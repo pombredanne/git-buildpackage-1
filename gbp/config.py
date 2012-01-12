@@ -407,10 +407,11 @@ class GbpOptionParserRpm(GbpOptionParser):
     """
     defaults = dict(GbpOptionParser.defaults)
     defaults.update( {
+                       'vendor'                 : 'vendor',
                        'builder'                : 'rpmbuild -ba',
                        'cleaner'                : 'git clean -d',
                        'packaging-dir'          : '',
-                       'packaging-tag'          : 'packaging/%(version)s',
+                       'packaging-tag'          : '%(vendor)s/%(version)s',
                        'export-dir'             : 'rpmbuild',
                        'rpmbuild-builddir'      : 'BUILD',
                        'rpmbuild-rpmdir'        : 'RPMS',
@@ -424,6 +425,8 @@ class GbpOptionParserRpm(GbpOptionParser):
 
     help = dict(GbpOptionParser.help)
     help.update( {
+                   'vendor':
+                        "Distribution vendor name",
                    'packaging-dir':
                         "subdir where packaging files are stored, default is '%(packaging-dir)s'",
                    'packaging-tag':

@@ -354,6 +354,7 @@ def parse_args(argv, prefix):
                       help="verbose command execution")
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
     parser.add_config_file_option(option_name="notify", dest="notify", type='tristate')
+    parser.add_config_file_option(option_name="vendor", action="store", dest="vendor")
     tag_group.add_option("--git-tag", action="store_true", dest="tag", default=False,
                       help="create a tag after a successful build")
     tag_group.add_option("--git-tag-only", action="store_true", dest="tag_only", default=False,
@@ -562,7 +563,7 @@ def main(argv):
             tag = repo.version_to_tag(options.packaging_tag, spec.version)
             if options.retag and repo.has_tag(tag):
                 repo.delete_tag(tag)
-            repo.create_tag(name=tag, msg="Distribution release %s" % spec.version,
+            repo.create_tag(name=tag, msg="%s release %s" % (options.vendor, spec.version),
                             sign=options.sign_tags, keyid=options.keyid, commit=tree)
             if options.posttag:
                 sha = repo.rev_parse("%s^{}" % tag)

@@ -139,6 +139,8 @@ def parse_args(argv):
     for group in [import_group, branch_group, tag_group, cmd_group ]:
         parser.add_option_group(group)
 
+    parser.add_config_file_option(option_name="vendor", action="store", dest="vendor")
+
     branch_group.add_option("-u", "--upstream-version", dest="version",
                       help="Upstream Version")
     branch_group.add_config_file_option(option_name="packaging-branch",
@@ -263,7 +265,7 @@ def main(argv):
                 else:
                     gbp.log.warn("'%s' not an archive, skipping pristine-tar" % source.path)
 
-            tag = repo.version_to_tag(options.upstream_tag, version)
+            tag = repo.version_to_tag(options.upstream_tag, version, options.vendor)
             repo.create_tag(name=tag,
                             msg="Upstream version %s" % version,
                             commit=commit,
