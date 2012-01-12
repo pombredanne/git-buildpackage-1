@@ -57,6 +57,41 @@ def cleanup_tmp_tree(tree):
         gbp.log.err("Removal of tmptree %s failed." % tree)
 
 
+def is_link_target(target, link):
+    """does symlink link already point to target?"""
+    if os.path.exists(link):
+            if os.path.samefile(target, link):
+                return True
+    return False
+
+
+def symlink_orig(archive, name, version, linkbasepattern):
+    """
+    Create a symlink from I{archive} ti I{<basename_pattern>.tar.<ext>} so
+    pristine-tar will see the correct basename.
+
+    @return: archive path to be used by pristine tar
+    @rtype: C{str}
+    """
+    if os.path.isdir(archive):
+        return None
+    ext = os.path.splitext(archive)[1]
+    if ext in ['.tgz', '.tbz2', '.tlz', '.txz' ]:
+        ext = ".%s" % ext[2:]
+
+    linkbasename = linkbasepattern % {'name': name, 'version': version}
+    link = "../%s.tar%s" % (linkbasename, ext)
+    if os.path.basename(archive) != os.path.basename(link):
+        try:
+            if not is_link_target(archive, link):
+                os.symlink(os.path.abspath(archive), link)
+        except OSError, err:
+                raise GbpError, "Cannot symlink '%s' to '%s': %s" % (archive, link, err[1])
+        return link
+    else:
+        return archive
+
+
 def ask_package_name(default, name_validator_func, err_msg):
     """
     Ask the user for the source package name.

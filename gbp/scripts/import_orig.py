@@ -30,6 +30,7 @@ from gbp.config import GbpOptionParserDebian, GbpOptionGroup, no_upstream_branch
 from gbp.errors import (GbpError, GbpNothingImported)
 import gbp.log
 from gbp.scripts.common.import_orig import (OrigUpstreamSource, cleanup_tmp_tree,
+                                            symlink_orig,
                                             ask_package_name, ask_package_version,
                                             repacked_tarball_name, repack_source)
 
@@ -40,40 +41,6 @@ try:
     import readline
 except ImportError:
     pass
-
-
-def is_link_target(target, link):
-    """does symlink link already point to target?"""
-    if os.path.exists(link):
-            if os.path.samefile(target, link):
-                return True
-    return False
-
-
-def symlink_orig(archive, pkg, version):
-    """
-    Create a symlink from I{archive} ti I{<pkg>_<version>.orig.tar.<ext>} so
-    pristine-tar will see the correct basename.
-
-    @return: archive path to be used by pristine tar
-    @rtype: C{str}
-    """
-    if os.path.isdir(archive):
-        return None
-    ext = os.path.splitext(archive)[1]
-    if ext in ['.tgz', '.tbz2', '.tlz', '.txz' ]:
-        ext = ".%s" % ext[2:]
-
-    link = "../%s_%s.orig.tar%s" % (pkg, version, ext)
-    if os.path.basename(archive) != os.path.basename(link):
-        try:
-            if not is_link_target(archive, link):
-                os.symlink(os.path.abspath(archive), link)
-        except OSError, err:
-                raise GbpError, "Cannot symlink '%s' to '%s': %s" % (archive, link, err[1])
-        return link
-    else:
-        return archive
 
 
 def upstream_import_commit_msg(options, version):
@@ -277,7 +244,7 @@ def main(argv):
             gbp.log.debug("Filter pristine-tar: repacking '%s' from '%s'" % (source.path, source.unpacked))
             (source, tmpdir)  = repack_source(source, sourcepackage, version, tmpdir, options.filters)
 
-        pristine_orig = symlink_orig(source.path, sourcepackage, version)
+        pristine_orig = symlink_orig(source.path, sourcepackage, version, "%(name)s_%(version)s.orig")
 
         # Don't mess up our repo with git metadata from an upstream tarball
         try:
