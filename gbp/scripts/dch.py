@@ -268,7 +268,7 @@ def guess_snapshot_commit(cp, repo, options):
     # If the current topmost changelog entry has already been tagged rely on
     # the version information only. The upper level relies then on the version
     # info anyway:
-    if repo.find_version(options.debian_tag, cp.version):
+    if repo.find_version(options.packaging_tag, cp.version):
         return None
     # If we didn't find a snapshot header we look at the point the changelog
     # was last touched.
@@ -358,7 +358,7 @@ def main(argv):
     parser.add_boolean_config_file_option(option_name = "ignore-branch", dest="ignore_branch")
     naming_group.add_config_file_option(option_name="debian-branch", dest="packaging_branch")
     naming_group.add_config_file_option(option_name="upstream-tag", dest="upstream_tag")
-    naming_group.add_config_file_option(option_name="debian-tag", dest="debian_tag")
+    naming_group.add_config_file_option(option_name="debian-tag", dest="packaging_tag")
     naming_group.add_config_file_option(option_name="snapshot-number", dest="snapshot_number",
                       help="expression to determine the next snapshot number, default is '%(snapshot-number)s'")
     parser.add_config_file_option(option_name="git-log", dest="git_log",
@@ -450,7 +450,7 @@ def main(argv):
                 else:
                     gbp.log.info("Couldn't find snapshot header, using version info")
             if not since:
-                since = repo.find_version(options.debian_tag, cp['Version'])
+                since = repo.find_version(options.packaging_tag, cp['Version'])
                 if not since:
                     raise GbpError("Version %s not found" % cp['Version'])
 
