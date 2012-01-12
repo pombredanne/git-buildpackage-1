@@ -131,7 +131,7 @@ def apply_debian_patch(repo, unpack_dir, src, options, parents):
         committer = get_committer_from_author(author, options)
         commit = repo.commit_dir(unpack_dir,
                                  "Imported Debian patch %s" % src.version,
-                                 branch = options.debian_branch,
+                                 branch = options.packaging_branch,
                                  other_parents = parents,
                                  author=author,
                                  committer=committer)
@@ -207,7 +207,7 @@ def parse_args(argv):
     parser.add_option("--download", action="store_true", dest="download", default=False,
                       help="download source package")
     branch_group.add_config_file_option(option_name="debian-branch",
-                      dest="debian_branch")
+                      dest="packaging_branch")
     branch_group.add_config_file_option(option_name="upstream-branch",
                       dest="upstream_branch")
     branch_group.add_boolean_config_file_option(option_name="create-missing-branches",
@@ -316,7 +316,7 @@ def main(argv):
                     branch = None
                 else:
                     branch = [options.upstream_branch,
-                              options.debian_branch][src.native]
+                              options.packaging_branch][src.native]
                     if not repo.has_branch(branch):
                         if options.create_missing_branches:
                             gbp.log.info("Creating missing branch '%s'" % branch)
@@ -349,16 +349,16 @@ def main(argv):
                     if options.pristine_tar:
                         repo.pristine_tar.commit(src.tgz, options.upstream_branch)
                     parents = [ options.upstream_branch ]
-                if is_empty and not repo.has_branch(options.debian_branch):
-                    repo.create_branch(options.debian_branch, commit)
+                if is_empty and not repo.has_branch(options.packaging_branch):
+                    repo.create_branch(options.packaging_branch, commit)
             if not src.native:
                 if src.diff or src.deb_tgz:
                     apply_debian_patch(repo, upstream.unpacked, src, options, parents)
                 else:
                     gbp.log.warn("Didn't find a diff to apply.")
-            if repo.get_branch() == options.debian_branch or is_empty:
+            if repo.get_branch() == options.packaging_branch or is_empty:
                 # Update HEAD if we modified the checked out branch
-                repo.force_head(options.debian_branch, hard=True)
+                repo.force_head(options.packaging_branch, hard=True)
     except KeyboardInterrupt:
         ret = 1
         gbp.log.err("Interrupted. Aborting.")
