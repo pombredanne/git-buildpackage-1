@@ -19,4 +19,10 @@ class TestHelp(unittest.TestCase):
             ret = os.system("bin/gbp-%s --help >/dev/null" % prog)
             self.assertEqual(ret, 0)
 
+    """Test help output of RPM-specific commands"""
+    def testHelpRpm(self):
+        for prog in [ "git-import-srpm" ]:
+            ret = os.system("bin/%s --help >/dev/null" % prog)
+            self.assertEqual(ret, 0)
+
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
