@@ -62,15 +62,16 @@ def export_patches(repo, branch, options):
         raise GbpError, ("Couldn't find upstream version %s. Don't know on what base to import." % spec.version)
 
     for n, p in spec.patches.iteritems():
-        f = options.packaging_dir+"/"+p['filename']
-        gbp.log.debug("Removing '%s'" % f) 
-        try:
-            os.unlink(f)
-        except OSError, (e, msg):
-            if e != errno.ENOENT:
-                raise GbpError, "Failed to remove patch: %s" % msg
-            else:
-                gbp.log.debug("%s does not exist." % f)
+        if p['autoupdate']:
+            f = options.packaging_dir+"/"+p['filename']
+            gbp.log.debug("Removing '%s'" % f) 
+            try:
+                os.unlink(f)
+            except OSError, (e, msg):
+                if e != errno.ENOENT:
+                    raise GbpError, "Failed to remove patch: %s" % msg
+                else:
+                    gbp.log.debug("%s does not exist." % f)
 
     gbp.log.info("Exporting patches from git (%s..%s)" % (upstream_commit, pq_branch))
     patches = repo.format_patches(upstream_commit, pq_branch, options.packaging_dir,

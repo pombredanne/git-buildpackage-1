@@ -266,15 +266,16 @@ def gen_patches(repo, spec, totree, options):
 
     # Remove all old patches
     for n, p in spec.patches.iteritems():
-        f = spec.specdir+"/"+p['filename']
-        gbp.log.debug("Removing '%s'" % f)
-        try:
-            os.unlink(f)
-        except OSError, (e, msg):
-            if e != errno.ENOENT:
-                raise GbpError, "Failed to remove patch: %s" % msg
-            else:
-                gbp.log.debug("%s does not exist." % f)
+        if p['autoupdate']:
+            f = spec.specdir+"/"+p['filename']
+            gbp.log.debug("Removing '%s'" % f)
+            try:
+                os.unlink(f)
+            except OSError, (e, msg):
+                if e != errno.ENOENT:
+                    raise GbpError, "Failed to remove patch: %s" % msg
+                else:
+                    gbp.log.debug("%s does not exist." % f)
 
     gbp.log.info("Generating patches from git (%s..%s)" % (upstream_tree, totree))
     if repo.get_obj_type(totree) in ['tag', 'commit']:

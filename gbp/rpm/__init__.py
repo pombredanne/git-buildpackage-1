@@ -180,7 +180,7 @@ class SrcRpmFile(object):
 class SpecFile(object):
     """Class for parsing/modifying spec files"""
     source_re = re.compile(r'^Source(?P<srcnum>[0-9]+)?:\s*(?P<filename>[^\s].*[^\s])\s*$', flags=re.I)
-    patchfile_re = re.compile(r'^(Patch(?P<patchnum>[0-9]+))?:\s*(?P<filename>.+)\s*$', flags=re.I)
+    patchfile_re = re.compile(r'^Patch(?P<patchnum>[0-9]+)?:\s*(?P<filename>.+)\s*$', flags=re.I)
     applypatch_re = re.compile(r'^%patch(?P<patchnum>[0-9]+)?(\s+(?P<args>.*))?$')
     marker_re = re.compile(r'^#\s+(?P<marker>>>|<<)\s+(?P<what>gbp-[^\s]+)\s*(?P<comment>.*)$')
 
@@ -208,10 +208,11 @@ class SpecFile(object):
         for (name, num, typ) in self.specinfo.sources:
             # only add files of patch type
             if typ == 2:
-                self.patches[num] = {'filename': name, 'strip': '0', 'apply': False}
+                self.patches[num] = {'filename': name, 'strip': '0', 'apply': False, 'autoupdate': False}
 
         # Parse info from spec file
         f = file(self.specfile)
+        autoupdate = False
         for line in f:
             m = self.applypatch_re.match(line)
             if m:
@@ -227,6 +228,24 @@ class SpecFile(object):
                     self.patches[patchnum]['strip'] = options.strip
 
                 self.patches[patchnum]['apply'] = True
+                continue
+
+            # Find patch tags inside autoupdate markers
+            m = self.marker_re.match(line)
+            if m:
+                if m.group('what') == "gbp-patch-tags":
+                    if m.group('marker') == '>>':
+                        autoupdate = True
+                    else:
+                        autoupdate = False
+                continue
+            m = self.patchfile_re.match(line)
+            if m:
+                if m.group('patchnum'):
+                    patchnum = int(m.group('patchnum'))
+                else:
+                    patchnum = 0
+                self.patches[patchnum]['autoupdate'] = autoupdate
                 continue
 
         f.close()
@@ -319,6 +338,13 @@ class SpecFile(object):
         tmpffd, tmpfpath = tempfile.mkstemp(suffix='.spec', dir='.')
         tmpf = os.fdopen(tmpffd, 'w')
 
+        # Check the max patchnumber of non-autoupdate patches
+        start_patch_tag_num = 0
+        for n, p in self.patches.iteritems():
+            if (not p['autoupdate']) and (n >= start_patch_tag_num):
+                start_patch_tag_num = n + 1
+        gbp.log.debug("Starting autoupdate patch macro numbering from %s" % start_patch_tag_num)
+
         autoupdate = False
         for line in f:
             m = self.marker_re.match(line)
@@ -337,12 +363,14 @@ class SpecFile(object):
 
                         if autoupdate == 'gbp-patch-tags':
                             for i in range(len(patchfilenames)):
+                                tag_num = start_patch_tag_num + i
                                 # "PatchXYZ:" text 12 chars wide, left aligned
-                                tmpf.write("%-12s%s\n" % ("Patch%d:" % i, patchfilenames[i]))
+                                tmpf.write("%-12s%s\n" % ("Patch%d:" % tag_num, patchfilenames[i]))
                         elif autoupdate == 'gbp-apply-patches':
                             for i in range(len(patchfilenames)):
+                                tag_num = start_patch_tag_num + i
                                 tmpf.write("# %s\n" % patchfilenames[i])
-                                tmpf.write("%%patch%d -p1\n" % i)
+                                tmpf.write("%%patch%d -p1\n" % tag_num)
                         else:
                             # Unknown autoupdate marker, we shouldn't end up here
                             gbp.log.warn("Hmm, found a bug - don't know what to do with marker '%s'" % autoupdate)
@@ -420,8 +448,8 @@ class SpecFile(object):
         gbp.log.debug("Orig file: %s" % self.orig_file)
 
         for n, p in sorted(self.patches.iteritems()):
-            gbp.log.debug("Patch %s: %s, strip: %s, apply: %s" %
-                          (n, p['filename'], p['strip'], p['apply']))
+            gbp.log.debug("Patch %s: %s, strip: %s, apply: %s, autoupdate: %s" %
+                          (n, p['filename'], p['strip'], p['apply'], p['autoupdate']))
 
 
 def parse_srpm(srpmfile):
