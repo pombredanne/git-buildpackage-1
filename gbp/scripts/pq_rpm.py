@@ -73,10 +73,16 @@ def export_patches(repo, branch, options):
                 else:
                     gbp.log.debug("%s does not exist." % f)
 
-    gbp.log.info("Exporting patches from git (%s..%s)" % (upstream_commit, pq_branch))
-    patches = repo.format_patches(upstream_commit, pq_branch, options.packaging_dir,
-                                  signature=False)
+    if options.export_rev:
+        export_treeish = options.export_rev
+    else:
+        export_treeish = pq_branch
+    if not repo.has_treeish(export_treeish):
+        raise GbpError # git-ls-tree printed an error message already
 
+    gbp.log.info("Exporting patches from git (%s..%s)" % (upstream_commit, export_treeish))
+    patches = repo.format_patches(upstream_commit, export_treeish, options.packaging_dir,
+                                  signature=False)
     filenames = []
     if patches:
         gbp.log.info("Regenerating patch queue in '%s'." % options.packaging_dir)
@@ -86,7 +92,7 @@ def export_patches(repo, branch, options):
         spec.updatepatches(filenames)
         GitCommand('status')(['--', options.packaging_dir])
     else:
-        gbp.log.info("No patches on '%s' - nothing to do." % pq_branch)
+        gbp.log.info("No patches on '%s' - nothing to do." % export_treeish)
 
 
 def safe_patches(queue):
@@ -256,6 +262,8 @@ def main(argv):
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
     parser.add_config_file_option(option_name="upstream-tag", dest="upstream_tag")
     parser.add_config_file_option(option_name="packaging-dir", dest="packaging_dir")
+    parser.add_option("--export-rev", action="store", dest="export_rev", default="",
+                      help="export patches from treeish object TREEISH instead of head of patch-queue branch", metavar="TREEISH")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)
