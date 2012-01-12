@@ -419,6 +419,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                        'rpmbuild-srpmdir'       : 'SRPMS',
                        'rpmbuild-buildrootdir'  : 'BUILDROOT',
                        'auto-patch-gen'         : 'False',
+                       'pristine-tarball-base'  : '%(name)s-%(version)s',
                      } )
 
     help = dict(GbpOptionParser.help)
@@ -429,6 +430,8 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "format string for packaging tags, rpm counterpart of the 'debian-tag' option, default is '%(packaging-tag)s'",
                    'auto-patch-gen':
                         "create patches between upstream and export-treeish, default is '%(auto-patch-gen)s'",
+                   'pristine-tarball-base':
+                        "basename for pristine-tar, default is '%(pristine-tarball-base)s'",
                  } )
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
