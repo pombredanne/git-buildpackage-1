@@ -38,7 +38,7 @@ def parse_args (argv):
     branch_group.add_option("--all", action="store_true", dest="all", default=False,
                             help="track all branches, not only debian and upstream")
     branch_group.add_config_file_option(option_name="upstream-branch", dest="upstream_branch")
-    branch_group.add_config_file_option(option_name="debian-branch", dest="debian_branch")
+    branch_group.add_config_file_option(option_name="debian-branch", dest="packaging_branch")
     branch_group.add_boolean_config_file_option(option_name="pristine-tar", dest="pristine_tar")
     branch_group.add_option("--depth", action="store", dest="depth", default=0,
                             help="git history depth (for creating shallow clones)")
@@ -88,7 +88,7 @@ def main(argv):
                     local != "HEAD":
                         repo.create_branch(local, remote)
         else: # only track gbp's default branches
-            branches = [ options.debian_branch, options.upstream_branch ]
+            branches = [ options.packaging_branch, options.upstream_branch ]
             if options.pristine_tar:
                 branches += [ repo.pristine_tar_branch ]
             gbp.log.debug('Will track branches: %s' % branches)
@@ -98,7 +98,7 @@ def main(argv):
                     not repo.has_branch(branch):
                         repo.create_branch(branch, remote)
 
-        repo.set_branch(options.debian_branch)
+        repo.set_branch(options.packaging_branch)
 
     except CommandExecFailed:
         retval = 1
