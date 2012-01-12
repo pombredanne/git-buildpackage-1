@@ -21,7 +21,7 @@ class TestHelp(unittest.TestCase):
 
     """Test help output of RPM-specific commands"""
     def testHelpRpm(self):
-        for prog in [ "git-import-srpm", "gbp-pq-rpm" ]:
+        for prog in [ "git-buildpackage-rpm", "git-import-srpm", "gbp-pq-rpm" ]:
             ret = os.system("bin/%s --help >/dev/null" % prog)
             self.assertEqual(ret, 0)
 

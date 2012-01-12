@@ -92,7 +92,6 @@ class GbpOptionParser(OptionParser):
                  'snapshot-number' : 'snapshot + 1',
                  'git-log'         : '--no-merges',
                  'export'          : 'HEAD',
-                 'export-dir'      : '',
                  'overlay'         : 'False',
                  'tarball-dir'     : '',
                  'ignore-new'      : 'False',
@@ -399,6 +398,7 @@ class GbpOptionParserDebian(GbpOptionParser):
     defaults.update( {
                        'builder'            : 'debuild -i -I',
                        'cleaner'            : 'debuild -d clean',
+                       'export-dir'         : '',
                      } )
 
 class GbpOptionParserRpm(GbpOptionParser):
@@ -407,10 +407,18 @@ class GbpOptionParserRpm(GbpOptionParser):
     """
     defaults = dict(GbpOptionParser.defaults)
     defaults.update( {
-                       'builder'                : '',
-                       'cleaner'                : '',
+                       'builder'                : 'rpmbuild -ba',
+                       'cleaner'                : 'git clean -d',
                        'packaging-dir'          : '',
                        'packaging-tag'          : 'packaging/%(version)s',
+                       'export-dir'             : 'rpmbuild',
+                       'rpmbuild-builddir'      : 'BUILD',
+                       'rpmbuild-rpmdir'        : 'RPMS',
+                       'rpmbuild-sourcedir'     : 'SOURCES',
+                       'rpmbuild-specdir'       : 'SPECS',
+                       'rpmbuild-srpmdir'       : 'SRPMS',
+                       'rpmbuild-buildrootdir'  : 'BUILDROOT',
+                       'auto-patch-gen'         : 'False',
                      } )
 
     help = dict(GbpOptionParser.help)
@@ -419,6 +427,8 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "subdir where packaging files are stored, default is '%(packaging-dir)s'",
                    'packaging-tag':
                         "format string for packaging tags, rpm counterpart of the 'debian-tag' option, default is '%(packaging-tag)s'",
+                   'auto-patch-gen':
+                        "create patches between upstream and export-treeish, default is '%(auto-patch-gen)s'",
                  } )
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
