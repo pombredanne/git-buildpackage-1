@@ -17,19 +17,12 @@
 """Handle checkin and checkout of archives from the pristine-tar branch"""
 
 import os, re
-import gbp.log
 from gbp.command_wrappers import Command
-from gbp.pkg import compressor_opts
+from gbp.pkg import PristineTar, compressor_opts
 from gbp.deb import DebianPkgPolicy
 
-class PristineTar(Command):
+class DebianPristineTar(PristineTar):
     """The pristine-tar branch in a git repository"""
-    cmd='/usr/bin/pristine-tar'
-    branch = 'pristine-tar'
-
-    def __init__(self, repo):
-        self.repo = repo
-        super(PristineTar, self).__init__(self.cmd, cwd=repo.path)
 
     def has_commit(self, package, version, comp_type=None):
         """
@@ -43,39 +36,14 @@ class PristineTar(Command):
         @param comp_type: the compression type
         @type comp_type: C{str}
         """
-        return True if self.get_commit(package, version, comp_type) else False
-
-    def get_commit(self, package, version, comp_type=None):
-        """
-        Get the pristine-tar commit of package I{package} in version I{version}
-        and compression type I{comp_type}
-
-        @param package: the package to look for
-        @type package: C{str}
-        @param version: the version to look for
-        @param comp_type: the compression type
-        @type comp_type: C{str}
-        """
-        if not self.repo.has_pristine_tar_branch():
-            return None
-
         if not comp_type:
             ext = '\w\+'
         else:
             ext = compressor_opts[comp_type][1]
 
-        regex = ('pristine-tar .* %s_%s\.orig\.tar\.%s' %
-                 (package, version, ext))
-        commits = self.repo.grep_log(regex, self.branch)
-        if commits:
-            commit = commits[-1]
-            gbp.log.debug("Found pristine-tar commit at '%s'" % commit)
-            return commit
-        return None
+        name_regexp = '%s_%s\.orig\.tar\.%s' % (package, version, ext)
 
-    def _checkout(self, archive):
-        self.run_error = 'Couldn\'t checkout "%s"' % os.path.basename(archive)
-        self.__call__(['checkout', archive])
+        return super(DebianPristineTar, self).has_commit(name_regexp)
 
     def checkout(self, package, version, comp_type, output_dir):
         """
@@ -95,21 +63,5 @@ class PristineTar(Command):
                                                   version,
                                                   comp_type,
                                                   output_dir)
-        self._checkout(name)
-
-    def commit(self, archive, upstream):
-        """
-        Commit an archive I{archive} to the pristine tar branch using upstream
-        branch ${upstream}.
-
-        @param archive: the archive to commit
-        @type archive: C{str}
-        @param upstream: the upstream branch to diff against
-        @type upstream: C{str}
-        """
-        ref = 'refs/heads/%s' % upstream
-
-        self.run_error = ("Couldn't commit to '%s' with upstream '%s'" %
-                          (self.branch, upstream))
-        self.__call__(['commit', archive, upstream])
+        super(DebianPristineTar, self).checkout(name)
 

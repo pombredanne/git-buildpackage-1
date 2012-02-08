@@ -307,3 +307,61 @@ class UpstreamSource(object):
             m = re.match(filter, os.path.basename(self.path))
             if m:
                 return (m.group('package'), m.group('version'))
+
+
+class PristineTar(Command):
+    """The pristine-tar branch in a git repository"""
+    cmd='/usr/bin/pristine-tar'
+    branch = 'pristine-tar'
+
+    def __init__(self, repo):
+        self.repo = repo
+        super(PristineTar, self).__init__(self.cmd, cwd=repo.path)
+
+    def has_commit(self, name_regexp):
+        """
+        Do we have a pristine-tar commit for a tarball?
+
+        @param name_regexp: the tarball to look for (regexp wildcards allowed)
+        @type name_regexp: C{str}
+        """
+        return True if self.get_commit(name_regexp) else False
+
+    def get_commit(self, name_regexp):
+        """
+        Get the pristine-tar commit of a tarball.
+
+        @param name_regexp: the tarball to look for (regexp wildcards allowed)
+        @type name_regexp: C{str}
+        """
+        if not self.repo.has_pristine_tar_branch():
+            return None
+
+        regex = ('pristine-tar .* %s' % name_regexp)
+        commits = self.repo.grep_log(regex, self.branch)
+        if commits:
+            commit = commits[-1]
+            gbp.log.debug("Found pristine-tar commit at '%s'" % commit)
+            return commit
+        return None
+
+    def checkout(self, archive):
+        self.run_error = 'Couldn\'t checkout "%s"' % os.path.basename(archive)
+        self.__call__(['checkout', archive])
+
+    def commit(self, archive, upstream):
+        """
+        Commit an archive I{archive} to the pristine tar branch using upstream
+        branch ${upstream}.
+
+        @param archive: the archive to commit
+        @type archive: C{str}
+        @param upstream: the upstream branch to diff against
+        @type upstream: C{str}
+        """
+        ref = 'refs/heads/%s' % upstream
+
+        self.run_error = ("Couldn't commit to '%s' with upstream '%s'" %
+                          (self.branch, upstream))
+        self.__call__(['commit', archive, upstream])
+
