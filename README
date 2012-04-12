@@ -12,3 +12,8 @@ On Debian systems this can be found in
 The API documentation of the gbp module can be found at:
 
     http://honk.sigxcpu.org/projects/git-buildpackage/apidocs/
+
+
+The documentation available for the RPM support can be found at
+
+    http://marquiz.github.com/git-buildpackage-rpm/
