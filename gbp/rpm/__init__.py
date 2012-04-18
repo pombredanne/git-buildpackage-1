@@ -466,7 +466,7 @@ def parse_srpm(srpmfile):
 
 def find_files(topdir, filespec='*', recursive=True):
     """find spec files in given dir"""
-    cmd = 'find %s' % topdir
+    cmd = 'find -L %s' % topdir
     if not recursive:
         cmd += " -maxdepth 1"
     cmd += ' -name "%s" -type f' % filespec
