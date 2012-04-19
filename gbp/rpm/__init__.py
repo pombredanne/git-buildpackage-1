@@ -209,6 +209,8 @@ class SpecFile(object):
             # only add files of patch type
             if typ == 2:
                 self.patches[num] = {'filename': name, 'strip': '0', 'apply': False, 'autoupdate': False}
+            if typ == 1:
+                self.sources[num] = {'filename': name, 'num': num}
 
         # Parse info from spec file
         f = file(self.specfile)
