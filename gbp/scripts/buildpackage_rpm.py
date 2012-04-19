@@ -47,7 +47,7 @@ def git_archive(repo, spec, output_dir, treeish, comp_type, comp_level, with_sub
     except KeyError:
         raise GbpError, "Unsupported compression type '%s'" % comp_type
 
-    output = os.path.join(output_dir, spec.orig_file)
+    output = os.path.join(output_dir, spec.orig_base)
     prefix = spec.orig_base
 
     try:
