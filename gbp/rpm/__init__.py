@@ -466,6 +466,15 @@ def parse_srpm(srpmfile):
     return srcrpm
 
 
+def parse_spec(specfile):
+    try:
+        return SpecFile(specfile)
+    except IOError, err:
+        raise GbpError, "Error reading spec file: %s" % err
+    except NoSpecError, err:
+        raise GbpError, "RPM error while parsing spec: %s" % err
+
+
 def find_files(topdir, filespec='*', recursive=True):
     """find spec files in given dir"""
     cmd = 'find -L %s' % topdir
