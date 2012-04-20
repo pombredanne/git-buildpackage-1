@@ -30,7 +30,7 @@ import errno
 from email.Utils import parseaddr
 import gbp.command_wrappers as gbpc
 from gbp.pkg import UpstreamSource
-from gbp.rpm import (parse_srpm, SrcRpmFile, SpecFile, guess_spec, NoSpecError)
+from gbp.rpm import (parse_srpm, SrcRpmFile, SpecFile, guess_spec, NoSpecError, parse_spec)
 from gbp.rpm.git import (RpmGitRepository, GitRepositoryError)
 from gbp.git import rfc822_date_to_git
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
@@ -137,6 +137,9 @@ def parse_args(argv):
     import_group.add_option("--allow-same-version", action="store_true",
                       dest="allow_same_version", default=False,
                       help="allow to import already imported version")
+    import_group.add_option("--unpacked", action="store_true",
+                      dest="unpacked", default=False,
+                      help="spec, tarball and patches in the same dir")
     import_group.add_config_file_option(option_name="packaging-dir",
                       dest="packaging_dir")
     (options, args) = parser.parse_args(argv[1:])
@@ -159,14 +162,24 @@ def main(argv):
             raise GbpError
         else:
             pkg = args[0]
+            dirs['src'] = os.path.abspath(os.path.dirname(pkg))
             if options.download:
                 srpm = download_source(pkg, dirs=dirs)
             else:
                 srpm = pkg
 
-            src = parse_srpm(srpm)
-            if options.verbose:
-                src.debugprint()
+            if not options.unpacked:
+                src = parse_srpm(srpm)
+                if options.verbose:
+                    src.debugprint()
+                pkgname = src.pkg
+                pkgver = src.version
+                upstream_version = src.upstream_version
+            else:
+                spec = parse_spec(pkg)
+                pkgname = spec.name
+                pkgver = "%s-%s" % (spec.version, spec.release)
+                upstream_version = spec.version
 
             try:
                 repo = RpmGitRepository('.')
@@ -184,7 +197,7 @@ def main(argv):
 
             if needs_repo:
                 gbp.log.info("No git repository found, creating one.")
-                repo = RpmGitRepository.create(src.pkg)
+                repo = RpmGitRepository.create(pkgname)
                 os.chdir(repo.path)
 
             if repo.bare:
@@ -194,22 +207,38 @@ def main(argv):
             dirs['srctarball'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
             dirs['srcunpack'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
             gbp.log.info("Extracting src rpm...")
-            src.unpack(dirs['pkgextract'],dirs['srctarball'])
-            if src.orig_file:
-                orig_tarball = os.path.join(dirs['srctarball'], src.orig_file)
-                upstream = UpstreamSource(orig_tarball)
-                upstream.unpack(dirs['srcunpack'], options.filters)
+
+            orig_tarball = None
+            if options.unpacked:
+               files = [patch['filename'] for patch in spec.patches.itervalues()]
+               for src in spec.sources.itervalues():
+                  if src['num']:
+                     files.append(src['filename'])
+               files.append(os.path.basename(pkg))
+               for fname in files:
+                   os.symlink(os.path.join(dirs['src'], fname),
+                              os.path.join(dirs['pkgextract'], fname))
+               if spec.orig_base:
+                  orig_tarball=os.path.join(dirs['src'], os.path.basename(spec.orig_file))
             else:
-                upstream = None
+               src.unpack(dirs['pkgextract'], dirs['srctarball'])
+               if src.orig_file:
+                  orig_tarball = os.path.join(dirs['srctarball'], src.orig_file)
+
+            if orig_tarball:
+                  upstream = UpstreamSource(orig_tarball)
+                  upstream.unpack(dirs['srcunpack'], options.filters)
+            else:
+                  upstream = None
 
             format = [(options.upstream_tag, "Upstream"), (options.packaging_tag, options.vendor)][options.native]
-            tag = repo.version_to_tag(format[0], src.upstream_version, options.vendor)
+            tag = repo.version_to_tag(format[0], upstream_version, options.vendor)
 
-            if repo.find_version(options.packaging_tag, src.version, options.vendor):
-                 gbp.log.warn("Version %s already imported." % src.version)
+            if repo.find_version(options.packaging_tag, pkgver, options.vendor):
+                 gbp.log.warn("Version %s already imported." % pkgver)
                  if options.allow_same_version:
-                    gbp.log.info("Moving tag of version '%s' since import forced" % src.version)
-                    move_tag_stamp(repo, options.packaging_tag, src.version, options.vendor)
+                    gbp.log.info("Moving tag of version '%s' since import forced" % pkgver)
+                    move_tag_stamp(repo, options.packaging_tag, pkgver, options.vendor)
                  else:
                     raise SkipImport
 
@@ -218,7 +247,7 @@ def main(argv):
 
             # Import upstream sources
             if upstream:
-                upstream_commit = repo.find_version(format[0], src.upstream_version, options.vendor)
+                upstream_commit = repo.find_version(format[0], upstream_version, options.vendor)
                 if not upstream_commit:
                     gbp.log.info("Tag %s not found, importing %s tarball" % (tag, format[1]))
 
@@ -232,7 +261,7 @@ def main(argv):
                                 "\nAlso check the --create-missing-branches option.")
                             raise GbpError
 
-                    msg = "%s version %s" % (format[1], src.upstream_version)
+                    msg = "%s version %s" % (format[1], upstream_version)
                     upstream_commit = repo.commit_dir(upstream.unpacked,
                                                       "Imported %s" % msg,
                                                        branch,create_missing_branch=options.create_missing_branches)
@@ -261,8 +290,8 @@ def main(argv):
                                     "\nAlso check the --create-missing-branches option.")
                         raise GbpError
 
-                tag = repo.version_to_tag(options.packaging_tag, src.version, options.vendor)
-                msg = "%s release %s" % (options.vendor, src.version)
+                tag = repo.version_to_tag(options.packaging_tag, pkgver, options.vendor)
+                msg = "%s release %s" % (options.vendor, pkgver)
 
                 if options.orphan_packaging or not upstream:
                     parents = []
@@ -332,7 +361,7 @@ def main(argv):
             gbpc.RemoveTree(dirs[d])()
 
     if not ret and not skipped:
-        gbp.log.info("Version '%s' imported under '%s'" % (src.version, src.pkg))
+        gbp.log.info("Version '%s' imported under '%s'" % (pkgver, pkgname))
     return ret
 
 if __name__ == '__main__':
