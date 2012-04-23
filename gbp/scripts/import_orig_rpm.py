@@ -297,7 +297,7 @@ def main(argv):
                 else:
                     gbp.log.warn("'%s' not an archive, skipping pristine-tar" % source.path)
 
-            tag = repo.version_to_tag(options.upstream_tag, version, vendor="Upstream")
+            tag = repo.version_to_tag(options.upstream_tag, dict(upstreamversion=version), "Upstream")
             repo.create_tag(name=tag,
                             msg="Upstream version %s" % version,
                             commit=commit,

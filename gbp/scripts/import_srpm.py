@@ -30,7 +30,7 @@ import errno
 from email.Utils import parseaddr
 import gbp.command_wrappers as gbpc
 from gbp.rpm import (parse_srpm, SrcRpmFile, SpecFile, guess_spec, NoSpecError,
-                     parse_spec, RpmUpstreamSource)
+                     parse_spec, RpmUpstreamSource, RpmPkgPolicy)
 from gbp.rpm.git import (RpmGitRepository, GitRepositoryError)
 from gbp.git.modifier import GitModifier
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
@@ -80,8 +80,7 @@ def committer_from_author(author, options):
 def move_tag_stamp(repo, format, version, vendor):
     "Move tag out of the way appending the current timestamp"
     old = repo.version_to_tag(format, version, vendor)
-    timestamped = "%s~%s" % (version, int(time.time()))
-    new = repo.version_to_tag(format, timestamped, vendor)
+    new = "%s~%s" % (old, int(time.time()))
     repo.move_tag(old, new)
 
 
@@ -186,7 +185,7 @@ def main(argv):
                     spec = parse_spec(pkg)
 
                 pkgname = spec.name
-                pkgver = "%s-%s" % (spec.version, spec.release)
+                pkgver = dict(upstreamversion=spec.version, release=spec.release)
                 upstream_version = spec.version
                 packager = spec.packager
                 unpacked = True
@@ -197,7 +196,7 @@ def main(argv):
                 if options.verbose:
                     src.debugprint()
                 pkgname = src.name
-                pkgver = src.version
+                pkgver = dict(upstreamversion=src.version)
                 upstream_version = src.upstream_version
                 packager = src.packager
                 unpacked = False
@@ -263,12 +262,12 @@ def main(argv):
                 upstream = None
 
             format = [(options.upstream_tag, "Upstream"), (options.packaging_tag, options.vendor)][options.native]
-            tag = repo.version_to_tag(format[0], upstream_version, options.vendor)
+            tag = repo.version_to_tag(format[0], dict(upstreamversion=upstream_version), options.vendor)
 
             if repo.find_version(options.packaging_tag, pkgver, options.vendor):
-                gbp.log.warn("Version %s already imported." % pkgver)
+                gbp.log.warn("Version %s already imported." % RpmPkgPolicy.compose_full_version(pkgver))
                 if options.allow_same_version:
-                    gbp.log.info("Moving tag of version '%s' since import forced" % pkgver)
+                    gbp.log.info("Moving tag of version '%s' since import forced" % RpmPkgPolicy.compose_full_version(pkgver))
                     move_tag_stamp(repo, options.packaging_tag, pkgver, options.vendor)
                 else:
                     raise SkipImport
@@ -290,7 +289,7 @@ def main(argv):
 
             # Import upstream sources
             if upstream:
-                upstream_commit = repo.find_version(format[0], upstream_version, options.vendor)
+                upstream_commit = repo.find_version(format[0], dict(upstreamversion=upstream_version), options.vendor)
                 if not upstream_commit:
                     gbp.log.info("Tag %s not found, importing %s tarball" % (tag, format[1]))
 
@@ -337,7 +336,7 @@ def main(argv):
                         raise GbpError
 
                 tag = repo.version_to_tag(options.packaging_tag, pkgver, options.vendor)
-                msg = "%s release %s" % (options.vendor, pkgver)
+                msg = "%s release %s" % (options.vendor, RpmPkgPolicy.compose_full_version(pkgver))
 
                 if options.orphan_packaging or not upstream:
                     parents = []
@@ -406,7 +405,7 @@ def main(argv):
             gbpc.RemoveTree(dirs[d])()
 
     if not ret and not skipped:
-        gbp.log.info("Version '%s' imported under '%s'" % (pkgver, pkgname))
+        gbp.log.info("Version '%s' imported under '%s'" % (RpmPkgPolicy.compose_full_version(pkgver), pkgname))
     return ret
 
 if __name__ == '__main__':
