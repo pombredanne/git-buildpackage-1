@@ -62,16 +62,19 @@ class NoSpecError(Exception):
     pass
 
 
-class RpmHdrInfo(rpm.hdr):
+class RpmHdrInfo(object):
     """Describes the RPM package header"""
     release_re = re.compile(r'(?P<release>[0-9]*)\.(?P<buildid>[a-zA-Z0-9].*)$')
 
     def __init__(self, rpmhdr):
-        rpm.hdr.__init__(rpmhdr)
+        self._hdr = rpmhdr
         self.buildid = ""
         m = self.release_re.match(self[rpm.RPMTAG_RELEASE])
         if m and m.group('buildid'):
             self.buildid = m.group('buildid')
+
+    def __getitem__(self, name):
+        return self._hdr[name]
 
 
 class SrcRpmFile(object):
