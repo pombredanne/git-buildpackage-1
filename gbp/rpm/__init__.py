@@ -87,7 +87,9 @@ class SrcRpmFile(object):
                       rpm.RPMVSF_NOSHA1HEADER | rpm.RPMVSF_NODSAHEADER |
                       rpm.RPMVSF_NOMD5 | rpm.RPMVSF_NORSA | rpm.RPMVSF_NOSHA1 |
                       rpm.RPMVSF_NODSA)
-        rpmhdr = rpm.ts(vsflags=ts_vsflags).hdrFromFdno(srpmfile)
+        srpmfp = open(srpmfile)
+        rpmhdr = rpm.ts(vsflags=ts_vsflags).hdrFromFdno(srpmfp.fileno())
+        srpmfp.close()
         self.rpmhdr = RpmHdrInfo(rpmhdr)
         self.srpmfile = os.path.abspath(srpmfile)
         (self.orig_file, self.orig_comp) = self.guess_orig_file()
