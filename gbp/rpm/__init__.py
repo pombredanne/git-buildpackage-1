@@ -190,7 +190,7 @@ class SpecFile(object):
     marker_re = re.compile(r'^#\s+(?P<marker>>>|<<)\s+(?P<what>gbp-[^\s]+)\s*(?P<comment>.*)$')
 
     def __init__(self, specfile):
-        self.specinfo = rpm.spec(specfile)
+        self.specinfo = rpm.ts().parseSpec(specfile)
 
         self.name = self.specinfo.packages[0].header[rpm.RPMTAG_NAME]
         self.version = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
