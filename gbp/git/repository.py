@@ -1125,7 +1125,7 @@ class GitRepository(object):
         @rtype: dict
         """
         out, ret =  self._git_getoutput('log',
-                                         ['--pretty=format:%an%n%ae%n%s%n%b%n',
+                                         ['--pretty=format:%an%n%ae%n%at%n%s%n%b%n',
                                           '-n1', commit])
         if ret:
             raise GitRepositoryError("Unable to retrieve log entry for %s"
@@ -1133,8 +1133,9 @@ class GitRepository(object):
         return {'id' : commit,
                 'author' : out[0].strip(),
                 'email' : out[1].strip(),
-                'subject' : out[2].rstrip(),
-                'body' : [line.rstrip() for line in  out[3:]]}
+                'timestamp': out[2].strip(),
+                'subject' : out[3].rstrip(),
+                'body' : [line.rstrip() for line in  out[4:]]}
 
 
 #{ Patches
