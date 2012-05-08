@@ -1,0 +1,1 @@
+../rpm/git-buildpackage.spec
