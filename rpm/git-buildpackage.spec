@@ -14,7 +14,9 @@ BuildRequires:  python
 BuildRequires:  python-distribute
 BuildRequires:  docbook-utils
 BuildRequires:  gtk-doc
-
+BuildRequires:  epydoc
+BuildRequires:  python-coverage
+BuildRequires:  python-nose
 
 %description
 Set of tools from Debian that integrate the package build system with Git.
