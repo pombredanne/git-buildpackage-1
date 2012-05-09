@@ -148,7 +148,7 @@ class SrcRpmFile(object):
         Try to guess the name of the primary upstream/source tarball
         returns a tuple with tarball filename and compression suffix
         """
-        tarball_re = re.compile(r'(?P<name>%s)?.*tar\.?(?P<comp>(bz2|gz|xz|\b))$' % self.rpmhdr[rpm.RPMTAG_NAME])
+        tarball_re = re.compile(r'(?P<name>%s)?.*tar\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % self.rpmhdr[rpm.RPMTAG_NAME])
         tarball = ""
         comp = ""
 
@@ -416,7 +416,7 @@ class SpecFile(object):
         Try to guess the name of the primary upstream/source tarball
         returns a tuple with tarball filename and compression suffix
         """
-        tarball_re = re.compile(r'(?P<base>(?P<name>%s)?.*)\.tar\.?(?P<comp>(bz2|gz|xz|\b))$' %
+        tarball_re = re.compile(r'(?P<base>(?P<name>%s)?.*)\.tar\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' %
                                 self.specinfo.packages[0].header[rpm.RPMTAG_NAME])
         tarball = ""
         base = ""
