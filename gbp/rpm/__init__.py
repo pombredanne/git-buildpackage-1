@@ -92,7 +92,7 @@ class SrcRpmFile(object):
         srpmfp.close()
         self.rpmhdr = RpmHdrInfo(rpmhdr)
         self.srpmfile = os.path.abspath(srpmfile)
-        (self.orig_file, self.orig_comp) = self.guess_orig_file()
+        (self.orig_file, self.orig_format, self.orig_comp) = self.guess_orig_file()
 
     def _get_version(self):
         """
@@ -148,9 +148,12 @@ class SrcRpmFile(object):
         Try to guess the name of the primary upstream/source tarball
         returns a tuple with tarball filename and compression suffix
         """
-        tarball_re = re.compile(r'(?P<name>%s)?.*tar\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % self.rpmhdr[rpm.RPMTAG_NAME])
+        tarball_re = re.compile(
+            r'(?P<name>%s).*?\.(?P<format>tar|zip)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
+                self.rpmhdr[rpm.RPMTAG_NAME])
         tarball = ""
         comp = ""
+        formt = ""
 
         # Take the first file that starts 'name' and has suffix like 'tar.*'
         for s in self.rpmhdr[rpm.RPMTAG_SOURCE]:
@@ -159,14 +162,16 @@ class SrcRpmFile(object):
                 # Take the first tarball that starts with pkg name
                 if m.group('name'):
                     tarball = s
+                    formt = m.group('format')
                     comp = m.group('comp')
                     break
                 # otherwise we take the first tarball
                 elif not tarball:
                     tarball = s
+                    formt = m.group('format')
                     comp = m.group('comp')
                 # else don't accept
-        return (tarball, comp)
+        return (tarball, formt, comp)
 
 
     def debugprint(self):
@@ -200,7 +205,7 @@ class SpecFile(object):
         self.specdir = os.path.dirname(self.specfile)
         self.patches = {}
         self.sources = {}
-        (self.orig_file, self.orig_base, self.orig_comp) = self.guess_orig_file()
+        (self.orig_file, self.orig_base, self.orig_format, self.orig_comp) = self.guess_orig_file()
 
         patchparser = OptionParser()
         patchparser.add_option("-p", dest="strip")
@@ -416,8 +421,9 @@ class SpecFile(object):
         Try to guess the name of the primary upstream/source tarball
         returns a tuple with tarball filename and compression suffix
         """
-        tarball_re = re.compile(r'(?P<base>(?P<name>%s)?.*)\.tar\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' %
-                                self.specinfo.packages[0].header[rpm.RPMTAG_NAME])
+        tarball_re = re.compile(
+            r'(?P<base>(?P<name>%s)?.*)?\.(?P<format>tar|zip)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
+               self.specinfo.packages[0].header[rpm.RPMTAG_NAME])
         tarball = ""
         base = ""
         comp = ""
@@ -433,14 +439,16 @@ class SpecFile(object):
                         tarball = name
                         base = m.group('base')
                         comp = m.group('comp')
+                        formt = m.group('format')
                         break
                     # otherwise we only take the first tarball
                     elif not tarball:
                         tarball = name
                         base = m.group('base')
                         comp = m.group('comp')
+                        formt = m.group('format')
                     # else don't accept
-        return (tarball, base, comp)
+        return (tarball, base, formt, comp)
 
 
     def debugprint(self):

@@ -42,10 +42,12 @@ from gbp.pkg import (compressor_opts, compressor_aliases)
 
 def git_archive(repo, spec, output_dir, treeish, comp_type, comp_level, with_submodules):
     "create a compressed orig tarball in output_dir using git_archive"
-    try:
-        comp_opts = compressor_opts[comp_type][0]
-    except KeyError:
-        raise GbpError, "Unsupported compression type '%s'" % comp_type
+    comp_opts = ''
+    if spec.orig_format == 'tar':
+        try:
+            comp_opts = compressor_opts[comp_type][0]
+        except KeyError:
+            raise GbpError, "Unsupported compression type '%s'" % comp_type
 
     output = os.path.join(output_dir, os.path.basename(spec.orig_file))
     prefix = spec.orig_base
@@ -58,7 +60,7 @@ def git_archive(repo, spec, output_dir, treeish, comp_type, comp_level, with_sub
 
         else:
             git_archive_single(treeish, output, prefix,
-                               comp_type, comp_level, comp_opts)
+                               comp_type, comp_level, comp_opts, spec.orig_format)
     except CommandExecFailed:
         gbp.log.err("Error generating submodules' archives")
         return False
@@ -185,8 +187,9 @@ def git_archive_build_orig(repo, spec, output_dir, options):
     upstream_tree = get_upstream_tree(repo, spec, options)
     gbp.log.info("%s does not exist, creating from '%s'" % (spec.orig_file,
                                                             upstream_tree))
-    gbp.log.debug("Building upstream tarball with compression '%s -%s'" %
-                  (options.comp_type, options.comp_level))
+    if options.comp_type:
+        gbp.log.debug("Building upstream tarball with compression '%s -%s'" %
+                      (options.comp_type, options.comp_level))
     if not git_archive(repo, spec, output_dir, upstream_tree,
                        options.comp_type,
                        options.comp_level,
