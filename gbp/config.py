@@ -473,6 +473,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                        'rpmbuild-srpmdir'       : 'SRPMS',
                        'rpmbuild-buildrootdir'  : 'BUILDROOT',
                        'patch-export'           : 'False',
+                       'patch-export-ignore-regex'  : '^GBP: patch-export-ignore',
                        'pristine-tarball-name'  : 'auto',
                      } )
 
@@ -490,6 +491,8 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "Spec file to use, 'auto' makes gbp to guess, other values make the packaging-dir option to be ignored, default is '%(spec-file)s'",
                    'patch-export':
                         "Create patches between upstream and export-treeish, default is '%(patch-export)s'",
+                   'patch-export-ignore-regex':
+                        "Don't create patches from commits whose message matches given regex, default is '%(patch-export-ignore-regex)s'",
                    'pristine-tarball-name':
                         "Filename to record to pristine-tar, set to 'auto' to not mangle the file name, default is '%(pristine-tarball-name)s'",
                  } )
