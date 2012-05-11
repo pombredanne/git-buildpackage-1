@@ -70,17 +70,26 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
         shutil.rmtree(tempdir)
 
 
-def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts, formt='tar'):
+def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts,
+                       formt='tar', directory=None):
     """
     Create tar.gz of an archive without submodules
 
     Exception handling is left to the caller.
     """
+    if directory:
+        prevdir = os.getcwd()
+        out = os.path.relpath(os.path.abspath(output), directory)
+        os.chdir(directory)
+    else:
+        out = output
     pipe = pipes.Template()
     pipe.prepend("git archive --format=%s --prefix=%s/ %s" % (formt, prefix, treeish), '.-')
     if comp_type:
         pipe.append('%s -c -%s %s' % (comp_type, comp_level, comp_opts),  '--')
-    ret = pipe.copy('', output)
+    ret = pipe.copy('', out)
+    if directory:
+        os.chdir(prevdir)
     if ret:
         raise GbpError("Error creating %s: %d" % (output, ret))
 

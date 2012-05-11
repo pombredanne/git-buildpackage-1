@@ -58,7 +58,7 @@ def git_archive(repo, cp, output_dir, treeish, comp_type, comp_level, with_submo
 
         else:
             git_archive_single(treeish, output, prefix,
-                               comp_type, comp_level, comp_opts)
+                               comp_type, comp_level, comp_opts, repo.path)
     except CommandExecFailed:
         gbp.log.err("Error generating submodules' archives")
         return False
