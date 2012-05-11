@@ -203,6 +203,13 @@ def write_patch(patch, options):
                 tmp.write(line)
                 break
         else:
+            if re.match(options.patch_export_ignore_regex, line):
+                gbp.log.debug("Ignoring patch %s, matches ignore-regex" % patch)
+                old.close()
+                tmp.close()
+                os.unlink(patch)
+                os.unlink(tmpname)
+                return
             if line.lower().startswith("gbp-pq-topic: "):
                 topic = line.split(" ",1)[1].strip()
                 gbp.log.debug("Topic %s found for %s" % (topic, patch))
@@ -270,7 +277,9 @@ def gen_patches(repo, spec, totree, options):
     if patches:
         gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
         for patch in patches:
-            filenames.append(os.path.basename(write_patch(patch, options)))
+            patch_file = write_patch(patch, options)
+            if patch_file != None:
+                filenames.append(os.path.basename(patch_file))
 
         spec.update_patches(filenames)
         spec.write_spec_file()
@@ -396,6 +405,7 @@ def parse_args(argv, prefix):
     export_group.add_option("--git-export-only", action="store_true", dest="export_only", default=False,
                       help="only export packaging files, don't build")
     export_group.add_boolean_config_file_option("patch-export", dest="patch_export")
+    export_group.add_config_file_option("patch-export-ignore-regex", dest="patch_export_ignore_regex")
     export_group.add_boolean_config_file_option(option_name="patch-numbers", dest="patch_numbers")
     options, args = parser.parse_args(args)
 
