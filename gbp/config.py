@@ -611,6 +611,7 @@ class GbpOptionParserRpm(GbpOptionParser):
             'packaging-tag'             : 'packaging/%(version)s',
             'packaging-tag-msg'         : '%(pkg)s %(vendor)s release '\
                                           '%(version)s',
+            'pq-branch'                 : 'development/%(branch)s',
             'spec-file'                 : '',
             'export-dir'                : '../rpmbuild',
             'native'                    : 'auto',
@@ -639,6 +640,9 @@ class GbpOptionParserRpm(GbpOptionParser):
             'packaging-tag-msg':
                   ("Format string for packaging tag messages, "
                    "default is '%(packaging-tag-msg)s'"),
+            'pq-branch':
+                "format string for the patch-queue branch name, default is "
+                "'%(pq-branch)s'",
             'spec-file':
                 "Spec file to use, causes the packaging-dir option to be "
                 "ignored, default is '%(spec-file)s'",
