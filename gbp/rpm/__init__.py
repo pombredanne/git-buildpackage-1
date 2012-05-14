@@ -427,6 +427,7 @@ class SpecFile(object):
         tarball = ""
         base = ""
         comp = ""
+        formt = ""
 
         # Take the first file that starts 'name' and has suffix like 'tar.*'
         for (name, num, typ) in self.specinfo.sources:
