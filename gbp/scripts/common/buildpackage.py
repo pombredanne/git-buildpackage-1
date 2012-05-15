@@ -21,9 +21,10 @@
 import os, os.path
 import pipes
 import tempfile
+import subprocess
 import shutil
 from gbp.command_wrappers import (CatenateTarArchive, CatenateZipArchive)
-from gbp.git import GitRepository
+from gbp.git import GitRepository, GitRepositoryError
 from gbp.errors import GbpError
 import gbp.log
 
@@ -82,7 +83,17 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
         shutil.rmtree(tempdir)
 
 
-def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
+def compress_filter(f_in, f_out, comp_type, comp_opts):
+    cmd = [comp_type] + comp_opts
+    p_filter = subprocess.Popen(cmd,
+                                stdin=f_in,
+                                stdout=f_out)
+    return p_filter.wait()
+
+
+
+def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level,
+                       comp_opts, format='tar'):
     """
     Create an archive without submodules
 
@@ -90,14 +101,17 @@ def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts
     """
     if prefix:
         prefix = prefix.strip('/') + '/'
-    pipe = pipes.Template()
-    pipe.prepend("git archive --format=%s --prefix=%s %s" % (format, prefix, treeish), '.-')
+    filter_fn = None
+    filter_args = {}
     if comp_type:
-        pipe.append('%s -c -%s %s' % (comp_type, comp_level,
-                                      " ".join(comp_opts)),  '--')
-    ret = pipe.copy('', output)
-    if ret:
-        raise GbpError("Error creating %s: %d" % (output, ret))
+        filter_fn = compress_filter
+        filter_args = {'comp_type': comp_type,
+                       'comp_opts': ['--stdout', '-%s' % comp_level]}
+        if comp_opts:
+            filter_args['comp_opts'].extend(comp_opts)
+
+    repo.archive(format=format, prefix=prefix, output=output,
+                 treeish=treeish, filter_fn=filter_fn, filter_args=filter_args)
 
 
 #{ Functions to handle export-dir
