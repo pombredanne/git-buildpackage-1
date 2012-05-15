@@ -23,7 +23,7 @@ import pipes
 import tempfile
 import shutil
 from gbp.command_wrappers import (CatenateTarArchive, CatenateZipArchive)
-from gbp.git import GitRepository
+from gbp.git import GitRepository, GitRepositoryError
 from gbp.errors import GbpError
 import gbp.log
 
@@ -79,19 +79,26 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
         shutil.rmtree(tempdir)
 
 
-def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
+def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
     """
     Create an archive without submodules
 
     Exception handling is left to the caller.
     """
-    pipe = pipes.Template()
-    pipe.prepend("git archive --format=%s --prefix=%s/ %s" % (format, prefix, treeish), '.-')
-    if comp_type:
-        pipe.append('%s -c -%s %s' % (comp_type, comp_level, comp_opts),  '--')
-    ret = pipe.copy('', output)
-    if ret:
-        raise GbpError("Error creating %s: %d" % (output, ret))
+    try:
+        filter_cmd = []
+        if comp_type:
+            filter_cmd = [comp_type, '--stdout', '-%s' % comp_level]
+            if comp_opts:
+                filter_cmd.append(comp_opts)
+
+        repo.archive(format=format,
+                     prefix='%s/' % prefix,
+                     output=output,
+                     treeish=treeish,
+                     filter_cmd=filter_cmd)
+    except GitRepositoryError:
+        raise
 
 
 #{ Functions to handle export-dir
