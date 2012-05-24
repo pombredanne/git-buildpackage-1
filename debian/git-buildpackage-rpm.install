@@ -1,0 +1,5 @@
+usr/bin/gbp-pq-rpm
+usr/bin/git-buildpackage-rpm
+usr/bin/git-import-orig-rpm
+usr/bin/git-import-srpm
+usr/lib/python*/dist-packages/gbp/rpm/*

@@ -1,0 +1,15 @@
+usr/bin/gbp-clone
+usr/bin/gbp-pull
+#usr/share/pyshared/gbp/*.py
+#usr/share/pyshared/gbp/scripts/clone.py
+#usr/share/pyshared/gbp/scripts/pull.py
+#usr/share/pyshared/gbp/scripts/common/*.py
+#usr/share/pyshared/gbp/git/*.py
+#usr/share/pyshared/gbp/pkg/*.py
+usr/lib/python*/dist-packages/gbp/*.py
+usr/lib/python2.7/dist-packages/gbp/scripts/clone.py
+usr/lib/python2.7/dist-packages/gbp/scripts/pull.py
+usr/lib/python2.7/dist-packages/gbp/scripts/common/*.py
+usr/lib/python2.7/dist-packages/gbp/git/*.py
+usr/lib/python2.7/dist-packages/gbp/pkg/*.py
+etc/git-buildpackage/gbp.conf
