@@ -1,0 +1,7 @@
+docs/git-import-dscs.1
+docs/git-dch.1
+docs/git-import-dsc.1
+docs/git-pbuilder.1
+docs/git-import-orig.1
+docs/git-buildpackage.1
+docs/gbp-pq.1
