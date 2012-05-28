@@ -50,7 +50,7 @@ def git_archive(repo, spec, output_dir, treeish, comp_type, comp_level, with_sub
             raise GbpError, "Unsupported compression type '%s'" % comp_type
 
     output = os.path.join(output_dir, os.path.basename(spec.orig_file))
-    prefix = spec.orig_base
+    prefix = "%s-%s" % (spec.name, spec.version)
 
     try:
         if repo.has_submodules() and with_submodules:
