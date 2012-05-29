@@ -199,6 +199,8 @@ def git_archive_build_orig(repo, spec, output_dir, options):
 
 
 def guess_comp_type(spec):
+    if not spec.orig_comp:
+        return ''
     if spec.orig_comp in compressor_opts:
         return spec.orig_comp
     if spec.orig_comp in compressor_aliases:
