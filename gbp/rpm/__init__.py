@@ -430,7 +430,7 @@ class SpecFile(object):
         formt = ""
 
         # Take the first file that starts 'name' and has suffix like 'tar.*'
-        for (name, num, typ) in self.specinfo.sources:
+        for (name, num, typ) in sorted(self.specinfo.sources, key=lambda s: s[1]):
             # only check files of source type
             if typ == 1:
                 m = tarball_re.match(os.path.basename(name))
