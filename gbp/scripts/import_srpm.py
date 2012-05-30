@@ -204,6 +204,12 @@ def main(argv):
                 set_bare_repo_options(options)
 
             dirs['pkgextract'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
+            dirs['pkgextract-packaging'] = os.path.join(dirs['pkgextract'], options.packaging_dir)
+            try:
+                os.mkdir(dirs['pkgextract-packaging'])
+            except OSError, (e, emsg):
+                if e == errno.EEXIST:
+                    pass
             dirs['srctarball'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
             dirs['srcunpack'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
             gbp.log.info("Extracting src rpm...")
@@ -217,11 +223,11 @@ def main(argv):
                files.append(os.path.basename(pkg))
                for fname in files:
                    os.symlink(os.path.join(dirs['src'], fname),
-                              os.path.join(dirs['pkgextract'], fname))
+                              os.path.join(dirs['pkgextract-packaging'], fname))
                if spec.orig_base:
                   orig_tarball=os.path.join(dirs['src'], os.path.basename(spec.orig_file))
             else:
-               src.unpack(dirs['pkgextract'], dirs['srctarball'])
+               src.unpack(dirs['pkgextract-packaging'], dirs['srctarball'])
                if src.orig_file:
                   orig_tarball = os.path.join(dirs['srctarball'], src.orig_file)
 
@@ -309,8 +315,9 @@ def main(argv):
                             pass
                         else:
                             raise
-                    for f in glob.glob(dirs['pkgextract']+"/*"):
-                        shutil.copy2(f, pkgsubdir)
+                    for f in os.listdir(dirs['pkgextract-packaging']):
+                        shutil.copy2(os.path.join(dirs['pkgextract-packaging'], f),
+                                     pkgsubdir)
                     commit = repo.commit_dir(upstream.unpacked,
                                                  "Imported %s" % msg,
                                                  branch, other_parents=[upstream_commit],
