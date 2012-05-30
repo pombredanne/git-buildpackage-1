@@ -595,7 +595,7 @@ class GitRepository(object):
             args += [ commit, '--' ]
             self._git_command("reset", args)
 
-    def is_clean(self):
+    def is_clean(self, ignore_untracked=False):
         """
         Does the repository contain any uncommitted modifications?
 
@@ -607,7 +607,11 @@ class GitRepository(object):
             return (True, '')
 
         clean_msg = 'nothing to commit'
-        out, ret = self._git_getoutput('status', extra_env={'LC_ALL': 'C'})
+
+        args = []
+        if ignore_untracked:
+            args.append('-uno')
+        out, ret = self._git_getoutput('status', args, extra_env={'LC_ALL': 'C'})
         if ret:
             raise GbpError("Can't get repository status")
         ret = False
