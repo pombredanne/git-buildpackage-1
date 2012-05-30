@@ -309,6 +309,8 @@ def build_parser(name, prefix=None):
 
     parser.add_boolean_config_file_option(option_name="ignore-new",
                     dest="ignore_new")
+    parser.add_boolean_config_file_option(option_name = "ignore-untracked",
+                    dest="ignore_untracked")
     parser.add_option("--git-verbose", action="store_true", dest="verbose",
                     default=False, help="verbose command execution")
     parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
@@ -460,11 +462,12 @@ def main(argv):
 
         Command(options.cleaner, shell=True)()
         if not options.ignore_new:
-            ret, out = repo.is_clean()
+            ret, out = repo.is_clean(options.ignore_untracked)
             if not ret:
                 gbp.log.err("You have uncommitted changes in your source tree:")
                 gbp.log.err(out)
-                raise GbpError("Use --git-ignore-new to ignore.")
+                raise GbpError("Use --git-ignore-new or --git-ignore-untracked "
+                               "to ignore.")
 
         if not options.ignore_new and not options.ignore_branch:
             if branch != options.packaging_branch:
