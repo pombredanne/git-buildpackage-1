@@ -197,7 +197,10 @@ class SpecFile(object):
     marker_re = re.compile(r'^#\s+(?P<marker>>>|<<)\s+(?P<what>gbp-[^\s]+)\s*(?P<comment>.*)$')
 
     def __init__(self, specfile):
-        self.specinfo = rpm.ts().parseSpec(specfile)
+        try:
+            self.specinfo = rpm.ts().parseSpec(specfile)
+        except ValueError, err:
+            raise GbpError, "RPM error while parsing spec: %s" % err
 
         self.name = self.specinfo.packages[0].header[rpm.RPMTAG_NAME]
         self.version = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
@@ -489,8 +492,6 @@ def parse_spec(specfile):
         return SpecFile(specfile)
     except IOError, err:
         raise GbpError, "Error reading spec file: %s" % err
-    except NoSpecError, err:
-        raise GbpError, "RPM error while parsing spec: %s" % err
 
 
 def find_files(topdir, filespec='*', recursive=True):
