@@ -29,7 +29,6 @@ Summary:    Common files for git-buildpackage debian and rpm tools
 Group:      Development/Tools/Building
 Requires:   git-core
 Requires:   python-base
-Requires:   python-dateutil
 
 %description common
 Common files and documentation, used by both git-buildpackage debian and rpm tools
