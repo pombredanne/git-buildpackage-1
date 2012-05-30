@@ -146,10 +146,11 @@ class SrcRpmFile(object):
         """
         Get the (downstream) version of the RPM
         """
-        version = [ self.rpmhdr[rpm.RPMTAG_EPOCH] + ":" ] if self.rpmhdr[rpm.RPMTAG_EPOCH] else ""
-        version += self.rpmhdr[rpm.RPMTAG_VERSION]+"-"+self.rpmhdr[rpm.RPMTAG_RELEASE]
+        version = dict(upstreamversion = self.rpmhdr[rpm.RPMTAG_VERSION],
+                       release = self.rpmhdr[rpm.RPMTAG_RELEASE])
+        if self.rpmhdr[rpm.RPMTAG_EPOCH] != None:
+            version['epoch'] = self.rpmhdr[rpm.RPMTAG_EPOCH]
         return version
-
     version = property(_get_version)
 
     def _get_name(self):
@@ -164,7 +165,7 @@ class SrcRpmFile(object):
         Get the upstream version of the package
         """
         return self.rpmhdr[rpm.RPMTAG_VERSION]
-    upstream_version = property(_get_upstream_version)
+    upstreamversion = property(_get_upstream_version)
 
     def _get_packager(self):
         """
@@ -248,7 +249,7 @@ class SpecFile(object):
             raise GbpError, "RPM error while parsing spec: %s" % err
 
         self.name = self.specinfo.packages[0].header[rpm.RPMTAG_NAME]
-        self.version = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
+        self.upstreamversion = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
         self.release = self.specinfo.packages[0].header[rpm.RPMTAG_RELEASE]
         self.epoch = self.specinfo.packages[0].header[rpm.RPMTAG_EPOCH]
         self.packager = self.specinfo.packages[0].header[rpm.RPMTAG_PACKAGER]
@@ -281,6 +282,19 @@ class SpecFile(object):
                     gbp.log.err("BUG: we didn't correctly parse all 'Patch' tags!")
 
         (self.orig_file, self.orig_base, self.orig_archive_fmt, self.orig_comp) = self.guess_orig_file()
+
+
+    def _get_version(self):
+        """
+        Get the (downstream) version
+        """
+        version = dict(upstreamversion = self.upstreamversion,
+                       release = self.release)
+        if self.epoch != None:
+            version['epoch'] = self.epoch
+        return version
+    version = property(_get_version)
+
 
     def write_spec_file(self):
         """
@@ -543,7 +557,7 @@ class SpecFile(object):
         Print info about the spec in readable way
         """
         gbp.log.debug("Name: %s" % (self.name))
-        gbp.log.debug("Version: %s" % (self.version))
+        gbp.log.debug("Version: %s" % (self.upstreamversion))
         gbp.log.debug("Release: %s" % self.release)
         gbp.log.debug("Epoch: %s" % self.epoch)
         gbp.log.debug("Spec file: %s" % self.specfile)

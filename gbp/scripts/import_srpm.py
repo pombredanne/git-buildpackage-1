@@ -185,8 +185,8 @@ def main(argv):
                     spec = parse_spec(pkg)
 
                 pkgname = spec.name
-                pkgver = dict(upstreamversion=spec.version, release=spec.release)
-                upstream_version = spec.version
+                pkgver = spec.version
+                upstream_version = spec.upstreamversion
                 packager = spec.packager
                 unpacked = True
             else:
@@ -196,8 +196,8 @@ def main(argv):
                 if options.verbose:
                     src.debugprint()
                 pkgname = src.name
-                pkgver = dict(upstreamversion=src.version)
-                upstream_version = src.upstream_version
+                pkgver = src.version
+                upstream_version = src.upstreamversion
                 packager = src.packager
                 unpacked = False
 
