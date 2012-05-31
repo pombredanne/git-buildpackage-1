@@ -210,7 +210,7 @@ def main(argv):
 
             orig_tarball = None
             if options.unpacked:
-               files = [patch['filename'] for patch in spec.patches.itervalues()]
+               files = os.path.basename([patch['filename']) for patch in spec.patches.itervalues()]
                for src in spec.sources.itervalues():
                   if src['num']:
                      files.append(src['filename'])
