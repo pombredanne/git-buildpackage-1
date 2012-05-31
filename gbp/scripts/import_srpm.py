@@ -77,9 +77,9 @@ def committer_from_author(author, options):
     return committer
 
 
-def move_tag_stamp(repo, format, version, vendor):
+def move_tag_stamp(repo, format, tag_str_fields):
     "Move tag out of the way appending the current timestamp"
-    old = repo.version_to_tag(format, version, vendor)
+    old = repo.version_to_tag(format, tag_str_fields)
     new = "%s~%s" % (old, int(time.time()))
     repo.move_tag(old, new)
 
@@ -262,13 +262,14 @@ def main(argv):
                 upstream = None
 
             format = [(options.upstream_tag, "Upstream"), (options.packaging_tag, options.vendor)][options.native]
-            tag = repo.version_to_tag(format[0], dict(upstreamversion=upstream_version), options.vendor)
+            tag_str_fields = dict(pkgver, vendor=options.vendor)
+            tag = repo.version_to_tag(format[0], tag_str_fields)
 
-            if repo.find_version(options.packaging_tag, pkgver, options.vendor):
+            if repo.find_version(options.packaging_tag, tag_str_fields):
                 gbp.log.warn("Version %s already imported." % RpmPkgPolicy.compose_full_version(pkgver))
                 if options.allow_same_version:
                     gbp.log.info("Moving tag of version '%s' since import forced" % RpmPkgPolicy.compose_full_version(pkgver))
-                    move_tag_stamp(repo, options.packaging_tag, pkgver, options.vendor)
+                    move_tag_stamp(repo, options.packaging_tag, tag_str_fields)
                 else:
                     raise SkipImport
 
@@ -289,7 +290,7 @@ def main(argv):
 
             # Import upstream sources
             if upstream:
-                upstream_commit = repo.find_version(format[0], dict(upstreamversion=upstream_version), options.vendor)
+                upstream_commit = repo.find_version(format[0], tag_str_fields)
                 if not upstream_commit:
                     gbp.log.info("Tag %s not found, importing %s tarball" % (tag, format[1]))
 
@@ -335,7 +336,8 @@ def main(argv):
                                     "\nAlso check the --create-missing-branches option.")
                         raise GbpError
 
-                tag = repo.version_to_tag(options.packaging_tag, pkgver, options.vendor)
+                tag_str_fields = dict(pkgver, vendor=options.vendor)
+                tag = repo.version_to_tag(options.packaging_tag, tag_str_fields)
                 msg = "%s release %s" % (options.vendor, RpmPkgPolicy.compose_full_version(pkgver))
 
                 if options.orphan_packaging or not upstream:
