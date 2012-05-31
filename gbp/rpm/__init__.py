@@ -149,7 +149,7 @@ class SrcRpmFile(object):
         returns a tuple with tarball filename and compression suffix
         """
         tarball_re = re.compile(
-            r'(?P<name>%s).*?\.(?P<format>tar|zip)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
+            r'(?P<name>%s).*?\.(?P<format>tar|zip|tgz)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
                 self.rpmhdr[rpm.RPMTAG_NAME])
         tarball = ""
         comp = ""
@@ -171,6 +171,8 @@ class SrcRpmFile(object):
                     formt = m.group('format')
                     comp = m.group('comp')
                 # else don't accept
+        if (formt, comp) == ('tgz', ''):
+            formt, comp = 'tar', 'gz'
         return (tarball, formt, comp)
 
 
@@ -422,7 +424,7 @@ class SpecFile(object):
         returns a tuple with tarball filename and compression suffix
         """
         tarball_re = re.compile(
-            r'(?P<base>(?P<name>%s)?.*)?\.(?P<format>tar|zip)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
+            r'(?P<base>(?P<name>%s)?.*)?\.(?P<format>tar|zip|tgz)\.?(?P<comp>(bz2|gz|xz|lzma|\b))$' % \
                self.specinfo.packages[0].header[rpm.RPMTAG_NAME])
         tarball = ""
         base = ""
@@ -449,6 +451,8 @@ class SpecFile(object):
                         comp = m.group('comp')
                         formt = m.group('format')
                     # else don't accept
+        if (formt, comp) == ('tgz', ''):
+            formt, comp = 'tar', 'gz'
         return (tarball, base, formt, comp)
 
 
