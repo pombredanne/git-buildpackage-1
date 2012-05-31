@@ -58,6 +58,9 @@ class RpmPkgPolicy(PkgPolicy):
     upstreamversion_msg = """Upstream version numbers must start with a digit and can only containg alphanumerics,
     full stops (.),tildes (~) and underscores (_)"""
 
+    # Time stamp format to be used in tagging
+    tag_timestamp_format = "%Y%m%d"
+
     @classmethod
     def is_valid_orig_archive(cls, filename):
         "Is this a valid orig source archive"

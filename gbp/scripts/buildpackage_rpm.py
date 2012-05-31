@@ -25,6 +25,7 @@ import sys
 import tempfile
 import shutil
 import re
+import datetime
 import gbp.rpm as rpm
 from gbp.command_wrappers import (Command,
                                   RunAtCommand, CommandExecFailed,
@@ -312,6 +313,45 @@ def setup_builder(options, builder_args):
         options.spec_dir = ''
 
 
+def update_tag_str_fields(tag_format_str, fields, repo, commit):
+    extra = fields
+
+    extra['nowtime'] = datetime.datetime.now().strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
+
+    commit_info = repo.get_commit_info(commit)
+    extra['authortime'] = datetime.datetime.fromtimestamp(int(commit_info['author'].date.split()[0])).strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
+    extra['committime'] = datetime.datetime.fromtimestamp(int(commit_info['committer'].date.split()[0])).strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
+    extra['version'] = version=rpm.RpmPkgPolicy.compose_full_version(fields)
+
+    # Parse tags with incremental numbering
+    re_fields = dict(extra,
+                     nowtimenum=extra['nowtime'] + ".(?P<nownum>[0-9]+)",
+                     authortimenum=extra['authortime'] + ".(?P<authornum>[0-9]+)",
+                     committimenum=extra['committime'] + ".(?P<commitnum>[0-9]+)")
+    re_fields.update(fields)
+
+    try:
+        tag_re = re.compile("^%s$" % (tag_format_str % re_fields))
+    except KeyError, err:
+        raise GbpError, "Unknown field '%s' in packaging-tag format string" % err
+
+    extra['nowtimenum'] = extra['nowtime'] + ".1"
+    extra['authortimenum'] = extra['authortime'] + ".1"
+    extra['committimenum'] = extra['committime'] + ".1"
+    for t in reversed(repo.get_tags()):
+        m = tag_re.match(t)
+        if m:
+            if 'nownum' in m.groupdict():
+                extra['nowtimenum'] = "%s.%s" % (extra['nowtime'], int(m.group('nownum'))+1)
+            if 'authornum' in m.groupdict():
+                extra['authortimenum'] = "%s.%s" % (extra['authortime'], int(m.group('authornum'))+1)
+            if 'commitnum' in m.groupdict():
+                extra['committimenum'] = "%s.%s" % (extra['committime'], int(m.group('commitnum'))+1)
+            break
+
+    return extra
+
+
 def parse_args(argv, prefix):
     args = [ arg for arg in argv[1:] if arg.find('--%s' % prefix) == 0 ]
     builder_args = [ arg for arg in argv[1:] if arg.find('--%s' % prefix) == -1 ]
@@ -567,6 +607,7 @@ def main(argv):
         if options.tag or options.tag_only:
             gbp.log.info("Tagging %s" % rpm.RpmPkgPolicy.compose_full_version(spec.version))
             tag_str_fields = dict(spec.version, vendor=options.vendor)
+            tag_str_fields = update_tag_str_fields(options.packaging_tag, tag_str_fields, repo, tree)
             tag = repo.version_to_tag(options.packaging_tag, tag_str_fields)
             if options.retag and repo.has_tag(tag):
                 repo.delete_tag(tag)
