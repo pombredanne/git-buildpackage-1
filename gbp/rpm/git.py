@@ -18,7 +18,7 @@
 import re
 from gbp.git import GitRepository, GitRepositoryError
 from gbp.pkg.pristinetar import PristineTar
-from gbp.rpm import RpmPkgPolicy
+from gbp.rpm.pkgpolicy import RpmPkgPolicy
 
 class RpmGitRepository(GitRepository):
     """A git repository that holds the source of an RPM package"""

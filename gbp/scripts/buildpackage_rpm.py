@@ -27,6 +27,7 @@ import shutil
 import re
 import datetime
 import gbp.rpm as rpm
+from gbp.rpm.pkgpolicy import RpmPkgPolicy
 from gbp.command_wrappers import (Command,
                                   RunAtCommand, CommandExecFailed,
                                   RemoveTree)
@@ -84,12 +85,12 @@ def prepare_upstream_tarball(repo, spec, options, output_dir):
     orig_file = os.path.basename(spec.orig_file)
     if options.tarball_dir:
         gbp.log.debug("Looking for orig tarball '%s' at '%s'" % (orig_file, options.tarball_dir))
-        if not rpm.RpmPkgPolicy.symlink_orig(orig_file, options.tarball_dir, output_dir, force=True):
+        if not RpmPkgPolicy.symlink_orig(orig_file, options.tarball_dir, output_dir, force=True):
             gbp.log.info("Orig tarball '%s' not found at '%s'" % (orig_file, options.tarball_dir))
         else:
             gbp.log.info("Orig tarball '%s' found at '%s'" % (orig_file, options.tarball_dir))
     # build an orig unless the user forbids it, always build (and overwrite pre-existing) if user forces it
-    if options.force_create or (not options.no_create_orig and not rpm.RpmPkgPolicy.has_orig(orig_file, output_dir)):
+    if options.force_create or (not options.no_create_orig and not RpmPkgPolicy.has_orig(orig_file, output_dir)):
         if not pristine_tar_build_orig(repo, orig_file, output_dir, options):
             upstream_tree = git_archive_build_orig(repo, spec, output_dir, options)
             if options.pristine_tar_commit:
@@ -316,12 +317,12 @@ def setup_builder(options, builder_args):
 def update_tag_str_fields(tag_format_str, fields, repo, commit):
     extra = fields
 
-    extra['nowtime'] = datetime.datetime.now().strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
+    extra['nowtime'] = datetime.datetime.now().strftime(RpmPkgPolicy.tag_timestamp_format)
 
     commit_info = repo.get_commit_info(commit)
-    extra['authortime'] = datetime.datetime.fromtimestamp(int(commit_info['author'].date.split()[0])).strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
-    extra['committime'] = datetime.datetime.fromtimestamp(int(commit_info['committer'].date.split()[0])).strftime(rpm.RpmPkgPolicy.tag_timestamp_format)
-    extra['version'] = version=rpm.RpmPkgPolicy.compose_full_version(fields)
+    extra['authortime'] = datetime.datetime.fromtimestamp(int(commit_info['author'].date.split()[0])).strftime(RpmPkgPolicy.tag_timestamp_format)
+    extra['committime'] = datetime.datetime.fromtimestamp(int(commit_info['committer'].date.split()[0])).strftime(RpmPkgPolicy.tag_timestamp_format)
+    extra['version'] = version=RpmPkgPolicy.compose_full_version(fields)
 
     # Parse tags with incremental numbering
     re_fields = dict(extra,
@@ -605,14 +606,14 @@ def main(argv):
 
         # Tag (note: tags the exported version)
         if options.tag or options.tag_only:
-            gbp.log.info("Tagging %s" % rpm.RpmPkgPolicy.compose_full_version(spec.version))
+            gbp.log.info("Tagging %s" % RpmPkgPolicy.compose_full_version(spec.version))
             tag_str_fields = dict(spec.version, vendor=options.vendor)
             tag_str_fields = update_tag_str_fields(options.packaging_tag, tag_str_fields, repo, tree)
             tag = repo.version_to_tag(options.packaging_tag, tag_str_fields)
             if options.retag and repo.has_tag(tag):
                 repo.delete_tag(tag)
             repo.create_tag(name=tag, msg="%s release %s" % (options.vendor,
-                                rpm.RpmPkgPolicy.compose_full_version(spec.version)),
+                                RpmPkgPolicy.compose_full_version(spec.version)),
                             sign=options.sign_tags, keyid=options.keyid, commit=tree)
             if options.posttag:
                 sha = repo.rev_parse("%s^{}" % tag)
