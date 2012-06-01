@@ -25,8 +25,9 @@ import tempfile
 import gbp.command_wrappers as gbpc
 import string
 from gbp.pkg import parse_archive_filename
-from gbp.rpm import (RpmPkgPolicy, RpmUpstreamSource, SpecFile, NoSpecError,
-                     parse_spec, guess_spec, guess_spec_repo)
+from gbp.rpm import (RpmUpstreamSource, SpecFile, NoSpecError, parse_spec,
+                     guess_spec, guess_spec_repo)
+from gbp.rpm.policy import RpmPkgPolicy
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
 from gbp.errors import GbpError
