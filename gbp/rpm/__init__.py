@@ -22,7 +22,6 @@ import sys
 import os
 import re
 import tempfile
-import rpm
 import glob
 import shutil as shutil
 from optparse import OptionParser
@@ -32,8 +31,15 @@ from gbp.errors import GbpError
 from gbp.git import GitRepositoryError
 from gbp.patch_series import (PatchSeries, Patch)
 import gbp.log
-from gbp.pkg import (PkgPolicy, UpstreamSource, compressor_opts, parse_archive_filename)
+from gbp.pkg import (UpstreamSource, compressor_opts, parse_archive_filename)
+from gbp.rpm.pkgpolicy import RpmPkgPolicy
 
+try:
+    # Try to load special RPM lib to be used for GBP (only)
+    rpm = __import__(RpmPkgPolicy.python_rpmlib_module_name)
+except ImportError:
+    gbp.log.debug("Failed to import '%s' as rpm python module, using host's default rpm library instead" % RpmPkgPolicy.python_rpmlib_module_name)
+    import rpm
 
 class NoSpecError(Exception):
     """no changelog found"""
