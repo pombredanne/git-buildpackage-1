@@ -30,7 +30,8 @@ import errno
 import urllib2
 import gbp.command_wrappers as gbpc
 from gbp.rpm import (parse_srpm, SrcRpmFile, SpecFile, guess_spec, NoSpecError,
-                     parse_spec, RpmUpstreamSource, RpmPkgPolicy)
+                     parse_spec, RpmUpstreamSource)
+from gbp.rpm.policy import RpmPkgPolicy
 from gbp.rpm.git import (RpmGitRepository, GitRepositoryError)
 from gbp.git.modifier import GitModifier
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
