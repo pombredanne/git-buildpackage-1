@@ -27,6 +27,9 @@ rpm_version_chars = 'a-zA-Z\d.~+'
 class RpmPkgPolicy(PkgPolicy):
     """Packaging policy for RPM"""
 
+    # Special rpmlib python module for GBP (only)
+    python_rpmlib_module_name = "rpmlibgbp"
+
     # Do NOT use a plus '+' or a period '.' as a delimiter.
     # Additionally, name must begin with an alphanumeric.
     packagename_re = re.compile("^[a-zA-Z0-9][a-zA-Z0-9\-_]+$")
