@@ -212,7 +212,7 @@ def main(argv):
             if options.unpacked:
                files = [os.path.basename(patch['filename']) for patch in spec.patches.itervalues()]
                for src in spec.sources.itervalues():
-                  if src['num']:
+                  if not spec.orig_file or src.filename != spec.orig_file:
                      files.append(src['filename'])
                files.append(os.path.basename(pkg))
                for fname in files:
