@@ -108,14 +108,16 @@ def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level, com
 #{ Functions to handle export-dir
 def dump_tree(repo, export_dir, treeish, with_submodules):
     "dump a tree to output_dir"
-    output_dir = os.path.dirname(export_dir)
+    output_dir = os.path.dirname(os.path.abspath(export_dir))
     prefix = os.path.basename(export_dir)
 
     pipe = pipes.Template()
     pipe.prepend('git archive --format=tar --prefix=%s/ %s' % (prefix, treeish), '.-')
     pipe.append('tar -C %s -xf -' % output_dir,  '-.')
-    top = os.path.abspath(os.path.curdir)
+    cwd = os.path.abspath(os.path.curdir)
+    top = repo.path
     try:
+        os.chdir(top)
         ret = pipe.copy('', '')
         if ret:
             raise GbpError("Error in dump_tree archive pipe")
@@ -145,7 +147,7 @@ def dump_tree(repo, export_dir, treeish, with_submodules):
         gbp.log.err("Error dumping tree to %s: %s" % (output_dir, e))
         return False
     finally:
-        os.chdir(top)
+        os.chdir(cwd)
     return True
 
 

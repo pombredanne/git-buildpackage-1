@@ -144,17 +144,18 @@ def export_patches(repo, branch, options):
         gbp.log.info("No patches on '%s' - nothing to do." % export_treeish)
 
 
-def safe_patches(queue):
+def safe_patches(queue, tmpdir_base):
     """
     Safe the current patches in a temporary directory
-    below .git/
+    below 'tmpdir_base'
 
     @param queue: an existing patch queue
+    @param tmpdir_base: base under which to create tmpdir
     @return: tmpdir and a safed queue (with patches in tmpdir)
     @rtype: tuple
     """
 
-    tmpdir = tempfile.mkdtemp(dir='.git/', prefix='gbp-pq')
+    tmpdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='gbp-pq')
     safequeue=PatchSeries()
 
     if len(queue) > 0:
@@ -224,7 +225,7 @@ def import_spec_patches(repo, branch, tries, options):
 
     queue = spec.patchseries()
     # Put patches in a safe place
-    tmpdir, queue = safe_patches(queue)
+    tmpdir, queue = safe_patches(queue, repo.path)
     for commit in commits:
         try:
             gbp.log.info("Trying to apply patches at '%s'" % commit)
@@ -355,6 +356,10 @@ def main(argv):
     except GitRepositoryError:
         gbp.log.err("%s is not a git repository" % (os.path.abspath('.')))
         return 1
+
+    if os.path.abspath('.') != repo.path:
+        gbp.log.warn("Switching to topdir before running commands")
+        os.chdir(repo.path)
 
     try:
         current = repo.get_branch()
