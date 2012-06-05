@@ -19,7 +19,6 @@
 """Common functionality for Debian and RPM buildpackage scripts"""
 
 import os, os.path
-import pipes
 import tempfile
 import subprocess
 import shutil
@@ -114,47 +113,38 @@ def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level,
                  treeish=treeish, filter_fn=filter_fn, filter_args=filter_args)
 
 
+def untar_filter(f_in, f_out, target_dir):
+    gbp.log.debug("Extracting git output to %s" % target_dir)
+    p_filter = subprocess.Popen(['tar', '-C', target_dir, '-x'],
+                                stdin=f_in,
+                                stdout=f_out)
+    return p_filter.wait()
+
+
 #{ Functions to handle export-dir
 def dump_tree(repo, export_dir, treeish, with_submodules):
-    "dump a tree to output_dir"
-    output_dir = os.path.dirname(export_dir)
+    """Dump a git tree-ish to output_dir"""
+    output_dir = os.path.dirname(os.path.abspath(export_dir))
     prefix = os.path.basename(export_dir)
-
-    pipe = pipes.Template()
-    pipe.prepend('git archive --format=tar --prefix=%s/ %s' % (prefix, treeish), '.-')
-    pipe.append('tar -C %s -xf -' % output_dir,  '-.')
-    top = os.path.abspath(os.path.curdir)
     try:
-        ret = pipe.copy('', '')
-        if ret:
-            raise GbpError("Error in dump_tree archive pipe")
-
-        if with_submodules:
-            if repo.has_submodules():
-                repo.update_submodules()
+        untar_args = {'target_dir': output_dir}
+        repo.archive(format="tar", prefix='%s/' % prefix, output=os.devnull,
+                     treeish=treeish, filter_fn=untar_filter,
+                     filter_args=untar_args)
+        if with_submodules and repo.has_submodules():
+            repo.update_submodules()
             for (subdir, commit) in repo.get_submodules(treeish):
-                gbp.log.info("Processing submodule %s (%s)" % (subdir, commit[0:8]))
+                gbp.log.info("Processing submodule %s (%s)" % (subdir,
+                                                               commit[0:8]))
                 tarpath = [subdir, subdir[2:]][subdir.startswith("./")]
-                os.chdir(subdir)
-                pipe = pipes.Template()
-                pipe.prepend('git archive --format=tar --prefix=%s/%s/ %s' %
-                             (prefix, tarpath, commit), '.-')
-                pipe.append('tar -C %s -xf -' % output_dir,  '-.')
-                ret = pipe.copy('', '')
-                os.chdir(top)
-                if ret:
-                     raise GbpError("Error in dump_tree archive pipe in submodule %s" % subdir)
-    except OSError as err:
+                subrepo = GitRepository(os.path.join(repo.path, subdir))
+                subrepo.archive(format='tar',
+                                prefix='%s/%s/' % (prefix, tarpath),
+                                output=os.devnull, treeish=treeish,
+                                filter_fn=untar_filter, filter_args=untar_args)
+    except GitRepositoryError as err:
         gbp.log.err("Error dumping tree to %s: %s" % (output_dir, err[0]))
         return False
-    except GbpError as err:
-        gbp.log.err(err)
-        return False
-    except Exception as e:
-        gbp.log.err("Error dumping tree to %s: %s" % (output_dir, e))
-        return False
-    finally:
-        os.chdir(top)
     return True
 
 
