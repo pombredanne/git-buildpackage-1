@@ -16,6 +16,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """A Git repository"""
 
+import os
 import re
 import subprocess
 import os.path
@@ -601,6 +602,31 @@ class GitRepository(object):
                 ret = True
             break
         return (ret, "".join(out))
+
+    def status(self, pathlist=None):
+        """
+        Check status of repository.
+
+        @param pathlist: List of paths to check status for
+        @type pathlist: C{list}
+        @return C{dict} of C{lists} of paths, where key is a git status flag.
+        @rtype C{dict}
+        """
+
+        options = ['--porcelain']
+        if pathlist:
+            options.extend(pathlist)
+
+        out, err, ret = self._git_inout('status', options,
+                                        extra_env={'LC_ALL': 'C'})
+        if ret:
+            raise GbpError("Can't get repository status: %s" % err)
+
+        result = defaultdict(list)
+
+        for line in out.splitlines():
+            result[line[:2]].append(line[3:])
+        return result
 
     def is_empty(self):
         """
