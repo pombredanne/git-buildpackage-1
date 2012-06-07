@@ -76,6 +76,7 @@ rm -rf %{buildroot}%{python_sitelib}/*info
 
 %files
 %defattr(-,root,root,-)
+%dir %{python_sitelib}/gbp/deb
 %{_bindir}/gbp-pq
 %{_bindir}/git-buildpackage
 %{_bindir}/git-dch
@@ -85,24 +86,36 @@ rm -rf %{buildroot}%{python_sitelib}/*info
 %{_bindir}/git-pbuilder
 %{_bindir}/gbp-create-remote-repo
 %{python_sitelib}/gbp/deb/
+%{python_sitelib}/gbp/scripts/pq.py*
+%{python_sitelib}/gbp/scripts/buildpackage.py*
+%{python_sitelib}/gbp/scripts/dch.py*
+%{python_sitelib}/gbp/scripts/import_dsc.py*
+%{python_sitelib}/gbp/scripts/import_dscs.py*
+%{python_sitelib}/gbp/scripts/import_orig.py*
+%{python_sitelib}/gbp/scripts/create_remote_repo.py*
 
 %files common
 %defattr(-,root,root,-)
 %{_bindir}/gbp-clone
 %{_bindir}/gbp-pull
-%{python_sitelib}/gbp
+%dir %{python_sitelib}/gbp
+%dir %{python_sitelib}/gbp/git
+%dir %{python_sitelib}/gbp/pkg
+%dir %{python_sitelib}/gbp/scripts
+%dir %{python_sitelib}/gbp/scripts/common
 %{python_sitelib}/gbp/*.py*
-%{python_sitelib}/gbp/git/
-%{python_sitelib}/gbp/pkg/
+%{python_sitelib}/gbp/scripts/__init__.py*
 %{python_sitelib}/gbp/scripts/clone.py*
 %{python_sitelib}/gbp/scripts/pull.py*
+%{python_sitelib}/gbp/scripts/common/*.py*
+%{python_sitelib}/gbp/git/*.py*
+%{python_sitelib}/gbp/pkg/*.py*
 %config %{_sysconfdir}/git-buildpackage
 
 
 %files rpm
 %defattr(-,root,root,-)
-%{_bindir}/gbp-pq-rpm
-%{_bindir}/git-buildpackage-rpm
-%{_bindir}/git-import-orig-rpm
-%{_bindir}/git-import-srpm
-%{python_sitelib}/gbp/rpm/
+%dir %{python_sitelib}/gbp/rpm
+%{_bindir}/*rpm*
+%{python_sitelib}/gbp/scripts/*rpm.py*
+%{python_sitelib}/gbp/rpm/*py*
