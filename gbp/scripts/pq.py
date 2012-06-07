@@ -30,12 +30,55 @@ from gbp.errors import GbpError
 import gbp.log
 from gbp.patch_series import (PatchSeries, Patch)
 from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
-                                 write_patch, switch_to_pq_branch,
-                                 apply_single_patch, apply_and_commit_patch,
-                                 drop_pq)
+                                   switch_to_pq_branch, apply_single_patch,
+                                   apply_and_commit_patch, drop_pq)
 
 PATCH_DIR = "debian/patches/"
 SERIES_FILE = os.path.join(PATCH_DIR,"series")
+
+
+def write_patch(patch, patch_dir, options):
+    """Write the patch exported by 'git-format-patch' to it's final location
+       (as specified in the commit)"""
+    oldname = os.path.basename(patch)
+    newname = oldname
+    tmpname = patch + ".gbp"
+    old = file(patch, 'r')
+    tmp = file(tmpname, 'w')
+    in_patch = False
+    topic = None
+
+    # Skip first line (From <sha1>)
+    old.readline()
+    for line in old:
+        if line.lower().startswith("gbp-pq-topic: "):
+            topic = line.split(" ",1)[1].strip()
+            gbp.log.debug("Topic %s found for %s" % (topic, patch))
+            continue
+        tmp.write(line)
+    tmp.close()
+    old.close()
+
+    if not options.patch_numbers:
+        patch_re = re.compile("[0-9]+-(?P<name>.+)")
+        m = patch_re.match(oldname)
+        if m:
+            newname = m.group('name')
+
+    if topic:
+        topicdir = os.path.join(patch_dir, topic)
+    else:
+        topicdir = patch_dir
+
+    if not os.path.isdir(topicdir):
+        os.makedirs(topicdir, 0755)
+
+    os.unlink(patch)
+    dstname = os.path.join(topicdir, newname)
+    gbp.log.debug("Moving %s to %s" % (tmpname, dstname))
+    shutil.move(tmpname, dstname)
+
+    return dstname
 
 
 def export_patches(repo, branch, options):

@@ -67,50 +67,6 @@ def pq_branch_base(pq_branch):
         return pq_branch[len(PQ_BRANCH_PREFIX):]
 
 
-def write_patch(patch, patch_dir, options):
-    """Write the patch exported by 'git-format-patch' to it's final location
-       (as specified in the commit)"""
-    oldname = os.path.basename(patch)
-    newname = oldname
-    tmpname = patch + ".gbp"
-    old = file(patch, 'r')
-    tmp = file(tmpname, 'w')
-    in_patch = False
-    topic = None
-
-    # Skip first line (From <sha1>)
-    old.readline()
-    for line in old:
-        if line.lower().startswith("gbp-pq-topic: "):
-            topic = line.split(" ",1)[1].strip()
-            gbp.log.debug("Topic %s found for %s" % (topic, patch))
-            continue
-        tmp.write(line)
-    tmp.close()
-    old.close()
-
-    if not options.patch_numbers:
-        patch_re = re.compile("[0-9]+-(?P<name>.+)")
-        m = patch_re.match(oldname)
-        if m:
-            newname = m.group('name')
-
-    if topic:
-        topicdir = os.path.join(patch_dir, topic)
-    else:
-        topicdir = patch_dir
-
-    if not os.path.isdir(topicdir):
-        os.makedirs(topicdir, 0755)
-
-    os.unlink(patch)
-    dstname = os.path.join(topicdir, newname)
-    gbp.log.debug("Moving %s to %s" % (tmpname, dstname))
-    shutil.move(tmpname, dstname)
-
-    return dstname
-
-
 def get_maintainer_from_control():
     """Get the maintainer from the control file"""
     cmd = 'sed -n -e \"s/Maintainer: \\+\\(.*\\)/\\1/p\" debian/control'
