@@ -26,6 +26,7 @@ import tempfile
 import shutil
 import re
 import datetime
+import gzip
 import gbp.rpm as rpm
 from gbp.rpm.policy import RpmPkgPolicy
 from gbp.command_wrappers import (Command,
@@ -41,6 +42,7 @@ from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
 from gbp.pkg import (compressor_opts, compressor_aliases)
+from gbp.scripts.pq_rpm import write_patch
 
 def git_archive(repo, spec, output_dir, treeish, comp_level, with_submodules):
     "create a compressed orig tarball in output_dir using git_archive"
@@ -186,67 +188,6 @@ def git_archive_build_orig(repo, spec, output_dir, options):
     return upstream_tree
 
 
-def write_patch(patch, options):
-    """Write the patch exported by 'git-format-patch' to it's final location
-       (as specified in the commit)"""
-    oldname = os.path.basename(patch)
-    newname = oldname
-    tmpname = patch + ".gbp"
-    old = file(patch, 'r')
-    tmp = file(tmpname, 'w')
-    in_patch = False
-    topic = None
-
-    # Skip first line (from <sha1>)
-    old.readline()
-    for line in old:
-        if in_patch:
-            if line == '-- \n':
-                # Found final signature, we're done:
-                tmp.write(line)
-                break
-        else:
-            if re.match(options.patch_export_ignore_regex, line):
-                gbp.log.debug("Ignoring patch %s, matches ignore-regex" % patch)
-                old.close()
-                tmp.close()
-                os.unlink(patch)
-                os.unlink(tmpname)
-                return
-            if line.lower().startswith("gbp-pq-topic: "):
-                topic = line.split(" ",1)[1].strip()
-                gbp.log.debug("Topic %s found for %s" % (topic, patch))
-                continue
-            elif (line.startswith("diff --git a/") or
-                  line.startswith("---")):
-                in_patch = True
-        tmp.write(line)
-
-    tmp.close()
-    old.close()
-
-    if not options.patch_numbers:
-        patch_re = re.compile("[0-9]+-(?P<name>.+)")
-        m = patch_re.match(oldname)
-        if m:
-            newname = m.group('name')
-
-    if topic:
-        topicdir = os.path.join(os.path.dirname(patch), topic)
-    else:
-        topicdir = os.path.dirname(patch)
-
-    if not os.path.isdir(topicdir):
-        os.makedirs(topicdir, 0755)
-
-    os.unlink(patch)
-    dstname = os.path.join(topicdir, newname)
-    gbp.log.debug("Moving %s to %s" % (tmpname, dstname))
-    shutil.move(tmpname, dstname)
-
-    return dstname
-
-
 def gen_patches(repo, spec, totree, options):
     """Generate patches"""
     upstream_tree = get_upstream_tree(repo, spec, options)
@@ -280,7 +221,11 @@ def gen_patches(repo, spec, totree, options):
     if patches:
         gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
         for patch in patches:
-            patch_file = write_patch(patch, options)
+            patch_file = write_patch(patch,
+                                     spec.specdir,
+                                     options.patch_numbers,
+                                     options.patch_export_compress,
+                                     options.patch_export_ignore_regex)
             if patch_file != None:
                 filenames.append(os.path.basename(patch_file))
 
@@ -449,8 +394,11 @@ def parse_args(argv, prefix):
                       help="only export packaging files, don't build")
     export_group.add_boolean_config_file_option("patch-export", dest="patch_export")
     export_group.add_config_file_option("patch-export-ignore-regex", dest="patch_export_ignore_regex")
+    export_group.add_config_file_option("patch-export-compress", dest="patch_export_compress")
     export_group.add_boolean_config_file_option(option_name="patch-numbers", dest="patch_numbers")
     options, args = parser.parse_args(args)
+
+    options.patch_export_compress = rpm.string_to_int(options.patch_export_compress)
 
     gbp.log.setup(options.color, options.verbose)
     if options.retag:
