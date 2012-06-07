@@ -23,6 +23,7 @@ import os
 import shutil
 import sys
 import tempfile
+import re
 import gzip
 from gbp.config import (GbpOptionParserRpm, GbpOptionGroup)
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
@@ -32,49 +33,55 @@ from gbp.errors import GbpError
 import gbp.log
 from gbp.patch_series import (PatchSeries, Patch)
 from gbp.pkg import parse_archive_filename
-from gbp.rpm import (SpecFile, guess_spec)
+from gbp.rpm import (SpecFile, guess_spec, string_to_int)
 from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    switch_to_pq_branch, apply_single_patch,
                                    apply_and_commit_patch, drop_pq)
 
-def write_patch(patch, patch_dir, options):
+def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_regex=None):
     """Write the patch exported by 'git-format-patch' to it's final location
        (as specified in the commit)"""
     oldname = os.path.basename(patch)
     newname = oldname
     tmpname = patch + ".gbp"
     old = file(patch, 'r')
-    tmp = file(tmpname, 'w')
-    in_patch = False
-    topic = None
 
-    # Skip first line (From <sha1>)
+    # Compress if patch file is larger than "threshold" value
+    if compress_size and os.path.getsize(patch) > compress_size:
+        tmp = gzip.open(tmpname, 'w')
+        newname += '.gz'
+    else:
+        tmp = file(tmpname, 'w')
+
+    # Skip the first From <sha>... line
     old.readline()
     for line in old:
-        if line.lower().startswith("gbp-pq-topic: "):
-            topic = line.split(" ",1)[1].strip()
-            gbp.log.debug("Topic %s found for %s" % (topic, patch))
-            continue
+        if ignore_regex and re.match(ignore_regex, line):
+                gbp.log.debug("Ignoring patch %s, matches ignore-regex" % patch)
+                old.close()
+                tmp.close()
+                os.unlink(patch)
+                os.unlink(tmpname)
+                return
+        elif (line.startswith("diff --git a/") or
+              line.startswith("---")):
+              tmp.write(line)
+              break;
         tmp.write(line)
+
+    # Write the rest of the file
+    tmp.writelines(old)
     tmp.close()
     old.close()
 
-    if not options.patch_numbers:
+    if not patch_numbers:
         patch_re = re.compile("[0-9]+-(?P<name>.+)")
         m = patch_re.match(oldname)
         if m:
             newname = m.group('name')
 
-    if topic:
-        topicdir = os.path.join(patch_dir, topic)
-    else:
-        topicdir = patch_dir
-
-    if not os.path.isdir(topicdir):
-        os.makedirs(topicdir, 0755)
-
     os.unlink(patch)
-    dstname = os.path.join(topicdir, newname)
+    dstname = os.path.join(out_dir, newname)
     gbp.log.debug("Moving %s to %s" % (tmpname, dstname))
     shutil.move(tmpname, dstname)
 
@@ -137,7 +144,9 @@ def export_patches(repo, branch, options):
     if patches:
         gbp.log.info("Regenerating patch queue in '%s'." % spec.specdir)
         for patch in patches:
-            filenames.append(os.path.basename(write_patch(patch, spec.specdir, options)))
+            patch_file = write_patch(patch, spec.specdir, options.patch_numbers, options.patch_export_compress)
+            if patch_file != None:
+                filenames.append(os.path.basename(patch_file))
 
         spec.update_patches(filenames)
         spec.write_spec_file()
@@ -345,9 +354,11 @@ def main(argv):
     parser.add_config_file_option(option_name="pq-branch", dest="pq_branch")
     parser.add_option("--export-rev", action="store", dest="export_rev", default="",
                       help="Export patches from treeish object TREEISH instead of head of patch-queue branch", metavar="TREEISH")
+    parser.add_config_file_option("patch-export-compress", dest="patch_export_compress")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)
+    options.patch_export_compress = string_to_int(options.patch_export_compress)
 
     if len(args) < 2:
         gbp.log.err("No action given.")
