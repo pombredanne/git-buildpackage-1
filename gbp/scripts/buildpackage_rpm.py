@@ -40,7 +40,7 @@ from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_submodules,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
-from gbp.scripts.pq_rpm import parse_spec
+from gbp.scripts.pq_rpm import parse_spec, update_patch_series
 
 
 def makedir(path):
@@ -226,6 +226,12 @@ def git_archive_build_orig(repo, spec, output_dir, options):
         raise GbpError("Cannot create upstream tarball at '%s'" % \
                         output_dir)
     return upstream_tree
+
+
+def export_patches(repo, spec, export_treeish, options):
+    """Generate patches and update spec file"""
+    upstream_tree = get_upstream_tree(repo, spec, options)
+    update_patch_series(repo, spec, upstream_tree, export_treeish, options)
 
 
 def is_native(repo, options):
@@ -459,6 +465,14 @@ def build_parser(name, prefix=None, git_treeish=None):
     export_group.add_config_file_option(option_name="spec-file",
                     dest="spec_file")
     export_group.add_config_file_option("spec-vcs-tag", dest="spec_vcs_tag")
+    export_group.add_boolean_config_file_option("patch-export",
+                    dest="patch_export")
+    export_group.add_option("--git-patch-export-rev", dest="patch_export_rev",
+                    metavar="TREEISH",
+                    help="Export patches from TREEISH")
+    export_group.add_boolean_config_file_option(option_name="patch-numbers",
+                    dest="patch_numbers")
+    export_group.add_config_file_option("patch-compress", dest="patch_compress")
     return parser
 
 
@@ -485,6 +499,8 @@ def parse_args(argv, prefix, git_treeish=None):
             gbp.log.err("'--%sretag' needs either '--%stag' or '--%stag-only'" %
                         (prefix, prefix, prefix))
             return None, None, None
+
+    options.patch_compress = rpm.string_to_int(options.patch_compress)
 
     return options, args, builder_args
 
@@ -552,6 +568,14 @@ def main(argv):
         if not options.tag_only:
             # Setup builder opts
             setup_builder(options, builder_args)
+
+            # Generate patches, if requested
+            if options.patch_export and not is_native(repo, options):
+                if options.patch_export_rev:
+                    patch_tree = get_tree(repo, options.patch_export_rev)
+                else:
+                    patch_tree = tree
+                export_patches(repo, spec, patch_tree, options)
 
             # Prepare final export dirs
             export_dir = makedir(options.export_dir)

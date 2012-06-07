@@ -619,6 +619,8 @@ class GbpOptionParserRpm(GbpOptionParser):
             'export-specdir'            : 'SPECS',
             'export-sourcedir'          : 'SOURCES',
             'spec-vcs-tag'              : '',
+            'patch-export'              : 'False',
+            'patch-compress'            : '0',
             'patch-import'              : 'True',
             'import-files'              : ['.gbp.conf',
                                            'debian/gbp.conf'],
@@ -661,6 +663,13 @@ class GbpOptionParserRpm(GbpOptionParser):
             'spec-vcs-tag':
                 "Set/update the 'VCS:' tag in the spec file, empty value "
                 "removes the tag entirely, default is '%(spec-vcs-tag)s'",
+            'patch-export':
+                "Create patches between upstream and export-treeish, default "
+                "is '%(patch-export)s'",
+            'patch-compress':
+                "Compress (auto-generated) patches larger than given number of "
+                "bytes, 0 never compresses, default is "
+                "'%(patch-compress)s'",
             'patch-import':
                 "Import patches to the packaging branch, default is "
                 "'%(patch-import)s'",
@@ -668,9 +677,6 @@ class GbpOptionParserRpm(GbpOptionParser):
                 "Comma-separated list of additional file(s) to import from "
                 "packaging branch. These will appear as one monolithic patch "
                 "in the pq/development branch. Default is %(import-files)s",
-            'patch-export':
-                "Create patches between upstream and export-treeish, default "
-                "is '%(patch-export)s'",
             'pristine-tarball-name':
                 "Filename to record to pristine-tar, set to 'auto' to not "
                 "mangle the file name, default is '%(pristine-tarball-name)s'",
