@@ -19,6 +19,7 @@
 import re
 import subprocess
 import os.path
+from collections import defaultdict
 
 import gbp.log as log
 from gbp.command_wrappers import (GitCommand, CommandExecFailed)
@@ -1130,16 +1131,26 @@ class GitRepository(object):
         """
         out, ret =  self._git_getoutput('log',
                                          ['--pretty=format:%an%n%ae%n%at%n%s%n%b%n',
-                                          '-n1', commit])
+                                          '-n1', '--name-status', commit])
         if ret:
             raise GitRepositoryError("Unable to retrieve log entry for %s"
                                      % commit)
+
+        files = defaultdict(list)
+        for line in reversed(out):
+            if not line.strip():
+                break
+            key, val = line.strip().split(None, 1)
+            files[key].append(val)
+            out.remove(line)
+
         return {'id' : commit,
                 'author' : out[0].strip(),
                 'email' : out[1].strip(),
                 'timestamp': out[2].strip(),
                 'subject' : out[3].rstrip(),
-                'body' : [line.rstrip() for line in  out[4:]]}
+                'body' : [line.rstrip() for line in  out[4:]],
+                'files' : files}
 
 
 #{ Patches
