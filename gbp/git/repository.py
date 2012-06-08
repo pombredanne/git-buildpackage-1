@@ -155,8 +155,14 @@ class GitRepository(object):
         @type args: C{list}
         @param extra_env: extra environment variables to set when running command
         @type extra_env: C{dict}
+        @param cwd: directory, where to run command
+        @type cwd: C{str}
         """
-        GitCommand(command, args, extra_env=extra_env, cwd=self.path)()
+        try:
+            GitCommand(command, args, extra_env=extra_env, cwd=self.path)()
+        except CommandExecFailed, excobj:
+            raise GitRepositoryError("Error running git %s: %s" % \
+                                     (command, str(excobj)))
 
     def _get_git_version(self):
         """
@@ -546,7 +552,7 @@ class GitRepository(object):
 
         try:
             self._git_command('tag', args.args)
-        except CommandExecFailed:
+        except GitRepositoryError:
             return False
         return True
 
@@ -1329,7 +1335,11 @@ class GitRepository(object):
         try:
             if not os.path.exists(abspath):
                 os.makedirs(abspath)
-            GitCommand("init", args.args, cwd=abspath)()
+            try:
+                GitCommand("init", args.args, cwd=abspath)()
+            except CommandExecFailed, excobj:
+                raise GitRepositoryError("Error running git init: %s" % str(excobj))
+
             if description:
                 with file(os.path.join(abspath, git_dir, "description"), 'w') as f:
                     description += '\n' if description[-1] != '\n' else ''
@@ -1381,7 +1391,12 @@ class GitRepository(object):
             if not os.path.exists(abspath):
                 os.makedirs(abspath)
 
-            GitCommand("clone", args.args, cwd=abspath)()
+            try:
+                GitCommand("clone", args.args, cwd=abspath)()
+            except CommandExecFailed, excobj:
+                raise GitRepositoryError("Error running git clone: %s" % \
+                                         str(excobj))
+
             if not name:
                 name = remote.rstrip('/').rsplit('/',1)[1]
                 if (mirror or bare):
