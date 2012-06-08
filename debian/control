@@ -25,7 +25,7 @@ Description: Suite to help with packaging in Git repositories
 
 Package: git-buildpackage
 Architecture: all
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, devscripts (>= 2.10.66~)
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, devscripts (>= 2.10.66~), git-buildpackage-common
 Recommends: cowbuilder
 Suggests: python-notify, unzip
 Description: Suite to help with Debian packages in Git repositories
@@ -43,7 +43,7 @@ Description: Suite to help with Debian packages in Git repositories
 
 Package: git-buildpackage-rpm
 Architecture: all
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-rpm
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-rpm, git-buildpackage-common
 Description: Suite to help with rpm packages in Git repositories
  This package contains the following tools:
   * git-import-srpm: import existing rpm source packages into a git
