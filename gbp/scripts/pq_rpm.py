@@ -197,9 +197,6 @@ def import_spec_patches(repo, branch, tries, options):
 
     # Edit spec file
     repo.set_branch(branch)
-    if spec.putautoupdatemarkers() != 0:
-      GitCommand('status')(['--', options.packaging_dir])
-      gbp.log.warn("Auto-added gbp autoupdate markers to spec file. Checking the changes manually before git commit is recommended.")
 
     return os.path.basename(spec.specfile)
 

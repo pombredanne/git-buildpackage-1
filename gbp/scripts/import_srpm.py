@@ -340,9 +340,6 @@ def main(argv):
                 try:
                     dummy, specfile = guess_spec(options.packaging_dir)
                     spec = SpecFile(specfile)
-                    if spec.putautoupdatemarkers() != 0:
-                        gbpc.GitCommand('status')(['--', options.packaging_dir])
-                        gbp.log.warn("Auto-added gbp autoupdate markers to spec file. Verifying the changes manually before git commit is recommended.")
                 except NoSpecError, err:
                     gbp.log.warn("Unable to find .spec file to add autoupdate markers ('%s')" % err)
 
