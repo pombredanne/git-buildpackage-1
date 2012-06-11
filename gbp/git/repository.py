@@ -156,8 +156,6 @@ class GitRepository(object):
         @type args: C{list}
         @param extra_env: extra environment variables to set when running command
         @type extra_env: C{dict}
-        @param cwd: directory, where to run command
-        @type cwd: C{str}
         """
         try:
             GitCommand(command, args, extra_env=extra_env, cwd=self.path)()
