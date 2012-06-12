@@ -42,7 +42,7 @@ from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
 from gbp.pkg import (compressor_opts, compressor_aliases)
-from gbp.scripts.pq_rpm import write_patch
+from gbp.scripts.pq_rpm import generate_patches, write_patch
 
 def git_archive(repo, spec, output_dir, treeish, prefix, comp_level, with_submodules):
     "create a compressed orig tarball in output_dir using git_archive"
@@ -188,7 +188,7 @@ def git_archive_build_orig(repo, spec, output_dir, options):
     return upstream_tree
 
 
-def gen_patches(repo, spec, totree, options):
+def export_patches(repo, spec, totree, options):
     """Generate patches"""
     upstream_tree = get_upstream_tree(repo, spec, options)
 
@@ -205,18 +205,12 @@ def gen_patches(repo, spec, totree, options):
                 else:
                     gbp.log.debug("%s does not exist." % f)
 
-    gbp.log.info("Generating patches from git (%s..%s)" % (upstream_tree, totree))
-    if repo.get_obj_type(totree) in ['tag', 'commit']:
-        patches = repo.format_patches(upstream_tree, totree, spec.specdir)
-    else:
-        gbp.log.info("Repository object '%s' is neither tag nor commit, only generating a diff" % totree)
-        diff = repo.diff(upstream_tree, totree)
-        diff_filename = os.path.join(spec.specdir, '%s.diff' % totree)
-        diff_file = open(diff_filename, 'w+')
-        diff_file.writelines(diff)
-        diff_file.close()
-        patches = [diff_filename]
-
+    # Create patches
+    patches = generate_patches(repo,
+                               upstream_tree,
+                               options.patch_export_squash_until,
+                               totree,
+                               spec.specdir)
     filenames = []
     if patches:
         gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
@@ -394,6 +388,7 @@ def parse_args(argv, prefix):
     export_group.add_boolean_config_file_option("patch-export", dest="patch_export")
     export_group.add_config_file_option("patch-export-ignore-regex", dest="patch_export_ignore_regex")
     export_group.add_config_file_option("patch-export-compress", dest="patch_export_compress")
+    export_group.add_config_file_option("patch-export-squash-until", dest="patch_export_squash_until")
     export_group.add_boolean_config_file_option(option_name="patch-numbers", dest="patch_numbers")
     options, args = parser.parse_args(args)
 
@@ -488,7 +483,7 @@ def main(argv):
 
             # Generate patches, if requested
             if options.patch_export and not is_native(repo, options):
-                gen_patches(repo, spec, tree, options)
+                export_patches(repo, spec, tree, options)
 
             # Prepare final export dirs
             export_dir = prepare_export_dir(options.export_dir)
