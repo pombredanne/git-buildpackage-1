@@ -89,6 +89,57 @@ def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_rege
     return dstname
 
 
+def write_diff_file(repo, start, end, diff_filename):
+    """
+    Write diff between two tree-ishes into a file
+    """
+    try:
+        diff = repo.diff(start, end)
+        diff_file = open(diff_filename, 'w+')
+        diff_file.writelines(diff)
+        diff_file.close()
+    except IOError:
+        raise GbpError, "Unable to create diff file"
+
+
+def generate_patches(repo, start, squash_point, end, outdir):
+    """
+    Generate patch files
+    """
+    gbp.log.info("Generating patches from git (%s..%s)" % (start, end))
+    patches = []
+
+    # Squash commits, if requested
+    if squash_point:
+        squash_sha1 = repo.rev_parse("%s^0" % squash_point)
+        start_sha1 = repo.rev_parse("%s^0" % start)
+        if start_sha1 != squash_sha1:
+            rev_list = repo.get_commits(start, end)
+            if not squash_sha1 in rev_list:
+                raise GbpError, "Given squash point '%s' not found in the history of end tree-ish" % squash_point
+            # Shorten SHA1s
+            squash_sha1 = repo.rev_parse(squash_sha1, short=7)
+            start_sha1 = repo.rev_parse(start_sha1, short=7)
+
+            gbp.log.info("Squashing commits %s..%s into one monolithic diff" % (start_sha1, squash_sha1))
+            diff_filename = os.path.join(outdir, '%s-to-%s.diff' % (start_sha1, squash_sha1))
+            write_diff_file(repo, start_sha1, squash_sha1, diff_filename)
+            patches.append(diff_filename)
+
+            start = squash_sha1
+
+    # Generate patches
+    if repo.get_obj_type(end) in ['tag', 'commit']:
+        patches.extend(repo.format_patches(start, end, outdir))
+    else:
+        gbp.log.info("Repository object '%s' is neither tag nor commit, only generating a diff" % end)
+        diff_filename = os.path.join(outdir, '%s.diff' % end)
+        write_diff_file(repo, start, end, diff_filename)
+        patches.append(diff_filename)
+
+    return patches
+
+
 def export_patches(repo, branch, options):
     """Export patches from the pq branch into a packaging branch"""
     if is_pq_branch(branch, options):
@@ -137,9 +188,13 @@ def export_patches(repo, branch, options):
     if not repo.has_treeish(export_treeish):
         raise GbpError # git-ls-tree printed an error message already
 
-    gbp.log.info("Exporting patches from git (%s..%s)" % (upstream_commit, export_treeish))
-    patches = repo.format_patches(upstream_commit, export_treeish, spec.specdir,
-                                  signature=False)
+    # Create patches
+    patches = generate_patches(repo,
+                               upstream_commit,
+                               options.patch_export_squash_until,
+                               export_treeish,
+                               spec.specdir)
+
     filenames = []
     if patches:
         gbp.log.debug("Regenerating patch queue in '%s'." % spec.specdir)
@@ -365,6 +420,7 @@ def main(argv):
     parser.add_option("--export-rev", action="store", dest="export_rev", default="",
                       help="Export patches from treeish object TREEISH instead of head of patch-queue branch", metavar="TREEISH")
     parser.add_config_file_option("patch-export-compress", dest="patch_export_compress")
+    parser.add_config_file_option("patch-export-squash-until", dest="patch_export_squash_until")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)

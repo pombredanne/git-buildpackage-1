@@ -527,6 +527,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                        'patch-export'           : 'False',
                        'patch-export-ignore-regex'  : '^GBP: patch-export-ignore',
                        'patch-export-compress'  : '0',
+                       'patch-export-squash-until'  : '',
                        'pristine-tarball-name'  : 'auto',
                        'orig-prefix'            : 'auto',
                      } )
@@ -551,6 +552,8 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "Don't create patches from commits whose message matches given regex, default is '%(patch-export-ignore-regex)s'",
                    'patch-export-compress':
                         "Compress (auto-generated) patches larger than given number of bytes, 0 never compresses, default is '%(patch-export-compress)s'",
+                   'patch-export-squash-until':
+                        "Squash commits (from upstream) until given tree-ish into one big diff, default is '%(patch-export-squash-until)s'",
                    'pristine-tarball-name':
                         "Filename to record to pristine-tar, set to 'auto' to not mangle the file name, default is '%(pristine-tarball-name)s'",
                    'orig-prefix':
