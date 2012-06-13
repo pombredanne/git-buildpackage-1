@@ -18,6 +18,7 @@
 """provides some rpm source package related helpers"""
 
 import commands
+import sys
 import os
 import re
 import tempfile
@@ -221,6 +222,9 @@ class SpecFile(object):
 
         # get patches
         for (name, num, typ) in self.specinfo.sources:
+            # workaround rpm parsing bug
+            num == sys.maxint:
+                num = 0
             # only add files of patch type
             if typ == 2:
                 self.patches[num] = {'filename': name, 'strip': '0', 'apply': False, 'autoupdate': False}
