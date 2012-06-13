@@ -421,6 +421,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                        'rpmbuild-buildrootdir'  : 'BUILDROOT',
                        'auto-patch-gen'         : 'False',
                        'pristine-tarball-base'  : '%(name)s-%(version)s',
+                       'specfile'               : '',
                      } )
 
     help = dict(GbpOptionParser.help)
@@ -435,6 +436,8 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "create patches between upstream and export-treeish, default is '%(auto-patch-gen)s'",
                    'pristine-tarball-base':
                         "basename for pristine-tar, default is '%(pristine-tarball-base)s'",
+                   'specfile':
+                        "Specfile to used, if defined the packaging-dir option is ignored, default is '%(specfile)s'",
                  } )
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:

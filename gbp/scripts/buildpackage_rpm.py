@@ -423,6 +423,7 @@ def parse_args(argv, prefix):
                       help="purge exported package build directory")
     export_group.add_config_file_option(option_name="packaging-dir",
                       dest="packaging_dir")
+    export_group.add_config_file_option(option_name="specfile", dest="specfile")
     export_group.add_option("--git-export-only", action="store_true", dest="export_only", default=False,
                       help="only export packaging files, don't build")
     export_group.add_boolean_config_file_option("auto-patch-gen", dest="auto_patch_gen")
@@ -495,7 +496,11 @@ def main(argv):
                          extra_env={'GBP_GIT_DIR': repo.git_dir,
                                     'GBP_TMP_DIR': tmp_dir})(dir=tmp_dir)
         # Parse spec from dump dir to get version etc.
-        options.packaging_dir, specfile = rpm.guess_spec(os.path.join(dump_dir, options.packaging_dir))
+        if options.specfile:
+            specfile = os.path.join(dump_dir, options.specfile)
+            options.packaging_dir = os.path.dirname(specfile)
+        else:
+            options.packaging_dir, specfile = rpm.guess_spec(os.path.join(dump_dir, options.packaging_dir))
         gbp.log.debug("Using spec file '%s' from subdir '%s'" % (specfile, options.packaging_dir))
         spec = rpm.SpecFile(specfile)
         spec.debugprint()
