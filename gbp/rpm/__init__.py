@@ -223,7 +223,7 @@ class SpecFile(object):
         # get patches
         for (name, num, typ) in self.specinfo.sources:
             # workaround rpm parsing bug
-            num == sys.maxint:
+            if num == sys.maxint:
                 num = 0
             # only add files of patch type
             if typ == 2:
