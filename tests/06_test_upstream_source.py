@@ -74,6 +74,16 @@ class TestTar(unittest.TestCase):
         self._check_tar(repacked, ["gbp/errors.py"],
                                   ["gbp/__init__.py"])
 
+    def test_pack_mangle_prefix(self):
+        """Check if mangling prefix works"""
+        source = UpstreamSource(os.path.abspath("gbp/"))
+        target = os.path.join(self.tmpdir,
+                     "gbp_0.1.tar.bz2")
+        repacked = source.pack(target, newprefix="foobar")
+        self._check_tar(repacked, ["foobar/errors.py", "foobar/__init__.py"])
+        repacked2 = source.pack(target, newprefix="")
+        self._check_tar(repacked2, ["./errors.py", "./__init__.py"])
+
 
 class TestZip(unittest.TestCase):
     """Test if unpacking zip archives works"""
