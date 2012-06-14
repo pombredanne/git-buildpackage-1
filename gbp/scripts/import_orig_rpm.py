@@ -24,6 +24,7 @@ import sys
 import tempfile
 import gbp.command_wrappers as gbpc
 import string
+import shutil
 from gbp.pkg import parse_archive_filename
 from gbp.rpm import (RpmUpstreamSource, SpecFile, NoSpecError, parse_spec,
                      guess_spec, guess_spec_repo)
@@ -46,7 +47,7 @@ except ImportError:
     pass
 
 
-def symlink_orig(archive, name, version, link_format_str):
+def symlink_orig(archive, link):
     """
     Create a symlink from I{archive} to I{<link_format_str>} so
     pristine-tar will see the desired filename for the archive.
@@ -56,14 +57,6 @@ def symlink_orig(archive, name, version, link_format_str):
     """
     if os.path.isdir(archive):
         return None
-    filename = os.path.basename(archive)
-    base_name, archive_fmt, comp = parse_archive_filename(filename)
-    ext = string.replace(filename, base_name, '', 1)
-    link = "../" + "%s" % link_format_str % {'name': name,
-                                             'version': version,
-                                             'upstreamversion': version,
-                                             'filename_base': base_name,
-                                             'filename_ext': ext}
     if os.path.basename(archive) != os.path.basename(link):
         try:
             if not is_link_target(archive, link):
@@ -142,6 +135,25 @@ def find_source(options, args):
         return archive
 
 
+def pristine_tarball_name(source, name, version, options):
+    old_filename = os.path.basename(source.path)
+    new_filename = old_filename
+    base_name, archive_fmt, comp = parse_archive_filename(old_filename)
+    ext = string.replace(old_filename, base_name, '', 1)
+
+    if options.pristine_tarball_name != 'auto':
+        new_filename = options.pristine_tarball_name % {'name': name,
+                                                        'version': version,
+                                                        'upstreamversion': version,
+                                                        'filename_base': base_name,
+                                                        'filename_ext': ext}
+    # Need to repack and mangle filename if the archive is not
+    # pristine-tar-compatible -> we decide to create bz2 compressed tarball
+    elif not source.is_tarball():
+        new_filename = "%s.tar.bz2" % base_name
+    return new_filename
+
+
 def set_bare_repo_options(options):
     """Modify options for import into a bare repository"""
     if options.pristine_tar or options.merge:
@@ -196,6 +208,8 @@ def parse_args(argv):
                       dest="filter_pristine_tar")
     import_group.add_config_file_option(option_name="pristine-tarball-name",
                       dest="pristine_tarball_name")
+    import_group.add_config_file_option(option_name="orig-prefix",
+                      dest="orig_prefix")
     import_group.add_config_file_option(option_name="import-msg",
                       dest="import_msg")
     cmd_group.add_config_file_option(option_name="postimport", dest="postimport")
@@ -214,7 +228,7 @@ def parse_args(argv):
 
 def main(argv):
     ret = 0
-    tmpdir = ''
+    tmpdir = tempfile.mkdtemp(dir='../')
     pristine_orig = None
 
     (options, args) = parse_args(argv)
@@ -247,18 +261,37 @@ def main(argv):
             set_bare_repo_options(options)
 
         if not source.is_dir():
-            tmpdir = tempfile.mkdtemp(dir=os.path.dirname(repo.path))
-            source.unpack(tmpdir, options.filters)
+            unpack_dir = tempfile.mkdtemp(prefix='unpack', dir=tmpdir)
+            source.unpack(unpack_dir, options.filters)
             gbp.log.debug("Unpacked '%s' to '%s'" % (source.path, source.unpacked))
 
-        if orig_needs_repack(source, options):
-            gbp.log.debug("Filter pristine-tar: repacking '%s' from '%s'" % (source.path, source.unpacked))
-            (source, tmpdir)  = repack_source(source, sourcepackage, version, tmpdir, options.filters)
+        # Name of tarball to be committed to pristine-tar branch
+        pristine_orig_name = pristine_tarball_name(source, sourcepackage, version, options)
 
-        if options.pristine_tarball_name != 'auto':
-            pristine_orig = symlink_orig(source.path, sourcepackage, version, options.pristine_tarball_name)
-        else:
-            pristine_orig = source.path
+        # Determine the prefix in the tarball to be committed to pristine-tar branch
+        new_prefix = None
+        if options.orig_prefix != 'auto':
+            new_prefix = options.orig_prefix % {'name': sourcepackage,
+                                                'version': version,
+                                                'upstreamversion': version}
+            if new_prefix == os.path.basename(source.unpacked):
+                new_prefix = None
+
+        # Get compressions formats of tarballs (original and pristine-tar)
+        dummy, dummy, old_comp = parse_archive_filename(os.path.basename(source.path))
+        dummy, dummy, pristine_comp = parse_archive_filename(pristine_orig_name)
+
+        if orig_needs_repack(source, options) or new_prefix != None or old_comp != pristine_comp:
+            gbp.log.debug("Repacking '%s' from '%s'" % (source.path, source.unpacked))
+            repack_dir = tempfile.mkdtemp(prefix='repack', dir=tmpdir)
+            source = repack_source(source,
+                                   os.path.join(tmpdir, pristine_orig_name),
+                                   repack_dir,
+                                   options.filters,
+                                   new_prefix)
+
+        # Create symlink for mangling of the pristine tarball name
+        pristine_orig = symlink_orig(source.path, os.path.join(tmpdir, pristine_orig_name))
 
         # Don't mess up our repo with git metadata from an upstream tarball
         try:
