@@ -249,7 +249,8 @@ class UpstreamSource(object):
         if len(unpacked) == 1 and os.path.isdir(unpacked[0]):
             return unpacked[0]
         else:
-            return dir
+            # We can determine "no prefix" from this
+            return os.path.join(dir, ".")
 
     def _unpack_tar(self, dir, filters):
         """
@@ -263,7 +264,7 @@ class UpstreamSource(object):
             # unpackArchive already printed an error message
             raise GbpError
 
-    def pack(self, newarchive, filters=[]):
+    def pack(self, newarchive, filters=[], newprefix=None):
         """
         Recreate a new archive from the current one
 
@@ -283,12 +284,21 @@ class UpstreamSource(object):
         if type(filters) != type([]):
             raise GbpError("Filters must be a list")
 
+        run_dir = os.path.dirname(self.unpacked.rstrip('/'))
+        pack_this = os.path.basename(self.unpacked.rstrip('/'))
+        transform = None
+        if newprefix != None:
+            newprefix = newprefix.strip('/.')
+            if newprefix:
+                transform = 's!%s!%s!' % (pack_this, newprefix)
+            else:
+                transform = 's!%s!%s!' % (pack_this, '.')
         try:
-            unpacked = self.unpacked.rstrip('/')
             repackArchive = gbpc.PackTarArchive(newarchive,
-                                os.path.dirname(unpacked),
-                                os.path.basename(unpacked),
-                                filters)
+                                run_dir,
+                                pack_this,
+                                filters,
+                                transform=transform)
             repackArchive()
         except gbpc.CommandExecFailed:
             # repackArchive already printed an error
