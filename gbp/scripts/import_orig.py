@@ -32,8 +32,7 @@ from gbp.errors import (GbpError, GbpNothingImported)
 import gbp.log
 from gbp.scripts.common.import_orig import (OrigUpstreamSource, cleanup_tmp_tree,
                                             ask_package_name, ask_package_version,
-                                            repacked_tarball_name, repack_source,
-                                            is_link_target)
+                                            repack_source, is_link_target)
 
 # Try to import readline, since that will cause raw_input to get fancy
 # line editing and history capabilities. However, if readline is not
@@ -154,6 +153,21 @@ def find_source(options, args):
         return archive
 
 
+def repacked_tarball_name(source, name, version):
+    if source.is_orig():
+        # Repacked orig tarball needs a different name since there's already
+        # one with that name
+        name = os.path.join(
+                    os.path.dirname(source.path),
+                    os.path.basename(source.path).replace(".tar", ".gbp.tar"))
+    else:
+        # Repacked sources or other archives get canonical name
+        name = os.path.join(
+                    os.path.dirname(source.path),
+                    "%s_%s.orig.tar.bz2" % (name, version))
+    return name
+
+
 def set_bare_repo_options(options):
     """Modify options for import into a bare repository"""
     if options.pristine_tar or options.merge:
@@ -272,7 +286,8 @@ def main(argv):
         if source.needs_repack(options):
             gbp.log.debug("Filter pristine-tar: repacking '%s' from '%s'" % (source.path, source.unpacked))
             repack_dir = tempfile.mkdtemp(prefix='repack', dir=tmpdir)
-            source = repack_source(source, sourcepackage, version, repack_dir, options.filters)
+            repack_name = repacked_tarball_name(source, sourcepackage, version)
+            source = repack_source(source, repack_name, repack_dir, options.filters)
 
         pristine_orig = symlink_orig(source.path, sourcepackage, version)
 
