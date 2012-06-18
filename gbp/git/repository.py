@@ -1159,27 +1159,25 @@ class GitRepository(object):
         @return: the commit's including id, author, email, subject and body
         @rtype: dict
         """
-        out, ret =  self._git_getoutput('log',
-                                         ['--pretty=format:%an%n%ae%n%at%n%s%n%b%n',
-                                          '-n1', '--name-status', commit])
+        args = GitArgs('--pretty=format:%an%x00%ae%x00%at%x00%s%x00%b%x00',
+                       '-z', '--name-status', commit)
+        out, err, ret =  self._git_inout('show', args.args)
         if ret:
             raise GitRepositoryError("Unable to retrieve log entry for %s"
                                      % commit)
 
+        fields = out.split('\x00')
         files = defaultdict(list)
-        for line in reversed(out):
-            if not line.strip():
-                break
-            key, val = line.strip().split(None, 1)
-            files[key].append(val)
-            out.remove(line)
+        starti = 5 if fields[5] != '' else 6
+        for i in range(starti, len(fields)-1, 2):
+            files[fields[i].strip()].append(fields[i+1])
 
         return {'id' : commit,
-                'author' : out[0].strip(),
-                'email' : out[1].strip(),
-                'timestamp': out[2].strip(),
-                'subject' : out[3].rstrip(),
-                'body' : [line.rstrip() for line in  out[4:]],
+                'author' : fields[0].strip(),
+                'email' : fields[1].strip(),
+                'timestamp': fields[2].strip(),
+                'subject' : fields[3].rstrip(),
+                'body' : fields[4],
                 'files' : files}
 
 
