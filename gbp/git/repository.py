@@ -1629,7 +1629,8 @@ class GitRepository(object):
         return output
 #}
 
-    def archive(self, format, prefix, output, treeish, **kwargs):
+    def archive(self, format, prefix, output, treeish, filter_fn=None,
+                filter_args={}):
         """
         Create an archive from a treeish
 
@@ -1641,13 +1642,24 @@ class GitRepository(object):
         @type output: C{str}
         @param treeish: the treeish to create the archive from
         @type treeish: C{str}
-        @param kwargs: additional commandline options passed to git-archive
+        @param filter_fn: function to filter the output of git-archive
+        @type filter_fn: C{function}
+        @param filter_args: arguments to pass to the filter fn
+        @type filter_args: C{dict}
         """
-        args = [ '--format=%s' % format, '--prefix=%s' % prefix,
-                 '--output=%s' % output, treeish ]
-        out, ret = self._git_getoutput('archive', args, **kwargs)
+        args = GitArgs('--format=%s' % format, '--prefix=%s' % prefix, treeish)
+
+        try:
+            with open(output, 'w') as f_out:
+                dummy, stderr, ret = self._git_inout('archive', args.args,
+                                                     output_f=f_out,
+                                                     filter_fn=filter_fn,
+                                                     filter_kwargs=filter_args)
+        except IOError, err:
+            raise GitRepositoryError("Unable to archive: %s" % err)
         if ret:
-            raise GitRepositoryError("Unable to archive %s" % treeish)
+            raise GitRepositoryError("Unable to archive %s, git-archive "\
+                                     "failed" % treeish)
 
     def collect_garbage(self, auto=False):
         """
