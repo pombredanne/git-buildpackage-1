@@ -459,6 +459,10 @@ def main(argv):
 
     try:
         branch = repo.get_branch()
+    except GitRepositoryError:
+        branch = None
+
+    try:
         if not options.export_only:
             Command(options.cleaner, shell=True)()
         if not options.ignore_new:
