@@ -37,6 +37,8 @@ from gbp.git.modifier import GitModifier
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
 from gbp.errors import GbpError
 import gbp.log
+from gbp.scripts.pq_rpm import safe_patches
+from gbp.scripts.common.pq import apply_and_commit_patch
 
 no_packaging_branch_msg = """
 Repository does not have branch '%s' for packaging/distribution sources. If there is none see
@@ -91,6 +93,36 @@ def set_bare_repo_options(options):
         gbp.log.info("Bare repository: setting %s option"
                       % (["", " '--no-pristine-tar'"][options.pristine_tar], ))
         options.pristine_tar = False
+
+
+def import_spec_patches(repo, spec):
+    """
+    Import patches from a spec file to the current branch
+    """
+    queue = spec.patchseries()
+    tmpdir = tempfile.mkdtemp()
+    orig_head = repo.rev_parse("HEAD")
+
+    try:
+        # Put patches in a safe place
+        safedir, queue = safe_patches(queue, tmpdir)
+        for patch in queue:
+            gbp.log.debug("Applying %s" % patch.path)
+            try:
+                apply_and_commit_patch(repo, patch)
+            except (GbpError, GitRepositoryError):
+                repo.force_head(orig_head, hard=True)
+                raise GbpError, "Couldn't import patches, you need to apply and commit manually"
+    finally:
+        shutil.rmtree(tmpdir)
+
+
+def force_to_branch_head(repo, branch):
+    if repo.get_branch() == branch:
+        # Update HEAD if we modified the checked out branch
+        repo.force_head(branch, hard=True)
+    # Checkout packaging branch
+    repo.set_branch(branch)
 
 
 def parse_args(argv):
@@ -150,6 +182,8 @@ def parse_args(argv):
                       dest="author_is_committer")
     import_group.add_config_file_option(option_name="packaging-dir",
                       dest="packaging_dir")
+    import_group.add_boolean_config_file_option(option_name="patch-import",
+                                                dest="patch_import")
     (options, args) = parser.parse_args(argv[1:])
     gbp.log.setup(options.color, options.verbose)
     return options, args
@@ -350,6 +384,12 @@ def main(argv):
                                              author=author,
                                              committer=committer,
                                              create_missing_branch=options.create_missing_branches)
+                    # Import patches on top of the source tree
+                    # (only for non-native packages with non-orphan packaging)
+                    force_to_branch_head(repo, options.packaging_branch)
+                    if options.patch_import:
+                        import_spec_patches(repo, spec)
+                        commit = options.packaging_branch
 
                 # Create packaging tag
                 repo.create_tag(name=tag,
@@ -358,11 +398,7 @@ def main(argv):
                                 sign=options.sign_tags,
                                 keyid=options.keyid)
 
-            if repo.get_branch() == options.packaging_branch:
-                # Update HEAD if we modified the checked out branch
-                repo.force_head(options.packaging_branch, hard=True)
-            # Checkout packaging branch
-            repo.set_branch(options.packaging_branch)
+            force_to_branch_head(repo, options.packaging_branch)
 
     except KeyboardInterrupt:
         ret = 1
