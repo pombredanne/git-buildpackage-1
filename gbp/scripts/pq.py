@@ -186,7 +186,7 @@ def import_quilt_patches(repo, branch, series, tries, options):
         for patch in queue:
             gbp.log.debug("Applying %s" % patch.path)
             try:
-                apply_and_commit_patch(repo, patch, options, patch.topic)
+                apply_and_commit_patch(repo, patch, patch.topic)
             except (GbpError, GitRepositoryError):
                 repo.set_branch(branch)
                 repo.delete_branch(pq_branch)
@@ -290,7 +290,7 @@ def main(argv):
             rebase_pq(repo, current, options)
         elif action == "apply":
             patch = Patch(patchfile)
-            apply_single_patch(repo, current, patch, options)
+            apply_single_patch(repo, current, patch, options, options.topic)
         elif action == "switch":
             switch_pq(repo, current, options)
     except CommandExecFailed:

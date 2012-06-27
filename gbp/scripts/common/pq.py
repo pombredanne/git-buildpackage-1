@@ -157,12 +157,12 @@ def switch_to_pq_branch(repo, branch, options):
     repo.set_branch(pq_branch)
 
 
-def apply_single_patch(repo, branch, patch, options):
+def apply_single_patch(repo, branch, patch, options, topic=None):
     switch_to_pq_branch(repo, branch, options)
-    apply_and_commit_patch(repo, patch, options, options.topic)
+    apply_and_commit_patch(repo, patch, topic)
 
 
-def apply_and_commit_patch(repo, patch, options, topic=None):
+def apply_and_commit_patch(repo, patch, topic=None):
     """apply a single patch 'patch', add topic 'topic' and commit it"""
     author = { 'name': patch.author,
                'email': patch.email,
