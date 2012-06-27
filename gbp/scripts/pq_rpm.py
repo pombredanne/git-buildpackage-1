@@ -25,6 +25,7 @@ import sys
 import tempfile
 import re
 import gzip
+import subprocess
 from gbp.config import (GbpOptionParserRpm, GbpOptionGroup)
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.command_wrappers import (Command, GitCommand, RunAtCommand,
@@ -39,20 +40,14 @@ from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    apply_and_commit_patch, drop_pq)
 
 def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_regex=None):
-    """Write the patch exported by 'git-format-patch' to it's final location
-       (as specified in the commit)"""
-    oldname = os.path.basename(patch)
-    newname = oldname
-    tmpname = patch + ".gbp"
+    """
+    Write the patch exported by 'git-format-patch' to it's final location
+    (as specified in the commit)
+    """
+    tmp_path = patch + ".gbp"
+
     old = file(patch, 'r')
-
-    # Compress if patch file is larger than "threshold" value
-    if compress_size and os.path.getsize(patch) > compress_size:
-        tmp = gzip.open(tmpname, 'w')
-        newname += '.gz'
-    else:
-        tmp = file(tmpname, 'w')
-
+    tmp = file(tmp_path, 'w')
     # Skip the first From <sha>... line
     old.readline()
     for line in old:
@@ -61,7 +56,7 @@ def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_rege
                 old.close()
                 tmp.close()
                 os.unlink(patch)
-                os.unlink(tmpname)
+                os.unlink(tmp_path)
                 return
         elif (line.startswith("diff --git a/") or
               line.startswith("---")):
@@ -74,18 +69,29 @@ def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_rege
     tmp.close()
     old.close()
 
+    new_name = os.path.basename(patch)
     if not patch_numbers:
         patch_re = re.compile("[0-9]+-(?P<name>.+)")
-        m = patch_re.match(oldname)
+        m = patch_re.match(new_name)
         if m:
-            newname = m.group('name')
+            new_name = m.group('name')
 
+    # Compress if patch file is larger than "threshold" value
+    if compress_size and os.path.getsize(tmp_path) > compress_size:
+        dst_path = os.path.join(out_dir, new_name + '.gz')
+        gbp.log.debug("Compressing %s to %s" % (tmp_path, dst_path))
+        f_new = open(dst_path, 'w+')
+        subprocess.Popen(['gzip', '-n', '-c', tmp_path], stdout=f_new).communicate()
+        f_new.close()
+    else:
+        dst_path = os.path.join(out_dir, new_name)
+        gbp.log.debug("Moving %s to %s" % (tmp_path, dst_path))
+        shutil.copy2(tmp_path, dst_path)
+
+    os.unlink(tmp_path)
     os.unlink(patch)
-    dstname = os.path.join(out_dir, newname)
-    gbp.log.debug("Moving %s to %s" % (tmpname, dstname))
-    shutil.move(tmpname, dstname)
 
-    return dstname
+    return dst_path
 
 
 def write_diff_file(repo, start, end, diff_filename):
@@ -101,9 +107,9 @@ def write_diff_file(repo, start, end, diff_filename):
         raise GbpError, "Unable to create diff file"
 
 
-def generate_patches(repo, start, squash_point, end, outdir):
+def generate_git_patches(repo, start, squash_point, end, outdir):
     """
-    Generate patch files
+    Generate patch files from git
     """
     gbp.log.info("Generating patches from git (%s..%s)" % (start, end))
     patches = []
@@ -139,6 +145,52 @@ def generate_patches(repo, start, squash_point, end, outdir):
     return patches
 
 
+def update_patch_series(repo, spec, start, end, options):
+    """
+    Export patches to packaging directory and update spec file accordingly.
+    """
+    tmpdir = tempfile.mkdtemp(prefix='gbp-')
+    try:
+        # Create "vanilla" patches
+        patches = generate_git_patches(repo,
+                                       start,
+                                       options.patch_export_squash_until,
+                                       end,
+                                       tmpdir)
+
+        # Remove all old patches from packaging dir
+        for n, p in spec.patches.iteritems():
+            if p['autoupdate']:
+                f = os.path.join(spec.specdir, p['filename'])
+                gbp.log.debug("Removing '%s'" % f)
+                try:
+                    os.unlink(f)
+                except OSError, (e, msg):
+                    if e != errno.ENOENT:
+                        raise GbpError, "Failed to remove patch: %s" % msg
+                    else:
+                        gbp.log.debug("%s does not exist." % f)
+
+        # Filter "vanilla" patches through write_patch()
+        filenames = []
+        if patches:
+            gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
+            for patch in patches:
+                patch_file = write_patch(patch,
+                                         spec.specdir,
+                                         options.patch_numbers,
+                                         options.patch_export_compress,
+                                         options.patch_export_ignore_regex)
+                if patch_file != None:
+                    filenames.append(os.path.basename(patch_file))
+
+            spec.update_patches(filenames)
+            spec.write_spec_file()
+
+    finally:
+        shutil.rmtree(tmpdir)
+
+
 def export_patches(repo, branch, options):
     """Export patches from the pq branch into a packaging branch"""
     if is_pq_branch(branch, options):
@@ -169,18 +221,6 @@ def export_patches(repo, branch, options):
     if not upstream_commit:
         raise GbpError, ("Couldn't find upstream version %s. Don't know on what base to import." % spec.upstreamversion)
 
-    for n, p in spec.patches.iteritems():
-        if p['autoupdate']:
-            f = os.path.join(spec.specdir, p['filename'])
-            gbp.log.debug("Removing '%s'" % f)
-            try:
-                os.unlink(f)
-            except OSError, (e, msg):
-                if e != errno.ENOENT:
-                    raise GbpError, "Failed to remove patch: %s" % msg
-                else:
-                    gbp.log.debug("%s does not exist." % f)
-
     if options.export_rev:
         export_treeish = options.export_rev
     else:
@@ -188,26 +228,9 @@ def export_patches(repo, branch, options):
     if not repo.has_treeish(export_treeish):
         raise GbpError # git-ls-tree printed an error message already
 
-    # Create patches
-    patches = generate_patches(repo,
-                               upstream_commit,
-                               options.patch_export_squash_until,
-                               export_treeish,
-                               spec.specdir)
+    update_patch_series(repo, spec, upstream_commit, export_treeish, options)
 
-    filenames = []
-    if patches:
-        gbp.log.info("Regenerating patch queue in '%s'." % spec.specdir)
-        for patch in patches:
-            patch_file = write_patch(patch, spec.specdir, options.patch_numbers, options.patch_export_compress)
-            if patch_file != None:
-                filenames.append(os.path.basename(patch_file))
-
-        spec.update_patches(filenames)
-        spec.write_spec_file()
-        GitCommand('status')(['--', spec.specdir])
-    else:
-        gbp.log.info("No patches on '%s' - nothing to do." % export_treeish)
+    GitCommand('status')(['--', spec.specdir])
 
 
 def safe_patches(queue, tmpdir_base):
@@ -411,6 +434,7 @@ def main(argv):
                       help="Export patches from treeish object TREEISH instead of head of patch-queue branch", metavar="TREEISH")
     parser.add_config_file_option("patch-export-compress", dest="patch_export_compress")
     parser.add_config_file_option("patch-export-squash-until", dest="patch_export_squash_until")
+    parser.add_config_file_option("patch-export-ignore-regex", dest="patch_export_ignore_regex")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)
