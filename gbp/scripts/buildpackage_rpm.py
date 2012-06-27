@@ -42,7 +42,7 @@ from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
 from gbp.pkg import (compressor_opts, compressor_aliases)
-from gbp.scripts.pq_rpm import generate_patches, write_patch
+from gbp.scripts.pq_rpm import update_patch_series
 
 def git_archive(repo, spec, output_dir, treeish, prefix, comp_level, with_submodules):
     "create a compressed orig tarball in output_dir using git_archive"
@@ -190,45 +190,12 @@ def git_archive_build_orig(repo, spec, output_dir, options):
     return upstream_tree
 
 
-def export_patches(repo, spec, totree, options):
-    """Generate patches"""
+def export_patches(repo, spec, export_treeish, options):
+    """
+    Generate patches and update spec file
+    """
     upstream_tree = get_upstream_tree(repo, spec, options)
-
-    # Remove all old patches
-    for n, p in spec.patches.iteritems():
-        if p['autoupdate']:
-            f = spec.specdir+"/"+p['filename']
-            gbp.log.debug("Removing '%s'" % f)
-            try:
-                os.unlink(f)
-            except OSError, (e, msg):
-                if e != errno.ENOENT:
-                    raise GbpError, "Failed to remove patch: %s" % msg
-                else:
-                    gbp.log.debug("%s does not exist." % f)
-
-    # Create patches
-    patches = generate_patches(repo,
-                               upstream_tree,
-                               options.patch_export_squash_until,
-                               totree,
-                               spec.specdir)
-    filenames = []
-    if patches:
-        gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
-        for patch in patches:
-            patch_file = write_patch(patch,
-                                     spec.specdir,
-                                     options.patch_numbers,
-                                     options.patch_export_compress,
-                                     options.patch_export_ignore_regex)
-            if patch_file != None:
-                filenames.append(os.path.basename(patch_file))
-
-        spec.update_patches(filenames)
-        spec.write_spec_file()
-    else:
-        gbp.log.info("No changes - nothing to do.")
+    update_patch_series(repo, spec, upstream_tree, export_treeish, options)
 
 
 def is_native(repo, options):
