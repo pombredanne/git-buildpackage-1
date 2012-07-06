@@ -25,6 +25,7 @@ try:
 except ImportError:
     gbp_version = "[Unknown version]"
 import gbp.tristate
+from gbp.git import GitRepositoryError, GitRepository
 
 no_upstream_branch_msg = """
 Repository does not have branch '%s' for upstream sources. If there is none see
@@ -256,9 +257,9 @@ class GbpOptionParser(OptionParser):
 
     def_config_files = [ '/etc/git-buildpackage/gbp.conf',
                          '~/.gbp.conf',
-                         '.gbp.conf',
-                         'debian/gbp.conf',
-                         '.git/gbp.conf' ]
+                         '%(top_dir)s/.gbp.conf',
+                         '%(top_dir)s/debian/gbp.conf',
+                         '%(git_dir)s/gbp.conf' ]
 
     @classmethod
     def get_config_files(klass):
@@ -272,10 +273,11 @@ class GbpOptionParser(OptionParser):
         >>> if os.environ.has_key('GBP_CONF_FILES'): del os.environ['GBP_CONF_FILES']
         >>> files = GbpOptionParser.get_config_files()
 
-        # Remove the ~-expanded one
-        >>> del files[1]
-        >>> files
-        ['/etc/git-buildpackage/gbp.conf', '.gbp.conf', 'debian/gbp.conf', '.git/gbp.conf']
+        >>> homedir = os.path.expanduser("~")
+        >>> topdir = gbp.git.GitRepository(".").path
+        >>> files_mangled = [file.replace(topdir, 'TOPDIR').replace(homedir, 'HOME') for file in files]
+        >>> files_mangled
+        ['/etc/git-buildpackage/gbp.conf', 'HOME/.gbp.conf', 'TOPDIR/.gbp.conf', 'TOPDIR/debian/gbp.conf', 'TOPDIR/.git/gbp.conf']
 
         >>> os.environ['GBP_CONF_FILES'] = 'test1:test2'
         >>> GbpOptionParser.get_config_files()
@@ -283,7 +285,15 @@ class GbpOptionParser(OptionParser):
         """
         envvar = os.environ.get('GBP_CONF_FILES')
         files = envvar.split(':') if envvar else klass.def_config_files
-        return [ os.path.expanduser(f) for f in files ]
+        try:
+            repo = GitRepository(".")
+            str_fields = {'git_dir': repo.git_dir,
+                          'top_dir': repo.path}
+        except GitRepositoryError:
+            str_fields = {'git_dir': '.git',
+                          'top_dir': '.'}
+
+        return [ os.path.expanduser(f % str_fields) for f in files ]
 
     def _parse_config_files(self):
         """
