@@ -483,7 +483,7 @@ def main(argv):
             tree = repo.write_tree()
         elif options.export == wc_name:
             # Write a tree of the working copy
-            tree = write_wc(repo)
+            tree = write_wc(repo, force=False)
         else:
             tree = options.export
         if not repo.has_treeish(tree):
