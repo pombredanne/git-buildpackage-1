@@ -23,6 +23,8 @@ class GitArgs(object):
     ['-h', '--no-foo']
     >>> GitArgs().add('--more-foo', '--less-bar').args
     ['--more-foo', '--less-bar']
+    >>> GitArgs().add(['--foo', '--bar']).args
+    ['--foo', '--bar']
     >>> GitArgs().add_cond(1 > 2, '--opt', '--no-opt').args
     ['--no-opt']
     >>> GitArgs().add_true(True, '--true').args
@@ -44,7 +46,12 @@ class GitArgs(object):
         """
         Add arguments to argument list
         """
-        self._args += list(args)
+        for arg in args:
+            if isinstance(arg, basestring):
+                self._args.append(arg)
+            else:
+                # Unwind lists
+                self._args.extend(arg)
         return self
 
     def add_true(self, condition, *args):
