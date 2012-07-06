@@ -5,6 +5,10 @@ Test L{gbp.config.GbpOptionParser}
 Test L{gbp.config.GbpOptionParserDebian}
 """
 
+import gbp.log
+
+gbp.log.setup(color=False, verbose=True)
+
 def test_option_parser():
     """
     Methods tested:
