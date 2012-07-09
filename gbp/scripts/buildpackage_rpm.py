@@ -34,7 +34,7 @@ from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.errors import GbpError
 import gbp.log
 import gbp.notifications
-from gbp.scripts.common.buildpackage import (index_name, wc_name,
+from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_submodules,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
@@ -481,9 +481,11 @@ def main(argv):
         if options.export == index_name:
             # Write a tree of the index
             tree = repo.write_tree()
-        elif options.export == wc_name:
+        elif options.export in wc_names:
             # Write a tree of the working copy
-            tree = write_wc(repo, force=False)
+            tree = write_wc(repo,
+                            force=wc_names[options.export]['force'],
+                            untracked=wc_names[options.export]['untracked'])
         else:
             tree = options.export
         if not repo.has_treeish(tree):
