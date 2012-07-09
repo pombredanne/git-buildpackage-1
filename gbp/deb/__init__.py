@@ -89,6 +89,14 @@ class DebianPkgPolicy(PkgPolicy):
         return tarball
 
 
+class DebianUpstreamSource(UpstreamSource):
+    """Upstream source class for Debian"""
+    def __init__(self, name, unpacked=None):
+        super(DebianUpstreamSource, self).__init__(name,
+                                                   unpacked,
+                                                   DebianPkgPolicy)
+
+
 class DpkgCompareVersions(gbpc.Command):
     cmd='/usr/bin/dpkg'
 
@@ -115,7 +123,7 @@ class DpkgCompareVersions(gbpc.Command):
 
 class DscFile(object):
     """Keeps all needed data read from a dscfile"""
-    compressions = r"(%s)" % '|'.join(UpstreamSource.known_compressions())
+    compressions = r"(%s)" % '|'.join(DebianUpstreamSource.known_compressions())
     pkg_re = re.compile(r'Source:\s+(?P<pkg>.+)\s*')
     version_re = re.compile(r'Version:\s((?P<epoch>\d+)\:)?(?P<version>[%s]+)\s*$' % debian_version_chars)
     tar_re = re.compile(r'^\s\w+\s\d+\s+(?P<tar>[^_]+_[^_]+(\.orig)?\.tar\.%s)' % compressions)
