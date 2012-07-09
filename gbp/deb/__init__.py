@@ -23,7 +23,6 @@ import subprocess
 import gbp.command_wrappers as gbpc
 from gbp.errors import GbpError
 from gbp.git import GitRepositoryError
-from gbp.pkg import UpstreamSource
 
 # Make sure these are available with 'import gbp.deb'
 from gbp.deb.changelog import ChangeLog, NoChangeLogError

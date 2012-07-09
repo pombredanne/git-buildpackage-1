@@ -29,6 +29,7 @@ from gbp.command_wrappers import (Command,
 from gbp.config import (GbpOptionParserDebian, GbpOptionGroup)
 from gbp.deb.git import (GitRepositoryError, DebianGitRepository)
 from gbp.deb.changelog import ChangeLog, NoChangeLogError, ParseChangeLogError
+from gbp.deb.upstreamsource import DebianUpstreamSource
 from gbp.errors import GbpError
 import gbp.log
 import gbp.notifications
@@ -36,8 +37,7 @@ from gbp.scripts.common.buildpackage import (index_name, wc_name,
                                              git_archive_submodules,
                                              git_archive_single, dump_tree,
                                              write_wc, drop_index)
-from gbp.pkg import (UpstreamSource, compressor_opts, compressor_aliases,
-                     parse_archive_filename)
+from gbp.pkg import compressor_opts, compressor_aliases, parse_archive_filename
 
 def git_archive(repo, cp, output_dir, treeish, comp_type, comp_level, with_submodules):
     "create a compressed orig tarball in output_dir using git_archive"
@@ -168,7 +168,7 @@ def extract_orig(orig_tarball, dest_dir):
     gbp.log.info("Extracting %s to '%s'" % (os.path.basename(orig_tarball), dest_dir))
 
     move_old_export(dest_dir)
-    upstream = UpstreamSource(orig_tarball)
+    upstream = DebianUpstreamSource(orig_tarball)
     upstream.unpack(dest_dir)
 
     # Check if tarball extracts into a single folder or not:
