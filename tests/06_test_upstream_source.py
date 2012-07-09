@@ -22,6 +22,7 @@ class TestDir(unittest.TestCase):
         """Upstream source is a directory"""
         source = UpstreamSource(self.upstream_dir)
         self.assertEqual(source.is_orig(), False)
+        self.assertEqual(source.is_tarball(), False)
         self.assertEqual(source.path, self.upstream_dir)
         self.assertEqual(source.unpacked, self.upstream_dir)
         self.assertEqual(source.guess_version(), ('test', '1.0'))
@@ -60,6 +61,7 @@ class TestTar(unittest.TestCase):
                      "gbp_0.1.tar.bz2")
         repacked = source.pack(target)
         self.assertEqual(repacked.is_orig(), True)
+        self.assertEqual(repacked.is_tarball(), True)
         self.assertEqual(repacked.is_dir(), False)
         self._check_tar(repacked, ["gbp/errors.py", "gbp/__init__.py"])
 
@@ -70,6 +72,7 @@ class TestTar(unittest.TestCase):
                      "gbp_0.1.tar.bz2")
         repacked = source.pack(target, ["__init__.py"])
         self.assertEqual(repacked.is_orig(), True)
+        self.assertEqual(repacked.is_tarball(), True)
         self.assertEqual(repacked.is_dir(), False)
         self._check_tar(repacked, ["gbp/errors.py"],
                                   ["gbp/__init__.py"])
@@ -102,6 +105,7 @@ class TestZip(unittest.TestCase):
     def test_unpack(self):
         source = UpstreamSource(self.zipfile)
         self.assertEqual(source.is_orig(), False)
+        self.assertEqual(source.is_tarball(), False)
         self.assertEqual(source.is_dir(), False)
         self.assertEqual(source.unpacked, None)
         source.unpack(self.tmpdir)
