@@ -26,8 +26,7 @@ import glob
 import pipes
 import time
 import gbp.command_wrappers as gbpc
-from gbp.pkg import UpstreamSource
-from gbp.deb import (debian_version_chars,
+from gbp.deb import (debian_version_chars, DebianUpstreamSource,
                      parse_dsc, DscFile)
 from gbp.deb.git import (DebianGitRepository, GitRepositoryError)
 from gbp.deb.changelog import ChangeLog
@@ -288,7 +287,7 @@ def main(argv):
                 set_bare_repo_options(options)
 
             dirs['tmp'] = os.path.abspath(tempfile.mkdtemp(dir='..'))
-            upstream = UpstreamSource(src.tgz)
+            upstream = DebianUpstreamSource(src.tgz)
             upstream.unpack(dirs['tmp'], options.filters)
 
             format = [(options.upstream_tag, "Upstream"), (options.debian_tag, "Debian")][src.native]
