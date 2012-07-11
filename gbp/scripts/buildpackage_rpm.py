@@ -537,7 +537,8 @@ def main(argv):
                     dst = os.path.join(source_dir, f)
                 try:
                     if os.path.isdir(src):
-                        shutil.copytree(src, dst)
+                        # dir is not packaging files, skip it
+                        continue
                     else:
                         shutil.copy2(src, dst)
                 except IOError, err:
