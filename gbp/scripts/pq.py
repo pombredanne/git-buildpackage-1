@@ -21,7 +21,7 @@ import errno
 import os
 import shutil
 import sys
-import tempfile
+import gbp.tmpfile as tempfile
 from gbp.config import (GbpOptionParserDebian, GbpOptionGroup)
 from gbp.git import (GitRepositoryError, GitRepository)
 from gbp.command_wrappers import (Command, GitCommand, RunAtCommand,
@@ -70,7 +70,7 @@ def export_patches(repo, branch, options):
         gbp.log.info("No patches on '%s' - nothing to do." % pq_branch)
 
 
-def safe_patches(series):
+def safe_patches(series, tmpdir_base):
     """
     Safe the current patches in a temporary directory
     below .git/
@@ -83,7 +83,7 @@ def safe_patches(series):
     src = os.path.dirname(series)
     name = os.path.basename(series)
 
-    tmpdir = tempfile.mkdtemp(dir='.git/', prefix='gbp-pq')
+    tmpdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='gbp-pq_')
     patches = os.path.join(tmpdir, 'patches')
     series = os.path.join(patches, name)
 
@@ -129,7 +129,7 @@ def import_quilt_patches(repo, branch, series, tries, force):
     # If we go back in history we have to safe our pq so we always try to apply
     # the latest one
     if len(commits) > 1:
-        tmpdir, series = safe_patches(series)
+        tmpdir, series = safe_patches(series, options.tmp_dir)
 
     queue = PatchSeries.read_series_file(series)
     for commit in commits:
@@ -201,6 +201,7 @@ def main(argv):
     parser.add_option("--force", dest="force", action="store_true", default=False,
                       help="in case of import even import if the branch already exists")
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
+    parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)

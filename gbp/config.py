@@ -130,6 +130,7 @@ class GbpOptionParser(OptionParser):
                  'template-dir': '',
                  'remote-config': '',
                  'allow-unauthenticated': 'False',
+                 'tmp-dir'          : '/var/tmp/gbp/',
              }
     help = {
              'debian-branch':
@@ -253,6 +254,9 @@ class GbpOptionParser(OptionParser):
              'allow-unauthenticated':
                   ("Don't verify integrity of downloaded source, "
                    "default is '%(allow-unauthenticated)s'"),
+             'tmp-dir':
+                  ("Base directory under which temporary directories are "
+                   "created, default is '%(tmp-dir)s'"),
            }
 
     def_config_files = [ '/etc/git-buildpackage/gbp.conf',

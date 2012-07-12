@@ -20,8 +20,8 @@
 
 import os, os.path
 import pipes
-import tempfile
 import shutil
+import gbp.tmpfile as tempfile
 from gbp.command_wrappers import (CatenateTarArchive, CatenateZipArchive)
 from gbp.git import GitRepository, GitRepositoryError
 from gbp.errors import GbpError
@@ -38,7 +38,8 @@ wc_names = {'WC':           {'force': True, 'untracked': True},
 wc_index = ".git/gbp_index"
 
 
-def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
+def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
+                           comp_type, comp_level, comp_opts, format='tar'):
     """
     Create a source tree archive with submodules.
 
@@ -48,7 +49,7 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
     Exception handling is left to the caller.
     """
 
-    tempdir = tempfile.mkdtemp()
+    tempdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='git-archive_')
     main_archive = os.path.join(tempdir, "main.%s" % format)
     submodule_archive = os.path.join(tempdir, "submodule.%s" % format)
     try:
