@@ -132,6 +132,7 @@ class GbpOptionParser(OptionParser):
                  'remote-config': '',
                  'allow-unauthenticated': 'False',
                  'symlink-orig': 'True',
+                 'tmp-dir' : '/var/tmp/gbp/',
              }
     help = {
              'debian-branch':
@@ -263,7 +264,10 @@ class GbpOptionParser(OptionParser):
              'symlink-orig':
                   ("Whether to creat a symlink from the upstream tarball "
                    "to the orig.tar.gz if needed, default is "
-                   "'%(symlink-orig)s'")
+                   "'%(symlink-orig)s'"),
+             'tmp-dir':
+                  ("Base directory under which temporary directories are "
+                   "created, default is '%(tmp-dir)s'"),
            }
 
     def_config_files = [ '/etc/git-buildpackage/gbp.conf',
