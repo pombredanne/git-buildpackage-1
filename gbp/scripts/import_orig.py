@@ -20,7 +20,7 @@
 import ConfigParser
 import os
 import sys
-import tempfile
+import gbp.tmpfile as tempfile
 import gbp.command_wrappers as gbpc
 from gbp.deb import (DebianPkgPolicy, parse_changelog_repo)
 from gbp.deb.upstreamsource import DebianUpstreamSource
@@ -197,6 +197,7 @@ def parse_args(argv):
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
     parser.add_config_file_option(option_name="color-scheme",
                                   dest="color_scheme")
+    parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
 
     # Accepted for compatibility
     parser.add_option("--no-dch", dest='no_dch', action="store_true",
@@ -215,9 +216,9 @@ def parse_args(argv):
 
 def main(argv):
     ret = 0
-    tmpdir = tempfile.mkdtemp(dir='../')
 
     (options, args) = parse_args(argv)
+    tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='import-orig_')
     try:
         source = find_source(options, args)
         if not source:

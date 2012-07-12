@@ -19,9 +19,9 @@
 """Common functionality for Debian and RPM buildpackage scripts"""
 
 import os, os.path
-import tempfile
 import subprocess
 import shutil
+import gbp.tmpfile as tempfile
 from gbp.command_wrappers import (CatenateTarArchive, CatenateZipArchive)
 from gbp.git import GitRepository, GitRepositoryError
 from gbp.errors import GbpError
@@ -35,7 +35,8 @@ wc_names = {'WC':           {'force': True, 'untracked': True},
             'WC.UNTRACKED': {'force': False, 'untracked': True},
             'WC.IGNORED':   {'force': True, 'untracked': True}}
 
-def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
+def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
+                           comp_type, comp_level, comp_opts, format='tar'):
     """
     Create a source tree archive with submodules.
 
@@ -46,7 +47,7 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
     """
     if prefix:
         prefix = prefix.strip('/') + '/'
-    tempdir = tempfile.mkdtemp()
+    tempdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='git-archive_')
     main_archive = os.path.join(tempdir, "main.%s" % format)
     submodule_archive = os.path.join(tempdir, "submodule.%s" % format)
     try:

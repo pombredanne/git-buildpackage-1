@@ -102,12 +102,12 @@ def test_create_tarballs():
     """Create an upstream tarball"""
     # Tarball with submodules
     cp = { "Source": "test", "Upstream-Version": "0.1" }
-    assert buildpackage.git_archive(repo, cp, str(tmpdir), "HEAD", "bzip2",
-                                    "9", True)
+    assert buildpackage.git_archive(repo, cp, str(tmpdir), "/tmp/", "HEAD",
+                                    "bzip2", "9", True)
     # Tarball without submodules
     cp = { "Source": "test", "Upstream-Version": "0.2" }
-    assert buildpackage.git_archive(repo, cp, str(tmpdir), "HEAD", "bzip2",
-                                    "9", False)
+    assert buildpackage.git_archive(repo, cp, str(tmpdir), "/tmp/", "HEAD",
+                                    "bzip2", "9", False)
 
 def test_check_tarfiles():
     """Check the contents of the created tarfile"""
