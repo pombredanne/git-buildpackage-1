@@ -22,10 +22,10 @@ import errno
 import os
 import shutil
 import sys
-import tempfile
 import re
 import gzip
 import subprocess
+import gbp.tmpfile as tempfile
 from gbp.config import (GbpOptionParserRpm, GbpOptionGroup)
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.command_wrappers import (Command, GitCommand, RunAtCommand,
@@ -149,46 +149,42 @@ def update_patch_series(repo, spec, start, end, options):
     """
     Export patches to packaging directory and update spec file accordingly.
     """
-    tmpdir = tempfile.mkdtemp(prefix='gbp-')
-    try:
-        # Create "vanilla" patches
-        patches = generate_git_patches(repo,
-                                       start,
-                                       options.patch_export_squash_until,
-                                       end,
-                                       tmpdir)
+    tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='patchexport_')
+    # Create "vanilla" patches
+    patches = generate_git_patches(repo,
+                                   start,
+                                   options.patch_export_squash_until,
+                                   end,
+                                   tmpdir)
 
-        # Remove all old patches from packaging dir
-        for n, p in spec.patches.iteritems():
-            if p['autoupdate']:
-                f = os.path.join(spec.specdir, p['filename'])
-                gbp.log.debug("Removing '%s'" % f)
-                try:
-                    os.unlink(f)
-                except OSError, (e, msg):
-                    if e != errno.ENOENT:
-                        raise GbpError, "Failed to remove patch: %s" % msg
-                    else:
-                        gbp.log.debug("%s does not exist." % f)
+    # Remove all old patches from packaging dir
+    for n, p in spec.patches.iteritems():
+        if p['autoupdate']:
+            f = os.path.join(spec.specdir, p['filename'])
+            gbp.log.debug("Removing '%s'" % f)
+            try:
+                os.unlink(f)
+            except OSError, (e, msg):
+                if e != errno.ENOENT:
+                    raise GbpError, "Failed to remove patch: %s" % msg
+                else:
+                    gbp.log.debug("%s does not exist." % f)
 
-        # Filter "vanilla" patches through write_patch()
-        filenames = []
-        if patches:
-            gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
-            for patch in patches:
-                patch_file = write_patch(patch,
-                                         spec.specdir,
-                                         options.patch_numbers,
-                                         options.patch_export_compress,
-                                         options.patch_export_ignore_regex)
-                if patch_file != None:
-                    filenames.append(os.path.basename(patch_file))
+    # Filter "vanilla" patches through write_patch()
+    filenames = []
+    if patches:
+        gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
+        for patch in patches:
+            patch_file = write_patch(patch,
+                                     spec.specdir,
+                                     options.patch_numbers,
+                                     options.patch_export_compress,
+                                     options.patch_export_ignore_regex)
+            if patch_file != None:
+                filenames.append(os.path.basename(patch_file))
 
-            spec.update_patches(filenames)
-            spec.write_spec_file()
-
-    finally:
-        shutil.rmtree(tmpdir)
+        spec.update_patches(filenames)
+        spec.write_spec_file()
 
 
 def export_patches(repo, branch, options):
@@ -244,7 +240,7 @@ def safe_patches(queue, tmpdir_base):
     @rtype: tuple
     """
 
-    tmpdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='gbp-pq')
+    tmpdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='patchimport_')
     safequeue=PatchSeries()
 
     if len(queue) > 0:
@@ -328,7 +324,7 @@ def import_spec_patches(repo, branch, tries, options):
 
     queue = spec.patchseries()
     # Put patches in a safe place
-    tmpdir, queue = safe_patches(queue, repo.path)
+    tmpdir, queue = safe_patches(queue, options.tmp_dir)
     for commit in commits:
         try:
             gbp.log.info("Trying to apply patches at '%s'" % commit)
@@ -350,10 +346,6 @@ def import_spec_patches(repo, branch, tries, options):
             break
     else:
         raise GbpError, "Couldn't apply patches"
-
-    if tmpdir:
-        gbp.log.debug("Remove temporary patch safe '%s'" % tmpdir)
-        shutil.rmtree(tmpdir)
 
     repo.set_branch(branch)
 
@@ -423,6 +415,7 @@ def main(argv):
                       help="In case of import even import if the branch already exists")
     parser.add_config_file_option(option_name="vendor", action="store", dest="vendor")
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
+    parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
     parser.add_config_file_option(option_name="upstream-tag", dest="upstream_tag")
     parser.add_config_file_option(option_name="spec-file", dest="spec_file")
     parser.add_config_file_option(option_name="packaging-dir", dest="packaging_dir")
@@ -469,6 +462,9 @@ def main(argv):
         os.chdir(repo.path)
 
     try:
+        # Create base temporary directory for this run
+        options.tmp_dir = tempfile.mkdtemp(dir=options.tmp_dir,
+                                           prefix='gbp-pq-rpm_')
         current = repo.get_branch()
         if action == "export":
             export_patches(repo, current, options)
@@ -497,6 +493,8 @@ def main(argv):
         if len(err.__str__()):
             gbp.log.err(err)
         retval = 1
+    finally:
+        shutil.rmtree(options.tmp_dir, ignore_errors=True)
 
     return retval
 

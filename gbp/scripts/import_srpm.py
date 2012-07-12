@@ -21,13 +21,13 @@ import ConfigParser
 import sys
 import re
 import os
-import tempfile
 import glob
 import pipes
 import time
 import shutil
 import errno
 from email.Utils import parseaddr
+import gbp.tmpfile as tempfile
 import gbp.command_wrappers as gbpc
 from gbp.rpm import (parse_srpm, SrcRpmFile, SpecFile, guess_spec, NoSpecError,
                      parse_spec, RpmUpstreamSource)
@@ -57,17 +57,15 @@ def download_source(pkg, dirs):
     else:
         mode='yumdownloader'
 
-    dirs['download'] = tempfile.mkdtemp(prefix='download', dir=dirs['tmp_base'])
+    tmpdir = tempfile.mkdtemp(dir=dirs['tmp_base'], prefix='download_')
     gbp.log.info("Downloading '%s' using '%s'..." % (pkg, mode))
     if mode == 'yumdownloader':
         gbpc.RunAtCommand('yumdownloader',
                           ['--source', '--destdir=', '.', pkg],
-                          shell=False)(dir=dirs['download'])
+                          shell=False)(dir=tmpdir)
     else:
-        gbpc.RunAtCommand('wget',
-                          [pkg],
-                          shell=False)(dir=dirs['download'])
-    srpm = glob.glob(os.path.join(dirs['download'], '*.src.rpm'))[0]
+        gbpc.RunAtCommand('wget', [pkg], shell=False)(dir=tmpdir)
+    srpm = glob.glob(os.path.join(tmpdir, '*.src.rpm'))[0]
     return srpm
 
 
@@ -95,26 +93,24 @@ def set_bare_repo_options(options):
         options.pristine_tar = False
 
 
-def import_spec_patches(repo, spec):
+def import_spec_patches(repo, spec, dirs):
     """
     Import patches from a spec file to the current branch
     """
     queue = spec.patchseries()
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(dir=dirs['tmp_base'], prefix='import_')
+
     orig_head = repo.rev_parse("HEAD")
 
-    try:
-        # Put patches in a safe place
-        safedir, queue = safe_patches(queue, tmpdir)
-        for patch in queue:
-            gbp.log.debug("Applying %s" % patch.path)
-            try:
-                apply_and_commit_patch(repo, patch)
-            except (GbpError, GitRepositoryError):
-                repo.force_head(orig_head, hard=True)
-                raise GbpError, "Couldn't import patches, you need to apply and commit manually"
-    finally:
-        shutil.rmtree(tmpdir)
+    # Put patches in a safe place
+    safedir, queue = safe_patches(queue, tmpdir)
+    for patch in queue:
+        gbp.log.debug("Applying %s" % patch.path)
+        try:
+            apply_and_commit_patch(repo, patch)
+        except (GbpError, GitRepositoryError):
+            repo.force_head(orig_head, hard=True)
+            raise GbpError, "Couldn't import patches, you need to apply and commit manually"
 
 
 def force_to_branch_head(repo, branch):
@@ -146,6 +142,7 @@ def parse_args(argv):
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
                       help="verbose command execution")
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
+    parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
     parser.add_option("--download", action="store_true", dest="download", default=False,
                       help="download source package")
     parser.add_config_file_option(option_name="vendor", action="store", dest="vendor")
@@ -202,7 +199,8 @@ def main(argv):
         if len(args) != 1:
             raise GbpError, "Need to give exactly one package to import. Try --help."
         else:
-            dirs['tmp_base'] = os.path.abspath(tempfile.mkdtemp())
+            dirs['tmp_base'] = tempfile.mkdtemp(dir=options.tmp_dir,
+                                                prefix='import-srpm')
             srpm = args[0]
             if options.download:
                 srpm = download_source(srpm, tmp_basedir)
@@ -212,7 +210,8 @@ def main(argv):
                 src = parse_srpm(srpm)
                 if options.verbose:
                     src.debugprint()
-                dirs['pkgextract'] = tempfile.mkdtemp(prefix='pkgextract', dir=dirs['tmp_base'])
+                dirs['pkgextract'] = tempfile.mkdtemp(dir=dirs['tmp_base'],
+                                                      prefix='pkgextract_')
                 gbp.log.info("Extracting src rpm to '%s'" % dirs['pkgextract'])
                 src.unpack(dirs['pkgextract'])
                 srpm = dirs['pkgextract']
@@ -247,8 +246,10 @@ def main(argv):
                 set_bare_repo_options(options)
 
             # Create more tempdirs
-            dirs['origsrc'] = tempfile.mkdtemp(prefix='origsrc', dir=dirs['tmp_base'])
-            dirs['packaging_base'] = tempfile.mkdtemp(prefix='packaging', dir=dirs['tmp_base'])
+            dirs['origsrc'] = tempfile.mkdtemp(dir=dirs['tmp_base'],
+                                               prefix='origsrc_')
+            dirs['packaging_base'] = tempfile.mkdtemp(dir=dirs['tmp_base'],
+                                                      prefix='packaging_')
             dirs['packaging'] = os.path.join(dirs['packaging_base'], options.packaging_dir)
             try:
                 os.mkdir(dirs['packaging'])
@@ -388,7 +389,7 @@ def main(argv):
                     # (only for non-native packages with non-orphan packaging)
                     force_to_branch_head(repo, options.packaging_branch)
                     if options.patch_import:
-                        import_spec_patches(repo, spec)
+                        import_spec_patches(repo, spec, dirs)
                         commit = options.packaging_branch
 
                 # Create packaging tag
