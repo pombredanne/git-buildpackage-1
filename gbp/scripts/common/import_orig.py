@@ -18,7 +18,6 @@
 #
 """Common functionality for import-orig scripts"""
 import os
-import tempfile
 import gbp.command_wrappers as gbpc
 from gbp.pkg import UpstreamSource
 import gbp.log
