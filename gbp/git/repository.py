@@ -1473,6 +1473,49 @@ class GitRepository(object):
         output, ret = self._git_getoutput('format-patch', options.args)
         return [ line.strip() for line in output ]
 
+    def format_patch(self, commit, output, signature=True, paths=None,
+                     filter_fn=None, filter_args={}):
+        """
+        Create patch of a single commit
+
+        @param commit: commit to create patch from
+        @type commit: C{str}
+        @param output: path/filename of the patch file to be generated
+        @type output: C{str}
+        @param signature: add signature to the end of patch
+        @type signature: C{bool}
+        @param paths: only list commits touching paths
+        @type paths: C{list} of C{str}
+        @return: patch path/filename or None if no patch was generated
+        @param filter_fn: python function for filtering the stdout
+        @type filter_fn: C{function}
+        @param filter_args: arguments to pass to the filter fn
+        @type filter_args: C{dict}
+        @rtype: C{str}
+        """
+        args = GitArgs('-k', '--stdout', '-a', '--ignore-submodules')
+        args.add_cond(not signature, '--no-signature')
+        args.add('%s^!' % commit)
+        if paths:
+            args.add('--', paths)
+
+        try:
+            output_dir = os.path.dirname(output)
+            if output_dir and not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+        except OSError as err:
+            raise GitRepositoryError("Unable to create patch directory" % err)
+
+        with open(output, 'w') as f_out:
+            dummy, stderr, ret = self._git_inout('format-patch', args.args,
+                                                 output_f=f_out,
+                                                 filter_fn=filter_fn,
+                                                 filter_kwargs=filter_args)
+        if os.path.getsize(output) == 0:
+            os.unlink(output)
+            output = None
+        return output
+
     def apply_patch(self, patch, index=True, context=None, strip=None):
         """Apply a patch using git apply"""
         args = []
