@@ -430,6 +430,34 @@ def test_get_commit_info():
     defaultdict(<type 'list'>, {'M': ['testfile']})
     """
 
+def test_format_patch():
+    """
+    Test generating of single patch
+
+    Methods tested:
+         - L{gbp.git.GitRepository.format_patch}
+
+    >>> import os
+    >>> import filecmp
+    >>> import gbp.git
+    >>> repo = gbp.git.GitRepository(repo_dir)
+    >>> repo.format_patch("HEAD", "foo.patch", signature=False)
+    'foo.patch'
+    >>> repo.format_patch("HEAD", "foo2.patch", signature=False, paths="testfile")
+    'foo2.patch'
+    >>> repo.format_patch("HEAD", "foo3.patch", signature=False, paths="filenotexists")
+    >>> os.path.getsize("foo.patch") > 300
+    True
+    >>> os.path.getsize("foo2.patch") > 300
+    True
+    >>> filecmp.cmp("foo.patch", "foo2.patch")
+    True
+    >>> os.path.exists("foo3.patch")
+    False
+    >>> os.unlink("foo.patch")
+    >>> os.unlink("foo2.patch")
+    """
+
 def test_diff():
     """
     Test git-diff
