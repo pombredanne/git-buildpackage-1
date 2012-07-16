@@ -178,6 +178,9 @@ def parse_args(argv):
                       dest="filter_pristine_tar")
     import_group.add_config_file_option(option_name="import-msg",
                       dest="import_msg")
+    import_group.add_option("--allow-same-version", action="store_true",
+                      dest="allow_same_version", default=False,
+                      help="allow to import already imported version")
     cmd_group.add_config_file_option(option_name="postimport", dest="postimport")
 
     parser.add_boolean_config_file_option(option_name="interactive",
@@ -286,11 +289,19 @@ def main(argv):
                     gbp.log.warn("'%s' not an archive, skipping pristine-tar" % source.path)
 
             tag = repo.version_to_tag(options.upstream_tag, version)
-            repo.create_tag(name=tag,
-                            msg="Upstream version %s" % version,
-                            commit=commit,
-                            sign=options.sign_tags,
-                            keyid=options.keyid)
+            if repo.find_version(options.upstream_tag, version):
+                 gbp.log.warn("Version %s already imported." % version)
+                 if options.allow_same_version:
+                    gbp.log.info("Moving tag of version '%s' since import forced" % version)
+                    move_tag_stamp(repo, options.upstream_tag, version)
+                 else:
+                    raise GbpError("Import skipped")
+            else:
+                repo.create_tag(name=tag,
+                                msg="Upstream version %s" % version,
+                                commit=commit,
+                                sign=options.sign_tags,
+                                keyid=options.keyid)
             if is_empty:
                 repo.create_branch(options.upstream_branch, rev=commit)
                 repo.force_head(options.upstream_branch, hard=True)
