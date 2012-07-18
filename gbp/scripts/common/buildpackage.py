@@ -156,4 +156,6 @@ def drop_index():
 
 def clone_index():
     """Copy the current index file to our custom index file"""
-    shutil.copy2(".git/index", wc_index)
+    indexfn = ".git/index"
+    if os.path.exists(indexfn):
+        shutil.copy2(indexfn, wc_index)
