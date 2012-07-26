@@ -22,7 +22,6 @@ import errno
 import os
 import shutil
 import sys
-import tempfile
 from gbp.config import (GbpOptionParserRpm, GbpOptionGroup)
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.command_wrappers import (Command, GitCommand, RunAtCommand,
@@ -31,10 +30,12 @@ from gbp.errors import GbpError
 import gbp.log
 from gbp.patch_series import (PatchSeries, Patch)
 from gbp.rpm import (SpecFile, guess_spec)
+from gbp.utils import TempDir
 from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    write_patch, switch_to_pq_branch,
                                    apply_single_patch, apply_and_commit_patch,
                                    drop_pq)
+from gbp.scripts.common.
 
 def export_patches(repo, branch, options):
     """Export patches from the pq branch into a packaging branch"""
@@ -105,11 +106,11 @@ def safe_patches(queue):
     @rtype: tuple
     """
 
-    tmpdir = tempfile.mkdtemp(dir='.git/', prefix='gbp-pq')
+    tmpdir = TempDir(dir='.git/', prefix='gbp-pq')
     safequeue=PatchSeries()
 
     if len(queue) > 0:
-        gbp.log.debug("Safeing patches '%s' in '%s'" % (os.path.dirname(queue[0].path), tmpdir))
+        gbp.log.debug("Safeing patches '%s' in '%s'" % (os.path.dirname(queue[0].path), tmpdir.path))
         for p in queue:
             dst = os.path.join(tmpdir, os.path.basename(p.path))
             shutil.copy(p.path, dst)
@@ -160,40 +161,28 @@ def import_spec_patches(repo, branch, tries, options):
 
     # Find upstream version
     commit = repo.find_version(options.upstream_tag, spec.version)
-    if commit:
-        #commits = repo.commits(num=tries, first_parent=True)
-        commits=[commit]
-    else:
+    if not commit:
         raise GbpError, ("Couldn't find upstream version %s. Don't know on what base to import." % spec.version)
 
+    try:
+        gbp.log.info("Trying to apply patches at '%s'" % commit)
+        repo.create_branch(pq_branch, commit)
+    except CommandExecFailed:
+        raise GbpError, ("Cannot create patch-queue branch '%s'." % pq_branch)
+
+    repo.set_branch(pq_branch)
     queue = spec.patchseries()
     # Put patches in a safe place
     tmpdir, queue = safe_patches(queue)
-    for commit in commits:
+
+    for patch in queue:
+        gbp.log.debug("Applying %s" % patch.path)
         try:
-            gbp.log.info("Trying to apply patches at '%s'" % commit)
-            repo.create_branch(pq_branch, commit)
-        except CommandExecFailed:
-            raise GbpError, ("Cannot create patch-queue branch '%s'." % pq_branch)
-
-        repo.set_branch(pq_branch)
-        for patch in queue:
-            gbp.log.debug("Applying %s" % patch.path)
-            try:
-                apply_and_commit_patch(repo, patch, patch.topic)
-            except (GbpError, GitRepositoryError, CommandExecFailed):
-                repo.set_branch(branch)
-                repo.delete_branch(pq_branch)
-                break
-        else:
-            # All patches applied successfully
-            break
-    else:
-        raise GbpError, "Couldn't apply patches"
-
-    if tmpdir:
-        gbp.log.debug("Remove temporary patch safe '%s'" % tmpdir)
-        shutil.rmtree(tmpdir)
+            apply_and_commit_patch(repo, patch, patch.topic)
+        except (GbpError, GitRepositoryError, CommandExecFailed):
+            repo.set_branch(branch)
+            repo.delete_branch(pq_branch)
+            raise GbpError, "Couldn't apply patches"
 
     # Edit spec file
     repo.set_branch(branch)

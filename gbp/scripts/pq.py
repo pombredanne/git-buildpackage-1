@@ -21,13 +21,13 @@ import errno
 import os
 import shutil
 import sys
-import tempfile
 from gbp.config import (GbpOptionParserDebian, GbpOptionGroup)
 from gbp.git import (GitRepositoryError, GitRepository)
 from gbp.command_wrappers import (Command, GitCommand, RunAtCommand,
                                   CommandExecFailed)
 from gbp.errors import GbpError
 import gbp.log
+from gbp.utils import TempDir
 from gbp.patch_series import (PatchSeries, Patch)
 from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                  write_patch, switch_to_pq_branch,
@@ -83,11 +83,11 @@ def safe_patches(series):
     src = os.path.dirname(series)
     name = os.path.basename(series)
 
-    tmpdir = tempfile.mkdtemp(dir='.git/', prefix='gbp-pq')
-    patches = os.path.join(tmpdir, 'patches')
+    tmpdir = TempDir(dir='.git/', prefix='gbp-pq')
+    patches = os.path.join(tmpdir.path, 'patches')
     series = os.path.join(patches, name)
 
-    gbp.log.debug("Safeing patches '%s' in '%s'" % (src, tmpdir))
+    gbp.log.debug("Safeing patches '%s' in '%s'" % (src, tmpdir.path))
     shutil.copytree(src, patches)
 
     return (tmpdir, series)
@@ -153,10 +153,6 @@ def import_quilt_patches(repo, branch, series, tries, force):
             break
     else:
         raise GbpError, "Couldn't apply patches"
-
-    if tmpdir:
-        gbp.log.debug("Remove temporary patch safe '%s'" % tmpdir)
-        shutil.rmtree(tmpdir)
 
 
 def rebase_pq(repo, branch):

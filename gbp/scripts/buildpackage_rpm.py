@@ -22,7 +22,6 @@ import ConfigParser
 import errno
 import os, os.path
 import sys
-import tempfile
 import shutil
 import re
 import gbp.rpm as rpm
@@ -34,6 +33,7 @@ from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.errors import GbpError
 import gbp.log
 import gbp.notifications
+from gbp.utils import TempDir
 from gbp.scripts.common.buildpackage import (index_name, wc_names,
                                              git_archive_submodules,
                                              git_archive_single, dump_tree,
@@ -443,7 +443,6 @@ def main(argv):
     retval = 0
     prefix = "git-"
     cp = None
-    dump_dir = None
 
     options, gbp_args, builder_args = parse_args(argv, prefix)
     if not options:
@@ -492,7 +491,8 @@ def main(argv):
             raise GbpError # git-ls-tree printed an error message already
 
         # Dump from git to a temporary directory:
-        dump_dir = tempfile.mkdtemp(dir=".")
+        tmp_dir = TempDir(dir=".")
+        dump_dir = tmp_dir.path
         gbp.log.info("Dumping tree '%s' to '%s'" % (options.export, dump_dir))
         if not dump_tree(repo, dump_dir, tree, options.with_submodules):
             raise GbpError
@@ -603,10 +603,6 @@ def main(argv):
         retval = 1
     finally:
         drop_index()
-
-    # Clean temporary dumpdir
-    if dump_dir and retval == 0:
-        shutil.rmtree(dump_dir)
 
     if not options.tag_only:
         if options.purge and not retval and not options.export_only:
