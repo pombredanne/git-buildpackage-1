@@ -222,8 +222,14 @@ def main(argv):
                      files.append(src['filename'])
                files.append(os.path.basename(pkg))
                for fname in files:
-                   os.symlink(os.path.join(dirs['src'], fname),
-                              os.path.join(dirs['pkgextract-packaging'], fname))
+                   fpath = os.path.join(dirs['src'], fname)
+                   if os.path.exists(fpath):
+                       os.symlink(fpath, os.path.join(
+                           dirs['pkgextract-packaging'], fname))
+                   else:
+                       gbp.log.err("File '%s' mentioned in spec doesn't exist" \
+                                   % fname)
+                       raise GbpError
                if spec.orig_base:
                   orig_tarball=os.path.join(dirs['src'], os.path.basename(spec.orig_file))
             else:
