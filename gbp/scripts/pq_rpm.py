@@ -35,7 +35,6 @@ from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    write_patch, switch_to_pq_branch,
                                    apply_single_patch, apply_and_commit_patch,
                                    drop_pq)
-from gbp.scripts.common.
 
 def export_patches(repo, branch, options):
     """Export patches from the pq branch into a packaging branch"""
