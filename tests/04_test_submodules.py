@@ -103,23 +103,29 @@ def test_dump_tree():
     assert os.path.exists(os.path.join(dumpdir, submodules[0].name, testfile_name))
 
 
-def test_create_tarball():
+def test_create_tarballs():
     """Create an upstream tarball"""
+    # Tarball with submodules
     cp = { "Source": "test", "Upstream-Version": "0.1" }
-    assert buildpackage.git_archive(repo,
-                                        cp,
-                                        tmpdir,
-                                        "HEAD",
-                                        "bzip2",
-                                        "9",
-                                        True)
+    assert buildpackage.git_archive(repo, cp, tmpdir, "HEAD", "bzip2", "9",
+                                    True)
+    # Tarball without submodules
+    cp["Upstream-Version"] = "0.2"
+    assert buildpackage.git_archive(repo, cp, tmpdir, "HEAD", "bzip2", "9",
+                                    False)
 
-def test_check_tarfile():
+def test_check_tarfiles():
     """Check the contents of the created tarfile"""
+    # Check tarball with submodules
     t = tarfile.open(os.path.join(tmpdir,"test_0.1.orig.tar.bz2"), 'r:*')
     files = t.getmembers()
     assert "test-0.1/.gitmodules" in [ f.name for f in files ]
     assert len(files) == 6
+    # Check tarball without submodules
+    t = tarfile.open(os.path.join(tmpdir,"test_0.2.orig.tar.bz2"), 'r:*')
+    files = t.getmembers()
+    assert ("test-0.2/%s" % testfile_name) in [ f.name for f in files ]
+    assert len(files) == 4
 
 def test_add_whitespace_submodule():
     """Add a second submodule with name containing whitespace"""
