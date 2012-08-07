@@ -40,76 +40,85 @@ from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    switch_to_pq_branch, apply_single_patch,
                                    apply_and_commit_patch, drop_pq)
 
-def write_patch(patch, out_dir, patch_numbers=True, compress_size=0, ignore_regex=None):
+def compress_patches(patches, compress_size=0):
     """
-    Write the patch exported by 'git-format-patch' to it's final location
-    (as specified in the commit)
+    Rename and/or compress patches
     """
-    tmp_path = patch + ".gbp"
+    ret_patches = []
+    for num, patch in enumerate(patches):
+        # Compress if patch file is larger than "threshold" value
+        if compress_size and os.path.getsize(patch) > compress_size:
+            gbp.log.debug("Compressing %s" % os.path.basename(patch))
+            subprocess.Popen(['gzip', '-n', patch]).communicate()
+            patch += ".gz"
 
-    old = file(patch, 'r')
-    tmp = file(tmp_path, 'w')
-    # Skip the first From <sha>... line
-    old.readline()
-    for line in old:
-        if ignore_regex and re.match(ignore_regex, line):
-                gbp.log.debug("Ignoring patch %s, matches ignore-regex" % patch)
-                old.close()
-                tmp.close()
-                os.unlink(patch)
-                os.unlink(tmp_path)
-                return
-        elif (line.startswith("diff --git a/") or
-              line.startswith("---")):
-              tmp.write(line)
-              break;
-        tmp.write(line)
+        ret_patches.append(os.path.basename(patch))
 
-    # Write the rest of the file
-    tmp.writelines(old)
-    tmp.close()
-    old.close()
-
-    new_name = os.path.basename(patch)
-    if not patch_numbers:
-        patch_re = re.compile("[0-9]+-(?P<name>.+)")
-        m = patch_re.match(new_name)
-        if m:
-            new_name = m.group('name')
-
-    # Compress if patch file is larger than "threshold" value
-    if compress_size and os.path.getsize(tmp_path) > compress_size:
-        dst_path = os.path.join(out_dir, new_name + '.gz')
-        gbp.log.debug("Compressing %s to %s" % (tmp_path, dst_path))
-        f_new = open(dst_path, 'w+')
-        subprocess.Popen(['gzip', '-n', '-c', tmp_path], stdout=f_new).communicate()
-        f_new.close()
-    else:
-        dst_path = os.path.join(out_dir, new_name)
-        gbp.log.debug("Moving %s to %s" % (tmp_path, dst_path))
-        shutil.copy2(tmp_path, dst_path)
-
-    os.unlink(tmp_path)
-    os.unlink(patch)
-
-    return dst_path
+    return ret_patches
 
 
-def write_diff_file(repo, start, end, diff_filename):
+def write_diff_file(repo, diff_filename, start, end):
     """
     Write diff between two tree-ishes into a file
     """
     try:
         diff = repo.diff(start, end)
-        diff_file = open(diff_filename, 'w+')
-        diff_file.writelines(diff)
-        diff_file.close()
+        if diff:
+            diff_file = open(diff_filename, 'w+')
+            diff_file.writelines(diff)
+            diff_file.close()
+            return diff_filename
+        else:
+            gbp.log.debug("I won't generate empty diff %s" % diff_filename)
+            return None
     except IOError:
         raise GbpError, "Unable to create diff file"
 
 
-def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
-                         outdir):
+def patch_content_filter(f_in, f_out):
+    # Skip the first line that contains commits SHA2
+    f_in.readline()
+    f_out.writelines(f_in)
+
+
+def patch_fn_filter(commit_info, patch_number=None, ignore_regex=None,
+                    topic_regex=None):
+    """
+    Create a patch filename, return None if patch is to be ignored.
+    """
+    suffix = ".patch"
+    topic = ""
+    # Filter based on subject
+    if ignore_regex and re.match(ignore_regex, commit_info['subject']):
+        gbp.log.debug("Ignoring commit %s, subject matches ignore-regex" %
+                      commit_info['id'])
+        return None
+    # Parse commit message
+    for line in commit_info['body'].splitlines():
+        if ignore_regex and re.match(ignore_regex, line):
+            gbp.log.debug("Ignoring commit %s, commit message matches "\
+                          "ignore-regex" % commit_info['id'])
+            return None
+        if topic_regex:
+                match = re.match(topic_regex, line, flags=re.I)
+                if match:
+                    gbp.log.debug("Topic %s found for %s" %
+                                  (match.group['topic'], commit_info['id']))
+                    topic = match.group['topic'] + os.path.sep
+
+    filename = topic
+    if patch_number is not None:
+        filename += "%04d-" % patch_number
+    filename += commit_info['patchname']
+    # Truncate filename
+    filename = filename[:64-len(suffix)]
+    filename += suffix
+
+    return filename
+
+
+def generate_patches(repo, start, squash_point, end, squash_diff_name,
+                     outdir, options):
     """
     Generate patch files from git
     """
@@ -132,11 +141,11 @@ def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
     if repo.get_merge_base(start_sha1, end_commit_sha1) != start_sha1:
         raise GbpError, "Start commit '%s' not an ancestor of end " \
                         "commit '%s'" % (start, end_commit)
+    rev_list = reversed(repo.get_commits(start, end_commit))
     # Squash commits, if requested
     if squash_point:
         squash_sha1 = repo.rev_parse("%s^0" % squash_point)
         if start_sha1 != squash_sha1:
-            rev_list = repo.get_commits(start, end_commit)
             if not squash_sha1 in rev_list:
                 raise GbpError, "Given squash point '%s' not found in the " \
                                 "history of end commit '%s'" % \
@@ -149,24 +158,41 @@ def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
                 diff_filename = squash_diff_name + ".diff"
             else:
                 diff_filename = '%s-to-%s.diff' % (start_sha1, squash_sha1)
-            gbp.log.info("Squashing commits %s..%s into one monolithic '%s'" %
-                         (start_sha1, squash_sha1, diff_filename))
-            diff_filepath = os.path.join(outdir, diff_filename)
-            write_diff_file(repo, start_sha1, squash_sha1, diff_filepath)
-            patches.append(diff_filepath)
 
+            gbp.log.info("Squashing commits %s..%s into one monolithic "\
+                         "'%s'" % (start_sha1, squash_sha1, diff_filename))
+            diff_filepath = os.path.join(outdir, diff_filename)
+            if write_diff_file(repo, diff_filepath, start_sha1, squash_sha1):
+                patches.append(diff_filepath)
             start = squash_sha1
 
     # Generate patches
-    patches.extend(repo.format_patches(start, end_commit, outdir))
+    patch_num = 1 if options.patch_numbers else None
+    for commit in rev_list:
+        info = repo.get_commit_info(commit)
+        patch_fn = patch_fn_filter(info, patch_num,
+                                   options.patch_export_ignore_regex)
+        if patch_fn:
+            patch_fn = repo.format_patch(commit,
+                                         os.path.join(outdir, patch_fn),
+                                         filter_fn=patch_content_filter,
+                                         signature=False)
+            if patch_fn:
+                patches.append(patch_fn)
+            if options.patch_numbers:
+                patch_num += 1
+
     # Generate diff to the tree-ish object
     if end_commit != end:
         diff_filename = '%s.diff' % end
         gbp.log.info("Generating '%s' (%s..%s)" % \
                      (diff_filename, end_commit, end))
         diff_filepath = os.path.join(outdir, diff_filename)
-        write_diff_file(repo, end_commit, end, diff_filepath)
-        patches.append(diff_filepath)
+        if write_diff_file(repo, diff_filepath, end_commit, end):
+            patches.append(diff_filepath)
+
+    # Compress
+    patches = compress_patches(patches, options.patch_export_compress)
 
     return patches
 
@@ -199,31 +225,16 @@ def update_patch_series(repo, spec, start, end, options):
     squash = options.patch_export_squash_until.split(':', 1)
     squash_point = squash[0]
     squash_name = squash[1] if len(squash) > 1 else ""
-    patches = generate_git_patches(repo,
-                                   start,
-                                   squash_point,
-                                   end,
-                                   squash_name,
-                                   tmpdir)
 
     # Unlink old patch files and generate new patches
     rm_patch_files(spec)
 
-    # Filter "vanilla" patches through write_patch()
-    filenames = []
-    if patches:
-        gbp.log.debug("Regenerating patch series in '%s'." % spec.specdir)
-        for patch in patches:
-            patch_file = write_patch(patch,
-                                     spec.specdir,
-                                     options.patch_numbers,
-                                     options.patch_export_compress,
-                                     options.patch_export_ignore_regex)
-            if patch_file != None:
-                filenames.append(os.path.basename(patch_file))
+    patches = generate_patches(repo, start, squash_point, end, squash_name,
+                               spec.specdir, options)
 
-        spec.update_patches(filenames)
-        spec.write_spec_file()
+    filenames = [os.path.basename(patch) for patch in patches]
+    spec.update_patches(filenames)
+    spec.write_spec_file()
 
 
 def export_patches(repo, branch, options):
