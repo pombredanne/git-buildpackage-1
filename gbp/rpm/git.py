@@ -37,8 +37,6 @@ class RpmGitRepository(GitRepository):
         @type format: C{str}
         @param str_fields: arguments for format string ('upstreamversion', 'release', 'vendor'...)
         @type str_fields: C{dict} of C{str}
-        @param vendor: distribution vendor
-        @type vendor: C{str}
         @return: sha1 of the commit the tag references to
         """
         tag = self. version_to_tag(format, str_fields)
@@ -56,8 +54,6 @@ class RpmGitRepository(GitRepository):
         @type format: C{str}
         @param str_fields: arguments for format string ('upstreamversion', 'release', 'vendor'...)
         @type str_fields: C{dict} of C{str}
-        @param vendor: distribution vendor
-        @type vendor: C{str}
         @return: version tag
 
         >>> RpmGitRepository.version_to_tag("packaging/%(version)s", dict(epoch='0', upstreamversion='0~0'))

@@ -1421,7 +1421,7 @@ class GitRepository(object):
         @param treeish: the treeish to create the archive from
         @type treeish: C{str}
         @param filter_cmd: an extra command whom to pipe git-archive output
-        @type filter: C{list} of C{str}
+        @type filter_cmd: C{list} of C{str}
         """
         git_cmd = ['git', 'archive',
                    '--format=%s' % format, '--prefix=%s' % prefix, treeish]

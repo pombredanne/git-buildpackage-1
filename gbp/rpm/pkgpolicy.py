@@ -91,7 +91,7 @@ class RpmPkgPolicy(PkgPolicy):
         i.e. epoch, version and release
 
         @param evr: dict of version components
-        @type version: C{dict} of C{str}
+        @type evr: C{dict} of C{str}
         @return: full version
         @rtype: C{str}
         """
