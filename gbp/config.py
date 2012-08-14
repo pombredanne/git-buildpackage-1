@@ -282,7 +282,7 @@ class GbpOptionParser(OptionParser):
         >>> files = GbpOptionParser.get_config_files()
 
         >>> homedir = os.path.expanduser("~")
-        >>> topdir = gbp.git.GitRepository(".").path
+        >>> topdir = gbp.git.GitRepository('.').path if os.path.isdir('.git') else os.path.abspath('.')
         >>> files_mangled = [file.replace(topdir, 'TOPDIR').replace(homedir, 'HOME') for file in files]
         >>> files_mangled
         ['/etc/git-buildpackage/gbp.conf', 'HOME/.gbp.conf', 'TOPDIR/.gbp.conf', 'TOPDIR/debian/gbp.conf', 'TOPDIR/.git/gbp.conf']
@@ -298,8 +298,8 @@ class GbpOptionParser(OptionParser):
             str_fields = {'git_dir': repo.git_dir,
                           'top_dir': repo.path}
         except GitRepositoryError:
-            str_fields = {'git_dir': '.git',
-                          'top_dir': '.'}
+            str_fields = {'git_dir': os.path.abspath('.git'),
+                          'top_dir': os.path.abspath('.')}
 
         return [ os.path.expanduser(f % str_fields) for f in files ]
 
