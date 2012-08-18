@@ -122,7 +122,7 @@ class GitRepository(object):
         env = self.__build_env(extra_env)
         cmd = ['git', command] + args
         log.debug(cmd)
-        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env, cwd=cwd)
+        popen = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env, cwd=cwd)
         while popen.poll() == None:
             output += popen.stdout.readlines()
         output += popen.stdout.readlines()
