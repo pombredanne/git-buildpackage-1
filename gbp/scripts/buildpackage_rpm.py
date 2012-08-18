@@ -310,7 +310,12 @@ def gen_patches(repo, spec, totree, options):
         gbp.log.info("No changes - nothing to do.")
 
 
-def is_native(repo, options):
+def is_native(repo, spec, options):
+    try:
+        get_upstream_tree(repo, spec, options)
+    except GbpError:
+        return True
+
     if repo.has_branch(options.upstream_branch):
         return False
     return True
@@ -546,7 +551,7 @@ def main(argv):
 
             # Get/build the orig tarball
             options.comp_type = guess_comp_type(spec)
-            if is_native(repo, options):
+            if is_native(repo, spec, options):
                 if spec.orig_file:
                     # Just build source tarball from the exported tree
                     gbp.log.debug("Building (native) src tarball with compression '%s -%s'" % (options.comp_type,
