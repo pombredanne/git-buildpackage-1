@@ -34,6 +34,9 @@ import gbp.log
 from gbp.pkg import (UpstreamSource, compressor_opts, parse_archive_filename)
 from gbp.rpm.pkgpolicy import RpmPkgPolicy
 
+# define a large number to check the valid id of source file
+MAX_SOURCE_NUMBER = 99999
+
 try:
     # Try to load special RPM lib to be used for GBP (only)
     rpm = __import__(RpmPkgPolicy.python_rpmlib_module_name)
@@ -159,7 +162,7 @@ class SpecFile(object):
         # And, double-check that we parsed spec content correctly
         for (name, num, typ) in self.specinfo.sources:
             # workaround rpm parsing bug
-            if num == sys.maxint:
+            if num >= MAX_SOURCE_NUMBER:
                 num = 0
             if typ == 1:
                 if num in self.sources:
