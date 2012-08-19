@@ -34,6 +34,9 @@ from gbp.patch_series import (PatchSeries, Patch)
 import gbp.log
 from gbp.pkg import (PkgPolicy, UpstreamSource)
 
+# define a large number to check the valid id of source file
+MAX_SOURCE_NUMBER = 9999
+
 # When trying to parse a version-number, these are
 # the valid characters.
 rpm_version_chars = 'a-zA-Z\d.~+'
@@ -223,7 +226,7 @@ class SpecFile(object):
         # get patches
         for (name, num, typ) in self.specinfo.sources:
             # workaround rpm parsing bug
-            if num == sys.maxint:
+            if num >= MAX_SOURCE_NUMBER:
                 num = 0
             # only add files of patch type
             if typ == 2:
