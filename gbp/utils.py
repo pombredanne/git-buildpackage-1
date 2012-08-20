@@ -22,6 +22,7 @@ import tempfile
 import shutil
 
 import gbp.log
+from gbp.errors import GbpError
 
 class TempDir(object):
     """
@@ -31,13 +32,26 @@ class TempDir(object):
     """
 
     def __init__(self, suffix='', prefix='tmp', dir=None):
-        self.path = tempfile.mkdtemp(suffix, prefix, dir)
+        self.path = None
+
+        if dir is None:
+            dir = tempfile.gettempdir()
+
+        target_dir = os.path.abspath(os.path.join(dir, prefix))
+        target_dir = os.path.dirname(target_dir)
+
+        try:
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            self.path = tempfile.mkdtemp(suffix, prefix, dir)
+        except OSError, (e, msg):
+            raise GbpError, "Failed to create dir on %s: %s" % (target_dir, msg)
 
     def __str__(self):
         return self.path
 
     def __del__(self):
         """Remove it when object is destroyed."""
-        if os.path.exists(self.path):
+        if self.path and os.path.exists(self.path):
             gbp.log.debug("Remove temporary directory '%s'" % self.path)
             shutil.rmtree(self.path)
