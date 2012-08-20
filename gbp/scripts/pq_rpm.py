@@ -108,7 +108,8 @@ def write_diff_file(repo, start, end, diff_filename):
         raise GbpError, "Unable to create diff file"
 
 
-def generate_git_patches(repo, start, squash_point, end, outdir):
+def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
+                         outdir):
     """
     Generate patch files from git
     """
@@ -127,10 +128,15 @@ def generate_git_patches(repo, start, squash_point, end, outdir):
             squash_sha1 = repo.rev_parse(squash_sha1, short=7)
             start_sha1 = repo.rev_parse(start_sha1, short=7)
 
-            gbp.log.info("Squashing commits %s..%s into one monolithic diff" % (start_sha1, squash_sha1))
-            diff_filename = os.path.join(outdir, '%s-to-%s.diff' % (start_sha1, squash_sha1))
-            write_diff_file(repo, start_sha1, squash_sha1, diff_filename)
-            patches.append(diff_filename)
+            if squash_diff_name:
+                diff_filename = squash_diff_name + ".diff"
+            else:
+                diff_filename = '%s-to-%s.diff' % (start_sha1, squash_sha1)
+            gbp.log.info("Squashing commits %s..%s into one monolithic '%s'" %
+                         (start_sha1, squash_sha1, diff_filename))
+            diff_filepath = os.path.join(outdir, diff_filename)
+            write_diff_file(repo, start_sha1, squash_sha1, diff_filepath)
+            patches.append(diff_filepath)
 
             start = squash_sha1
 
@@ -171,10 +177,14 @@ def update_patch_series(repo, spec, start, end, options):
     """
     tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='patchexport_')
     # Create "vanilla" patches
+    squash = options.patch_export_squash_until.split(':', 1)
+    squash_point = squash[0]
+    squash_name = squash[1] if len(squash) > 1 else ""
     patches = generate_git_patches(repo,
                                    start,
-                                   options.patch_export_squash_until,
+                                   squash_point,
                                    end,
+                                   squash_name,
                                    tmpdir)
 
     # Unlink old patch files and generate new patches
