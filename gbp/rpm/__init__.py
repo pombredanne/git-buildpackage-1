@@ -521,6 +521,10 @@ class SpecFile(object):
                     self.sources[orig_num]['prefix'] = ''
                 elif setup_opts.name:
                     self.sources[orig_num]['prefix'] = self.macro_expand(setup_opts.name) + '/'
+                else:
+                    # RPM default
+                    self.sources[orig_num]['prefix'] = "%s-%s/" % (self.name,
+                                                        self.upstreamversion)
         return orig_num
 
 
