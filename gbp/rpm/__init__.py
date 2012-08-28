@@ -365,12 +365,16 @@ class SpecFile(object):
             m = self.setupmacro_re.match(line)
             if m:
                 (options, args) = setupparser.parse_args(m.group('args').split())
-                srcnum = 0
-                if options.unpack_before:
-                    srcnum = int(options.unpack_before)
-                elif options.unpack_after:
-                    srcnum = int(options.unpack_after)
-                self.sources[srcnum]['setup_options'] = options
+                srcnum = None
+                if options.no_unpack_default:
+                    if options.unpack_before:
+                        srcnum = int(options.unpack_before)
+                    elif options.unpack_after:
+                        srcnum = int(options.unpack_after)
+                else:
+                    srcnum = 0
+                if srcnum != None:
+                    self.sources[srcnum]['setup_options'] = options
                 # Save the occurrence of last setup macro
                 ret['setupmacro'] = i
                 continue
