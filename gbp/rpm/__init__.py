@@ -129,12 +129,12 @@ class SrcRpmFile(object):
 
 class SpecFile(object):
     """Class for parsing/modifying spec files"""
-    source_re = re.compile(r'^Source(?P<srcnum>[0-9]+)?:\s*(?P<name>[^\s].*[^\s])\s*$', flags=re.I)
-    patchtag_re = re.compile(r'^Patch(?P<patchnum>[0-9]+)?:\s*(?P<name>\S.*)$', flags=re.I)
+    source_re = re.compile(r'^Source(?P<srcnum>[0-9]+)?\s*:\s*(?P<name>[^\s].*[^\s])\s*$', flags=re.I)
+    patchtag_re = re.compile(r'^Patch(?P<patchnum>[0-9]+)?\s*:\s*(?P<name>\S.*)$', flags=re.I)
     patchmacro_re = re.compile(r'^%patch(?P<patchnum>[0-9]+)?(\s+(?P<args>.*))?$')
     setupmacro_re = re.compile(r'^%setup(\s+(?P<args>.*))?$')
     marker_re = re.compile(r'^#\s+(?P<marker>>>|<<)\s+(?P<what>gbp-[^\s]+)\s*(?P<comment>.*)$')
-    gbptag_re = re.compile(r'^\s*#\s*gbp(?P<tagname>[a-z]+):\s*(?P<data>\S.*)\s*$', flags=re.I)
+    gbptag_re = re.compile(r'^\s*#\s*gbp(?P<tagname>[a-z]+)\s*:\s*(?P<data>\S.*)\s*$', flags=re.I)
 
     def __init__(self, specfile):
         try:
