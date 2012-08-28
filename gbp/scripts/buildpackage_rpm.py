@@ -438,7 +438,7 @@ def main(argv):
         # Dump from git to a temporary directory:
         dump_dir = tempfile.mkdtemp(dir=options.tmp_dir,
                                     prefix='buildpackage-rpm_')
-        gbp.log.info("Dumping tree '%s' to '%s'" % (options.export, dump_dir))
+        gbp.log.debug("Dumping tree '%s' to '%s'" % (options.export, dump_dir))
         if not dump_tree(repo, dump_dir, tree, options.with_submodules):
             raise GbpError
         # Run postexport hook
@@ -472,7 +472,7 @@ def main(argv):
             spec_dir = makedir(os.path.join(export_dir, options.spec_dir))
 
             # Move packaging files
-            gbp.log.info("Exporting packaging files in '%s' to '%s'" % (spec.specdir, export_dir))
+            gbp.log.debug("Exporting packaging files in '%s' to '%s'" % (spec.specdir, export_dir))
             pkgfiles = os.listdir(spec.specdir)
             for f in pkgfiles:
                 src = os.path.join(spec.specdir, f)
