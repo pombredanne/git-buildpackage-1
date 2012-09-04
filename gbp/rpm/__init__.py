@@ -516,7 +516,7 @@ class SpecFile(object):
                     orig_num = num
                     break
             # otherwise we take the first archive
-            elif not orig_num and src['archive_fmt']:
+            elif orig_num == None and src['archive_fmt']:
                 orig_num = num
             # else don't accept
 
@@ -544,7 +544,8 @@ class SpecFile(object):
         gbp.log.debug("Release: %s" % self.release)
         gbp.log.debug("Epoch: %s" % self.epoch)
         gbp.log.debug("Spec file: %s" % self.specfile)
-        gbp.log.debug("Orig file: %s" % self.orig_src['filename'])
+        orig_fn = self.orig_src['filename'] if self.orig_src else None
+        gbp.log.debug("Orig file: %s" % orig_fn)
 
         for n, s in sorted(self.sources.iteritems()):
             items = []
