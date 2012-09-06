@@ -496,7 +496,7 @@ def main(argv):
                                                                  version=RpmPkgPolicy.compose_full_version(spec.version),
                                                                  name=spec.name,
                                                                  vendor=options.vendor)
-            else:
+            elif spec.orig_src:
                 options.orig_prefix = spec.orig_src['prefix']
 
             # Get/build the orig tarball
