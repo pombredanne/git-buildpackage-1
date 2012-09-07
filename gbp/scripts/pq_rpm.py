@@ -183,7 +183,7 @@ def update_patch_series(repo, spec, start, end, options):
     # Filter "vanilla" patches through write_patch()
     filenames = []
     if patches:
-        gbp.log.info("Regenerating patch series in '%s'." % spec.specdir)
+        gbp.log.debug("Regenerating patch series in '%s'." % spec.specdir)
         for patch in patches:
             patch_file = write_patch(patch,
                                      spec.specdir,
