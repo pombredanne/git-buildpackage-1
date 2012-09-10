@@ -441,11 +441,6 @@ def main(argv):
         gbp.log.debug("Dumping tree '%s' to '%s'" % (options.export, dump_dir))
         if not dump_tree(repo, dump_dir, tree, options.with_submodules):
             raise GbpError
-        # Run postexport hook
-        if options.postexport:
-            RunAtCommand(options.postexport, shell=True,
-                         extra_env={'GBP_GIT_DIR': repo.git_dir,
-                                    'GBP_TMP_DIR': tmp_dir})(dir=tmp_dir)
         # Find and parse spec from dump dir to get version etc.
         if options.spec_file != 'auto':
             specfile = os.path.join(dump_dir, options.spec_file)
@@ -515,6 +510,11 @@ def main(argv):
             elif spec.orig_src:
                  prepare_upstream_tarball(repo, spec, options, source_dir)
 
+            # Run postexport hook
+            if options.postexport:
+                RunAtCommand(options.postexport, shell=True,
+                             extra_env={'GBP_GIT_DIR': repo.git_dir,
+                                        'GBP_TMP_DIR': options.tmp_dir})(dir=export_dir)
             # Do actual build
             if not options.export_only and not options.tag_only:
                 if options.prebuild:
