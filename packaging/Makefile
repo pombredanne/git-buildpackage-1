@@ -1,0 +1,16 @@
+PKG_NAME := git-buildpackage
+SPECFILE = $(addsuffix .spec, $(PKG_NAME))
+PKG_VERSION := $(shell grep '^Version: ' $(SPECFILE)|awk '{print $$2}')
+
+TARBALL := $(PKG_NAME)_$(PKG_VERSION).tar.gz
+MD5 := $(shell md5sum $(TARBALL) | sed "s/  / $(shell stat -c '%s' $(TARBALL)) /")
+
+dsc:
+	@sed  -i 's/^Version:.*/Version: $(PKG_VERSION)/' $(PKG_NAME).dsc
+	@sed  -i 's/ [a-f0-9]\+ [0-9]\+ $(PKG_NAME).*tar.*/ $(MD5)/' $(PKG_NAME).dsc
+
+tarball:
+	@cd .. && git archive --prefix $(PKG_NAME)-$(PKG_VERSION)/ HEAD \
+				| gzip > packaging/$(TARBALL)
+
+all: tarball dsc
