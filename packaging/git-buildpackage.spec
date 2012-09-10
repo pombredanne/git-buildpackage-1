@@ -1,6 +1,6 @@
 Name:       git-buildpackage
 Summary:    Build packages from git
-Version:    0.6.0git20120803
+Version:    0.6.0git20120822
 Release:    0
 Group:      Development/Tools/Building
 License:    GPLv2
