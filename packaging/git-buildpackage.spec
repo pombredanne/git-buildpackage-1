@@ -3,7 +3,7 @@
 
 Name:       git-buildpackage
 Summary:    Build packages from git
-Version:    0.6.0_git20130530
+Version:    0.6.0git20130530
 Release:    0
 Group:      Development/Tools/Building
 License:    GPLv2
