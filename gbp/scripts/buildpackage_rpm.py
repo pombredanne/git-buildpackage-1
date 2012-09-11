@@ -398,7 +398,6 @@ def main(argv):
     retval = 0
     prefix = "git-"
     cp = None
-    dump_dir = None
 
     options, gbp_args, builder_args = parse_args(argv, prefix)
     if not options:
@@ -411,6 +410,14 @@ def main(argv):
         return 1
     else:
         repo_dir = os.path.abspath(os.path.curdir)
+
+    try:
+        # Create base temporary directory for this run
+        options.tmp_dir = tempfile.mkdtemp(dir=options.tmp_dir,
+                                           prefix='buildpackage-rpm_')
+    except GbpError, err:
+        gbp.log.err(err)
+        return 1
 
     try:
         branch = repo.get_branch()
@@ -437,7 +444,7 @@ def main(argv):
 
         # Dump from git to a temporary directory:
         dump_dir = tempfile.mkdtemp(dir=options.tmp_dir,
-                                    prefix='buildpackage-rpm_')
+                                    prefix='dump_tree_')
         gbp.log.debug("Dumping tree '%s' to '%s'" % (options.export, dump_dir))
         if not dump_tree(repo, dump_dir, tree, options.with_submodules):
             raise GbpError
@@ -567,10 +574,7 @@ def main(argv):
         retval = 1
     finally:
         drop_index()
-
-    # Clean temporary dumpdir
-    if dump_dir and retval == 0:
-        shutil.rmtree(dump_dir)
+        shutil.rmtree(options.tmp_dir)
 
     if not options.tag_only:
         if options.purge and not retval and not options.export_only:
