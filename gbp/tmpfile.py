@@ -20,14 +20,19 @@ import os
 import errno
 import tempfile
 
+from gbp.errors import GbpError
+
 def mkdtemp(dir, **kwargs):
     try:
-        os.makedirs(dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
     except OSError as (e, msg):
-        if e != errno.EEXIST:
-            raise
+        raise GbpError, "Unable to create dir %s (%s)" % (dir, msg)
 
-    return os.path.abspath(tempfile.mkdtemp(dir=dir, **kwargs))
+    try:
+        return os.path.abspath(tempfile.mkdtemp(dir=dir, **kwargs))
+    except OSError as (e, msg):
+        raise GbpError, "Unable to create tmpdir under %s (%s)" % (dir, msg)
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
 
