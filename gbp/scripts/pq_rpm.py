@@ -115,14 +115,31 @@ def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
     gbp.log.info("Generating patches from git (%s..%s)" % (start, end))
     patches = []
 
+    if not repo.has_treeish(start) or not repo.has_treeish(end):
+        raise GbpError # git-ls-tree printed an error message already
+
+    start_sha1 = repo.rev_parse("%s^0" % start)
+    try:
+        end_commit = end
+        end_commit_sha1 = repo.rev_parse("%s^0" % end_commit)
+    except GitRepositoryError:
+        # In case of plain tree-ish objects, assume current branch head is the
+        # last commit
+        end_commit = "HEAD"
+        end_commit_sha1 = repo.rev_parse("%s^0" % end_commit)
+
+    if repo.get_merge_base(start_sha1, end_commit_sha1) != start_sha1:
+        raise GbpError, "Start commit '%s' not an ancestor of end " \
+                        "commit '%s'" % (start, end_commit)
     # Squash commits, if requested
     if squash_point:
         squash_sha1 = repo.rev_parse("%s^0" % squash_point)
-        start_sha1 = repo.rev_parse("%s^0" % start)
         if start_sha1 != squash_sha1:
-            rev_list = repo.get_commits(start, end)
+            rev_list = repo.get_commits(start, end_commit)
             if not squash_sha1 in rev_list:
-                raise GbpError, "Given squash point '%s' not found in the history of end tree-ish" % squash_point
+                raise GbpError, "Given squash point '%s' not found in the " \
+                                "history of end commit '%s'" % \
+                                (squash_point, end_commit)
             # Shorten SHA1s
             squash_sha1 = repo.rev_parse(squash_sha1, short=7)
             start_sha1 = repo.rev_parse(start_sha1, short=7)
@@ -140,13 +157,15 @@ def generate_git_patches(repo, start, squash_point, end, squash_diff_name,
             start = squash_sha1
 
     # Generate patches
-    if repo.get_obj_type(end) in ['tag', 'commit']:
-        patches.extend(repo.format_patches(start, end, outdir))
-    else:
-        gbp.log.info("Repository object '%s' is neither tag nor commit, only generating a diff" % end)
-        diff_filename = os.path.join(outdir, '%s.diff' % end)
-        write_diff_file(repo, start, end, diff_filename)
-        patches.append(diff_filename)
+    patches.extend(repo.format_patches(start, end_commit, outdir))
+    # Generate diff to the tree-ish object
+    if end_commit != end:
+        diff_filename = '%s.diff' % end
+        gbp.log.info("Generating '%s' (%s..%s)" % \
+                     (diff_filename, end_commit, end))
+        diff_filepath = os.path.join(outdir, diff_filename)
+        write_diff_file(repo, end_commit, end, diff_filepath)
+        patches.append(diff_filepath)
 
     return patches
 
