@@ -487,6 +487,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                        'rpmbuild-buildrootdir'  : 'BUILDROOT',
                        'patch-export'           : 'False',
                        'patch-export-ignore-regex'  : '^GBP: patch-export-ignore',
+                       'patch-export-ignore-path'   : '',
                        'patch-export-compress'  : '0',
                        'patch-export-squash-until'  : '',
                        'pristine-tarball-name'  : 'auto',
@@ -512,6 +513,9 @@ class GbpOptionParserRpm(GbpOptionParser):
                         "Create patches between upstream and export-treeish, default is '%(patch-export)s'",
                    'patch-export-ignore-regex':
                         "Don't create patches from commits whose message matches given regex, default is '%(patch-export-ignore-regex)s'",
+                   'patch-export-ignore-path':
+                        ("Exclude changes to path(s) matching regex, default "
+                        "is '%(patch-export-ignore-path)s'"),
                    'patch-export-compress':
                         "Compress (auto-generated) patches larger than given number of bytes, 0 never compresses, default is '%(patch-export-compress)s'",
                    'patch-export-squash-until':
