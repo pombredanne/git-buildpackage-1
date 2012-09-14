@@ -66,6 +66,22 @@ def pq_branch_base(pq_branch):
         return pq_branch[len(PQ_BRANCH_PREFIX):]
 
 
+def patch_path_filter(file_status, exclude_regex=None):
+    """
+    Create patch include paths, i.e. a "negation" of the exclude paths.
+    """
+    if exclude_regex:
+        include_paths = []
+        for fnlist in file_status.values():
+            for fn in fnlist:
+                if not re.match(exclude_regex, fn):
+                    include_paths.append(fn)
+    else:
+        include_paths = ['.']
+
+    return include_paths
+
+
 def write_patch_file(filename, repo, commit_info, diff):
     """Write patch file"""
     if not diff:
@@ -95,7 +111,8 @@ def write_patch_file(filename, repo, commit_info, diff):
     return filename
 
 
-def format_patch(outdir, repo, commit, patch_num, topic_regex=None):
+def format_patch(outdir, repo, commit, patch_num, topic_regex=None,
+                 path_exclude_regex=None):
     """Create patch of a single commit"""
     info = repo.get_commit_info(commit)
 
@@ -122,10 +139,16 @@ def format_patch(outdir, repo, commit, patch_num, topic_regex=None):
     filename = filename[:64-len(suffix)]
     filename = os.path.join(outdir, filename) + suffix
 
+    # Determine files to include
+    paths = patch_path_filter(info['files'], path_exclude_regex)
+
     # Finally, create the patch
-    diff = repo.diff('%s^!' % commit, stat=80, summary=True)
-    write_patch_file(filename, repo, info, diff)
-    return filename
+    if paths:
+        diff = repo.diff('%s^!' % commit, paths=paths, stat=80, summary=True)
+                         extra_opts=['--stat', '--summary', '-p'])
+        write_patch_file(filename, repo, info, diff)
+        return filename
+    return None
 
 
 def get_maintainer_from_control(repo):
