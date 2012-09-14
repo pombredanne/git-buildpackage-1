@@ -418,6 +418,21 @@ def test_get_commit_info():
     defaultdict(<type 'list'>, {'M': ['testfile']})
     """
 
+def test_diff_status():
+    """
+    Methods tested:
+        - L{gbp.git.GitRepository.diff_status}
+
+    >>> import gbp.git
+    >>> repo = gbp.git.GitRepository(repo_dir)
+    >>> repo.diff_status("HEAD", "HEAD")
+    defaultdict(<type 'list'>, {})
+    >>> repo.diff_status("HEAD~1", "HEAD")
+    defaultdict(<type 'list'>, {'M': ['testfile']})
+    """
+
+
+
 def test_mirror_clone():
     """
     Mirror a repository
