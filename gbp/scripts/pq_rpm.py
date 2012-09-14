@@ -56,12 +56,12 @@ def compress_patches(patches, compress_size=0):
     return ret_patches
 
 
-def write_diff_file(repo, diff_filename, start, end):
+def write_diff_file(repo, diff_filename, start, end, paths=[]):
     """
     Write diff between two tree-ishes into a file
     """
     try:
-        diff = repo.diff(start, end)
+        diff = repo.diff(start, end, paths)
         if diff:
             diff_file = open(diff_filename, 'w+')
             diff_file.writelines(diff)
@@ -116,6 +116,22 @@ def patch_fn_filter(commit_info, patch_number=None, ignore_regex=None,
     return filename
 
 
+def patch_path_filter(file_status, exclude_regex=None):
+    """
+    Create patch include paths, i.e. a "negation" of the exclude paths.
+    """
+    if exclude_regex:
+        include_paths = []
+        for fnlist in file_status.values():
+            for fn in fnlist:
+                if not re.match(exclude_regex, fn):
+                    include_paths.append(fn)
+    else:
+        include_paths = ['.']
+
+    return include_paths
+
+
 def generate_patches(repo, start, squash_point, end, squash_diff_name,
                      outdir, options):
     """
@@ -158,12 +174,17 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
             else:
                 diff_filename = '%s-to-%s.diff' % (start_sha1, squash_sha1)
 
-            gbp.log.info("Squashing commits %s..%s into one monolithic "\
-                         "'%s'" % (start_sha1, squash_sha1, diff_filename))
-            diff_filepath = os.path.join(outdir, diff_filename)
-            if write_diff_file(repo, diff_filepath, start_sha1, squash_sha1):
-                patches.append(diff_filepath)
-            start = squash_sha1
+            file_status = repo.diff_status(start_sha1, squash_sha1)
+            paths = patch_path_filter(file_status,
+                                      options.patch_export_ignore_path)
+            if paths:
+                gbp.log.info("Squashing commits %s..%s into one monolithic "\
+                             "'%s'" % (start_sha1, squash_sha1, diff_filename))
+                diff_filepath = os.path.join(outdir, diff_filename)
+                if write_diff_file(repo, diff_filepath, start_sha1,
+                                   squash_sha1, paths):
+                    patches.append(diff_filepath)
+                start = squash_sha1
 
     # Generate patches
     patch_num = 1 if options.patch_numbers else None
@@ -171,11 +192,13 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
         info = repo.get_commit_info(commit)
         patch_fn = patch_fn_filter(info, patch_num,
                                    options.patch_export_ignore_regex)
-        if patch_fn:
+        paths = patch_path_filter(info['files'],
+                                  options.patch_export_ignore_path)
+        if patch_fn and paths:
             patch_fn = repo.format_patch(commit,
                                          os.path.join(outdir, patch_fn),
-                                         filter_fn=patch_content_filter,
-                                         signature=False)
+                                         signature=False, paths=paths,
+                                         filter_fn=patch_content_filter)
             if patch_fn:
                 patches.append(patch_fn)
             if options.patch_numbers:
@@ -183,12 +206,16 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
 
     # Generate diff to the tree-ish object
     if end_commit != end:
-        diff_filename = '%s.diff' % end
-        gbp.log.info("Generating '%s' (%s..%s)" % \
-                     (diff_filename, end_commit, end))
-        diff_filepath = os.path.join(outdir, diff_filename)
-        if write_diff_file(repo, diff_filepath, end_commit, end):
-            patches.append(diff_filepath)
+        file_status = repo.diff_status(end_commit, end)
+        paths = patch_path_filter(file_status,
+                                  options.patch_export_ignore_path)
+        if paths:
+            diff_filename = '%s.diff' % end
+            gbp.log.info("Generating '%s' (%s..%s)" % \
+                         (diff_filename, end_commit, end))
+            diff_filepath = os.path.join(outdir, diff_filename)
+            if write_diff_file(repo, diff_filepath, end_commit, end, paths):
+                patches.append(diff_filepath)
 
     # Compress
     patches = compress_patches(patches, options.patch_export_compress)
@@ -468,6 +495,7 @@ def main(argv):
     parser.add_config_file_option("patch-export-compress", dest="patch_export_compress")
     parser.add_config_file_option("patch-export-squash-until", dest="patch_export_squash_until")
     parser.add_config_file_option("patch-export-ignore-regex", dest="patch_export_ignore_regex")
+    parser.add_config_file_option("patch-export-ignore-path", dest="patch_export_ignore_path")
 
     (options, args) = parser.parse_args(argv)
     gbp.log.setup(options.color, options.verbose)
