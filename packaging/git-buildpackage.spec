@@ -10,7 +10,11 @@ Source0:    %{name}_%{version}.tar.gz
 # >> gbp-patch-tags         # auto-added by gbp
 # << gbp-patch-tags         # auto-added by gbp
 Requires:   %{name}-common = %{version}-%{release}
+%if 0%{?fedora}
+Requires:   dpkg-devel
+%else
 Requires:   dpkg
+%endif
 BuildRequires:  python
 BuildRequires:  python-setuptools
 BuildRequires:  docbook-utils
