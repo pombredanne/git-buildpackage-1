@@ -20,6 +20,7 @@
 
 import os, os.path
 import pipes
+import subprocess
 import shutil
 import gbp.tmpfile as tempfile
 from gbp.command_wrappers import (CatenateTarArchive, CatenateZipArchive)
@@ -85,26 +86,32 @@ def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
         shutil.rmtree(tempdir)
 
 
+def compress_filter(f_in, f_out, comp_type, comp_opts):
+    cmd = [comp_type] + comp_opts
+    p_filter = subprocess.Popen(cmd,
+                                stdin=f_in,
+                                stdout=f_out)
+    return p_filter.wait()
+
+
+
 def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level, comp_opts, format='tar'):
     """
     Create an archive without submodules
 
     Exception handling is left to the caller.
     """
-    try:
-        filter_cmd = []
-        if comp_type:
-            filter_cmd = [comp_type, '--stdout', '-%s' % comp_level]
-            if comp_opts:
-                filter_cmd.extend(comp_opts)
+    filter_fn = None
+    filter_args = {}
+    if comp_type:
+        filter_fn = compress_filter
+        filter_args = {'comp_type': comp_type,
+                       'comp_opts': ['--stdout', '-%s' % comp_level]}
+        if comp_opts:
+            filter_args['comp_opts'].extend(comp_opts)
 
-        repo.archive(format=format,
-                     prefix='%s/' % prefix,
-                     output=output,
-                     treeish=treeish,
-                     filter_cmd=filter_cmd)
-    except GitRepositoryError:
-        raise
+    repo.archive(format=format, prefix='%s/' % prefix, output=output,
+                 treeish=treeish, filter_fn=filter_fn, filter_args=filter_args)
 
 
 #{ Functions to handle export-dir

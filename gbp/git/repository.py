@@ -1502,7 +1502,8 @@ class GitRepository(object):
         return result
 #}
 
-    def archive(self, format, prefix, output, treeish, filter_cmd=[]):
+    def archive(self, format, prefix, output, treeish, filter_fn=None,
+                filter_args={}):
         """
         Create an archive from a treeish
 
@@ -1514,43 +1515,24 @@ class GitRepository(object):
         @type output: C{str}
         @param treeish: the treeish to create the archive from
         @type treeish: C{str}
-        @param filter_cmd: an extra command whom to pipe git-archive output
-        @type filter_cmd: C{list} of C{str}
+        @param filter_fn: function to filter the output of git-archive
+        @type filter_fn: C{function}
+        @param filter_args: arguments to pass to the filter fn
+        @type filter_args: C{dict}
         """
-        git_cmd = ['git', 'archive',
-                   '--format=%s' % format, '--prefix=%s' % prefix, treeish]
-        log.debug("%s | %s > %s" % \
-                  (" ".join(git_cmd), " ".join(filter_cmd), output))
-        try:
-            f_out = file(output, 'w')
-            if filter_cmd:
-                p_git = subprocess.Popen(git_cmd,
-                                         stdout=subprocess.PIPE,
-                                         cwd=self.path)
-                p_filter = subprocess.Popen(filter_cmd,
-                                            stdin=p_git.stdout,
-                                            stdout=f_out,
-                                            cwd=self.path)
-                p_git.stdout.close()
-                p_filter.communicate()
-                filter_ret = p_filter.wait()
-            else:
-                p_git = subprocess.Popen(git_cmd,
-                                         stdout=f_out,
-                                         cwd=self.path)
-                p_git.communicate()
-                filter_ret = 0
+        args = GitArgs('--format=%s' % format, '--prefix=%s' % prefix, treeish)
 
-            git_ret = p_git.wait()
+        try:
+            with open(output, 'w') as f_out:
+                dummy, stderr, ret = self._git_inout('archive', args.args,
+                                                     output_f=f_out,
+                                                     filter_fn=filter_fn,
+                                                     filter_kwargs=filter_args)
         except IOError, err:
             raise GitRepositoryError("Unable to archive: %s" % err)
-        except OSError, err:
-            raise GitRepositoryError("Unable to archive, command failed: %s" % err)
-
-        if git_ret:
-            raise GitRepositoryError("Unable to archive %s, git-archive failed: %s" % treeish)
-        if filter_ret:
-            raise GitRepositoryError("Unable to archive %s, filter command failed: %s" % (treeish, filter_ret))
+        if ret:
+            raise GitRepositoryError("Unable to archive %s, git-archive "\
+                                     "failed" % treeish)
 
     def collect_garbage(self, auto=False):
         """
