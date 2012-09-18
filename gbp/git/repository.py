@@ -129,9 +129,11 @@ class GitRepository(object):
         return output, popen.returncode
 
     def _git_inout(self, command, args, input=None, extra_env=None, cwd=None,
-                   capture_stderr=False):
+                   capture_stderr=False, output_f=None, filter_fn=None,
+                   filter_kwargs={}):
         """
-        Run a git command with input and return output
+        Run a git command with input and return output. Alternatively write
+        the output to a file.
 
         @param command: git command to run
         @type command: C{str}
@@ -143,30 +145,51 @@ class GitRepository(object):
         @type extra_env: C{dict}
         @param capture_stderr: whether to capture stderr
         @type capture_stderr: C{bool}
+        @param output_f: file object where to write git output
+        @type output_f: C{file}
+        @param filter_fn: function throught which to filter the git output
+        @type filter_fn: C{function}
+        @param filter_kwargs: arguments to pass to the filter fn
+        @type filter_kwargs: C{dict}
         @return: stdout, stderr, return code
         @rtype: C{tuple} of C{str}, C{str}, C{int}
         """
         if not cwd:
             cwd = self.path
-        return self.__git_inout(command, args, input, extra_env, cwd, capture_stderr)
+        return self.__git_inout(command, args, input, extra_env, cwd,
+                                capture_stderr, output_f, filter_fn,
+                                filter_kwargs)
 
     @classmethod
-    def __git_inout(cls, command, args, input, extra_env, cwd, capture_stderr):
+    def __git_inout(cls, command, args, input, extra_env, cwd, capture_stderr,
+                    output_f=None, filter_fn=None, filter_kwargs={}):
         """
         As _git_inout but can be used without an instance
         """
-        cmd = ['git', command] + args
         env = cls.__build_env(extra_env)
-        stderr_arg = subprocess.PIPE if capture_stderr else None
+        cmd = ['git', command] + args
+        debug_msg = " ".join(cmd)
+        if output_f:
+            debug_msg += " > %s" % output_f.name
+        if filter_fn:
+            debug_msg += ", filtering through %s()" % filter_fn.__name__
+        log.debug(debug_msg)
 
-        log.debug(cmd)
+        if not output_f:
+            output_f = subprocess.PIPE
+        stdout_arg = subprocess.PIPE if filter_fn else output_f
+        stderr_arg = subprocess.PIPE if capture_stderr else None
         popen = subprocess.Popen(cmd,
                                  stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
+                                 stdout=stdout_arg,
                                  stderr=stderr_arg,
                                  env=env,
                                  cwd=cwd)
+        if filter_fn:
+            if filter_fn(popen.stdout, output_f, **filter_kwargs):
+                raise GitRepositoryError("Filtering git output in failed!")
         (stdout, stderr) = popen.communicate(input)
+
         return stdout, stderr, popen.returncode
 
     def _git_command(self, command, args=[], extra_env=None):
