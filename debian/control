@@ -16,7 +16,7 @@ X-Python-Version: >= 2.6
 
 Package: git-buildpackage-common
 Architecture: all
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, git, python-rpm
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, git
 Recommends: pristine-tar (>= 0.5)
 Suggests: python-notify, unzip
 Description: Suite to help with packaging in Git repositories
