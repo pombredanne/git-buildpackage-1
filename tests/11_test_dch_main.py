@@ -12,7 +12,7 @@ import os
 import re
 
 # Snapshot of version 0.9-2~1
-snap_header_0_9 = r'^test-package\s\(0.9-2~1\.gbp([0-9a-f]{6})\)\sUNRELEASED;\surgency=low'
+snap_header_0_9 = r'^test-package\s\(0.9(-2|-1ubuntu1)~1\.gbp([0-9a-f]{6})\)\sUNRELEASED;\surgency=low'
 # Snapshot of version 1.0-1~1
 snap_header_1 = r'^test-package\s\(1.0-1~1\.gbp([0-9a-f]{6})\)\sUNRELEASED;\surgency=low'
 # Snapshot of version 1.0-1~2
@@ -71,7 +71,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (1.0-1) unstable; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_new_upstream_version_with_auto(self):
@@ -168,7 +168,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (1.0-1) unstable; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_new_upstream_version_with_auto_snapshot(self):
@@ -202,7 +202,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (0.9-2) UNRELEASED; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) UNRELEASED; urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_release(self):
@@ -214,7 +214,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (0.9-2) unstable; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_auto(self):
@@ -226,7 +226,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (0.9-2) UNRELEASED; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) UNRELEASED; urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_snapshot(self):
@@ -240,8 +240,8 @@ class TestScriptDch(DebianGitTestRepo):
         lines = file("debian/changelog").readlines()
         header = re.search(snap_header_0_9, lines[0])
         self.assertIsNotNone(header)
-        self.assertEqual(header.lastindex, 1)
-        self.assertIsNotNone(re.search(snap_mark + header.group(1), lines[2]))
+        self.assertEqual(header.lastindex, 2)
+        self.assertIsNotNone(re.search(snap_mark + header.group(2), lines[2]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_auto_release(self):
@@ -254,11 +254,11 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertEqual("test-package (0.9-2) unstable; urgency=low\n", lines[0])
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_auto_snapshot(self):
-        """Test dch.py like git-dch script does: increment debian version - auto - snashot mode"""
+        """Test dch.py like git-dch script does: increment debian version - auto - snapshot mode"""
         options = self.options[:]
         options.append("--auto")
         options.append("--snapshot")
@@ -269,6 +269,6 @@ class TestScriptDch(DebianGitTestRepo):
         lines = file("debian/changelog").readlines()
         header = re.search(snap_header_0_9, lines[0])
         self.assertIsNotNone(header)
-        self.assertEqual(header.lastindex, 1)
-        self.assertIsNotNone(re.search(snap_mark + header.group(1), lines[2]))
+        self.assertEqual(header.lastindex, 2)
+        self.assertIsNotNone(re.search(snap_mark + header.group(2), lines[2]))
         self.assertIn("""  * added debian/control\n""", lines)
