@@ -36,7 +36,7 @@ def is_pq_branch(branch, options):
     is branch a patch-queue branch?
 
     >>> from optparse import OptionParser
-    >>> (opts, args) = OptionParser().parse_args()
+    >>> (opts, args) = OptionParser().parse_args([])
     >>> is_pq_branch("foo", opts)
     False
     >>> is_pq_branch("patch-queue/foo", opts)
@@ -70,7 +70,7 @@ def pq_branch_name(branch, options):
     get the patch queue branch corresponding to branch
 
     >>> from optparse import OptionParser
-    >>> (opts, args) = OptionParser().parse_args()
+    >>> (opts, args) = OptionParser().parse_args([])
     >>> pq_branch_name("patch-queue/master", opts)
     >>> pq_branch_name("foo", opts)
     'patch-queue/foo'
@@ -96,7 +96,7 @@ def pq_branch_base(pq_branch, options):
     '%(branch)s' key.
 
     >>> from optparse import OptionParser
-    >>> (opts, args) = OptionParser().parse_args()
+    >>> (opts, args) = OptionParser().parse_args([])
     >>> opts.packaging_branch = "packaging"
     >>> pq_branch_base("patch-queue/master", opts)
     'master'
