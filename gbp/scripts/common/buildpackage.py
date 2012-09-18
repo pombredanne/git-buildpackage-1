@@ -74,7 +74,9 @@ def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
 
         # compress the output
         if comp_type:
-            ret = os.system("%s --stdout -%s %s %s > %s" % (comp_type, comp_level, comp_opts, main_archive, output))
+            ret = os.system("%s --stdout -%s %s %s > %s" % \
+                           (comp_type, comp_level, " ".join(comp_opts),
+                            main_archive, output))
             if ret:
                 raise GbpError("Error creating %s: %d" % (output, ret))
         else:
@@ -94,7 +96,7 @@ def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level, com
         if comp_type:
             filter_cmd = [comp_type, '--stdout', '-%s' % comp_level]
             if comp_opts:
-                filter_cmd.append(comp_opts)
+                filter_cmd.extend(comp_opts)
 
         repo.archive(format=format,
                      prefix='%s/' % prefix,
