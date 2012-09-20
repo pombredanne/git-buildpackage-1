@@ -15,6 +15,6 @@ $(TARBALL):
 		| gzip > $(CURDIR)/$(TARBALL)
 
 clean:
-	@rm -f $(PKG_NAME)*tar*
+	@rm -f $(PKG_NAME)*.tar.gz
 
-all: dsc
+all: clean dsc
