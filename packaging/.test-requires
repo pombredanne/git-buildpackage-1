@@ -1,0 +1,4 @@
+Fedora-16:tar pristine-tar unzip gnupg man-db
+Fedora-17:tar pristine-tar unzip gnupg man-db
+openSUSE-12.1:tar pristine-tar unzip man perl-TimeDate
+openSUSE-12.2:tar pristine-tar unzip man perl-TimeDate
