@@ -477,6 +477,7 @@ def main(argv):
             setup_builder(options, builder_args)
 
             # Generate patches, if requested
+            if options.patch_export and not is_native(repo, options):
                 export_patches(repo, spec, tree, options)
 
             # Prepare final export dirs
