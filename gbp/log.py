@@ -27,7 +27,7 @@ class Logger(object):
     DEBUG, INFO, WARNING, ERROR = range(4)
 
     COLOR_NONE = 0
-    COLOR_BLACK, COLOR_RED, COLOR_GREEN = range(30,33)
+    COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW = range(30,34)
 
     COLOR_SEQ = "\033[%dm"
     BOLD_SEQ = "\033[1m"
@@ -41,7 +41,7 @@ class Logger(object):
     def __init__(self):
         self.levels = { self.DEBUG:   [ 'debug', self.COLOR_GREEN ],
                         self.INFO:    [ 'info',  self.COLOR_GREEN ],
-                        self.WARNING: [ 'warn',  self.COLOR_RED   ],
+                        self.WARNING: [ 'warning',  self.COLOR_YELLOW   ],
                         self.ERROR:   [ 'error', self.COLOR_RED   ], }
         self.color = False
         self.level = self.INFO
