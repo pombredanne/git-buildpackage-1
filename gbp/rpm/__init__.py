@@ -48,6 +48,9 @@ class NoSpecError(Exception):
     """no changelog found"""
     pass
 
+class MacroExpandError(Exception):
+    pass
+
 
 class RpmUpstreamSource(UpstreamSource):
     """Upstream source class for Debian"""
@@ -224,8 +227,7 @@ class SpecFile(object):
 
         if matchobj.group(2) in macro_dict:
             return macro_dict[matchobj.group(2)]
-        gbp.log.debug("Could not expanded macro '%s'" % matchobj.group(0))
-        return matchobj.group(0)
+        raise MacroExpandError("Unknown macro '%s'" % matchobj.group(0))
 
 
     def macro_expand(self, text):
@@ -530,16 +532,24 @@ class SpecFile(object):
 
         # Refine our guess about the prefix
         if orig_num != None:
-            setup_opts = self.sources[orig_num]['setup_options']
+            orig = self.sources[orig_num]
+            setup_opts = orig['setup_options']
             if setup_opts:
                 if setup_opts.create_dir:
-                    self.sources[orig_num]['prefix'] = ''
+                    orig['prefix'] = ''
                 elif setup_opts.name:
-                    self.sources[orig_num]['prefix'] = self.macro_expand(setup_opts.name) + '/'
+                    try:
+                        orig['prefix'] = self.macro_expand(setup_opts.name) + \
+                                         '/'
+                    except MacroExpandError as err:
+                        gbp.log.warn("Couldn't determine prefix from %%setup "\
+                                     "macro (%s). Using filename base as a "  \
+                                     "fallback" % err)
+                        orig['prefix'] = orig['filename_base'] + '/'
                 else:
                     # RPM default
-                    self.sources[orig_num]['prefix'] = "%s-%s/" % (self.name,
-                                                        self.upstreamversion)
+                    orig['prefix'] = "%s-%s/" % (self.name,
+                                                 self.upstreamversion)
         return orig_num
 
 
