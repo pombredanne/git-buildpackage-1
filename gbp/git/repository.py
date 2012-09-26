@@ -1425,7 +1425,7 @@ class GitRepository(object):
         args = GitArgs('-k', '--stdout')
         args.add_cond(not signature, '--no-signature')
         args.add('%s^!' % commit)
-        args.add_cond(paths, paths)
+        args.add_cond(paths, ['--'] + paths)
 
         try:
             output_dir = os.path.dirname(output)
