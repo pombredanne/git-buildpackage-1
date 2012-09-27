@@ -203,26 +203,6 @@ class GitRepository(object):
             raise GitRepositoryError("Error running git %s: %s" %
                                      (command, excobj))
 
-    def _get_git_version(self):
-        """
-        Return the version of the git suite (i.e. "git client commands")
-        that is installed on the OS.
-
-        The version is not a property of the git repository itself, but the
-        information it is needed in some methods of GitRepository() in order
-        to call git subcommands with correct arguments.
-
-        @return: git version
-        @rtype: C{str}
-        """
-        out = self._git_inout("version", [])
-        # effectively "lstrip" everything until the first number
-        version_re = re.compile(r'^[^0-9]*(?P<version>.*)$')
-        m = version_re.match(out[0])
-        if m:
-            return m.group('version')
-        return None
-
     def _cmd_has_feature(self, command, feature):
         """
         Check if the git command has certain feature enabled.
@@ -431,10 +411,11 @@ class GitRepository(object):
         """
         args = GitArgs()
         args.add_cond(verbose, '--summary', '--no-summary')
-        if (self._get_git_version() >= '1.7.8'):
+        if (self._cmd_has_feature('merge', 'edit')):
             args.add_cond(edit, '--edit', '--no-edit')
         else:
-            log.debug("edit/no-edit option for git-merge not supported by your git suite version")
+            log.debug("Your git suite doesn't support --edit/--no-edit " \
+                      "option for git-merge ")
         args.add(commit)
         self._git_command("merge", args.args)
 
