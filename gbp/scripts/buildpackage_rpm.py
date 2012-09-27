@@ -244,7 +244,7 @@ def setup_builder(options, builder_args):
                              '--define "_rpmdir %%_topdir/%s"' % options.rpm_dir,
                              '--define "_sourcedir %%_topdir/%s"' % options.source_dir,
                              '--define "_specdir %%_topdir/%s"' % options.spec_dir,
-                             '--define "_srpmdir %%_topdir/%s"' % options.srpm_dir,
+                             '--define "_srcrpmdir %%_topdir/%s"' % options.srpm_dir,
                              '--define "_buildrootdir %%_topdir/%s"' % options.buildroot_dir])
     elif options.builder.startswith('osc'):
         builder_args.insert(0, 'build')
