@@ -1,3 +1,3 @@
-Fedora-16:tar pristine-tar unzip gnupg
-Fedora-17:tar pristine-tar unzip gnupg
-openSUSE-12.1:tar pristine-tar unzip
+Fedora-16:tar pristine-tar unzip gnupg man-db
+Fedora-17:tar pristine-tar unzip gnupg man-db
+openSUSE-12.1:tar pristine-tar unzip man
