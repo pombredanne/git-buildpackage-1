@@ -143,15 +143,18 @@ class SpecFile(object):
                                             "ExclusiveArch", "ExclusiveOS",
                                             "BuildArch")):
         with tempfile.NamedTemporaryFile(prefix='gbp') as temp:
-            with open(specfile) as specf:
-                with open(temp.name, 'w') as filtered:
-                    filtered.writelines(line for line in specf \
-                        if line.split(":")[0].strip() not in skip_tags)
-                    filtered.flush()
-                    try:
-                        self.specinfo = rpm.spec(temp.name)
-                    except ValueError, err:
-                        raise GbpError, "RPM error while parsing spec: %s" % err
+            try:
+                with open(specfile) as specf:
+                    with open(temp.name, 'w') as filtered:
+                        filtered.writelines(line for line in specf \
+                            if line.split(":")[0].strip() not in skip_tags)
+                        filtered.flush()
+                        try:
+                            self.specinfo = rpm.spec(temp.name)
+                        except ValueError as err:
+                            raise GbpError("RPM error while parsing spec: %s" % err)
+            except IOError as err:
+                raise NoSpecError("Unable to read spec file: %s" % err)
 
         self.name = self.specinfo.packages[0].header[rpm.RPMTAG_NAME]
         self.upstreamversion = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
