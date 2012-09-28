@@ -238,8 +238,9 @@ def is_native(repo, options):
 def setup_builder(options, builder_args):
     """setup everything to use git-pbuilder"""
     if options.builder.startswith('rpmbuild'):
-        builder_args.extend(['-ba',
-                             '--define "_topdir %s"' % os.path.abspath(options.export_dir),
+        if len(builder_args) == 0:
+            builder_args.append('-ba')
+        builder_args.extend(['--define "_topdir %s"' % os.path.abspath(options.export_dir),
                              '--define "_builddir %%_topdir/%s"' % options.build_dir,
                              '--define "_rpmdir %%_topdir/%s"' % options.rpm_dir,
                              '--define "_sourcedir %%_topdir/%s"' % options.source_dir,

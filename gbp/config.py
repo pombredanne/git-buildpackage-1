@@ -459,7 +459,7 @@ class GbpOptionParserRpm(GbpOptionParser):
     defaults = dict(GbpOptionParser.defaults)
     defaults.update( {
                        'vendor'                 : 'vendor',
-                       'builder'                : 'rpmbuild -ba',
+                       'builder'                : 'rpmbuild',
                        'cleaner'                : '',
                        'packaging-dir'          : '',
                        'packaging-tag'          : '%(vendor)s/%(version)s',
