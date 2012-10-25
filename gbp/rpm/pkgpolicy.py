@@ -30,10 +30,9 @@ class RpmPkgPolicy(PkgPolicy):
     # Special rpmlib python module for GBP (only)
     python_rpmlib_module_name = "rpmlibgbp"
 
-    # From http://wiki.meego.com/Packaging/Guidelines#Package_Naming
-    # "Do NOT use an underscore '_', a plus '+', or a period '.' as a delimiter"
+    # "Do NOT use an underscore a plus '+', or a period '.' as a delimiter"
     # Additionally, name must begin with an alphanumeric
-    packagename_re = re.compile("^[a-zA-Z0-9][a-zA-Z0-9\-]+$")
+    packagename_re = re.compile("^[a-zA-Z0-9][a-zA-Z0-9\-_]+$")
     packagename_msg = """Package names must be at least two characters long, start with an
     alphanumeric and can only contain alphanumerics or minus signs (-)"""
 
