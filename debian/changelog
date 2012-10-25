@@ -1,4 +1,4 @@
-git-buildpackage (0.6.0git20120822) unstable; urgency=low
+git-buildpackage (0.6.0git20120822-tizen20121025) unstable; urgency=low
 
   [ Guido Günther ]
   * [e05bfb9] dch: Fix error reporting on parsing errors
