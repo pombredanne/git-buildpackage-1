@@ -1,4 +1,4 @@
-git-buildpackage (0.6.0git20130329) unstable; urgency=low
+git-buildpackage (0.6.0git20130329-tizen20130403) unstable; urgency=low
 
   [ Guido Günther ]
   * [703da99] Remove unused imports
