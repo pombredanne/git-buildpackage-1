@@ -1,4 +1,4 @@
-git-buildpackage (0.6.0git20130530) unstable; urgency=low
+git-buildpackage (0.6.0git20130530-tizen20130531) unstable; urgency=low
 
   [ Guido Günther ]
   * [f4acd7a] GitRepository: Use LC_ALL=C when checking features.
