@@ -1,6 +1,6 @@
 Format: 1.0
 Source: git-buildpackage
-Version: 0.6.0git20121124
+Version: 0.6.0git20121124-tizen20130308
 Binary: git-buildpackage-common, git-buildpackage, git-buildpackage-rpm
 Maintainer: Adrian Schroeter <adrian@suse.de>
 Architecture: all
