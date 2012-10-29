@@ -57,7 +57,7 @@ def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
         # generate each submodule's arhive and append it to the main archive
         for (subdir, commit) in repo.get_submodules(treeish):
             tarpath = [subdir, subdir[2:]][subdir.startswith("./")]
-            subrepo = GitRepository(subdir)
+            subrepo = GitRepository(os.path.join(repo.path, subdir))
 
             gbp.log.debug("Processing submodule %s (%s)" % (subdir, commit[0:8]))
             subrepo.archive(format=format,
