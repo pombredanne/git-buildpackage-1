@@ -590,7 +590,7 @@ def main(argv):
         gbp.log.err("Failed determine spec file (%s)" % err)
         retval = 1
     finally:
-        drop_index()
+        drop_index(repo)
         shutil.rmtree(options.tmp_dir)
 
     if not options.tag_only:
