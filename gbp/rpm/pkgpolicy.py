@@ -50,7 +50,23 @@ class RpmPkgPolicy(PkgPolicy):
 
     @classmethod
     def is_valid_orig_archive(cls, filename):
-        "Is this a valid orig source archive"
+        """
+        Is this a valid orig source archive
+
+        @param filename: upstream source archive filename
+        @type filename: C{str}
+        @return: true if valid upstream source archive filename
+        @rtype: C{bool}
+
+        >>> RpmPkgPolicy.is_valid_orig_archive("foo/bar_baz.tar.gz")
+        True
+        >>> RpmPkgPolicy.is_valid_orig_archive("foo.bar.tar")
+        True
+        >>> RpmPkgPolicy.is_valid_orig_archive("foo.bar")
+        False
+        >>> RpmPkgPolicy.is_valid_orig_archive("foo.gz")
+        False
+        """
         (base, arch_fmt, compression) = parse_archive_filename(filename)
         if arch_fmt:
             return True
@@ -66,6 +82,15 @@ class RpmPkgPolicy(PkgPolicy):
         @type version: C{str}
         @return: individual version components
         @rtype: C{dict}
+
+        >>> RpmPkgPolicy.split_full_version("1")
+        {'release': None, 'epoch': None, 'upstreamversion': '1'}
+        >>> RpmPkgPolicy.split_full_version("1.2.3-5.3")
+        {'release': '5.3', 'epoch': None, 'upstreamversion': '1.2.3'}
+        >>> RpmPkgPolicy.split_full_version("3:1.2.3")
+        {'release': None, 'epoch': '3', 'upstreamversion': '1.2.3'}
+        >>> RpmPkgPolicy.split_full_version("3:1-0")
+        {'release': '0', 'epoch': '3', 'upstreamversion': '1'}
         """
         epoch = None
         upstreamversion = None
@@ -93,6 +118,16 @@ class RpmPkgPolicy(PkgPolicy):
         @type evr: C{dict} of C{str}
         @return: full version
         @rtype: C{str}
+
+        >>> RpmPkgPolicy.compose_full_version({'epoch': '', 'upstreamversion': '1.0'})
+        '1.0'
+        >>> RpmPkgPolicy.compose_full_version({'epoch': '2', 'upstreamversion': '1.0', 'release': None})
+        '2:1.0'
+        >>> RpmPkgPolicy.compose_full_version({'epoch': None, 'upstreamversion': '1', 'release': '0'})
+        '1-0'
+        >>> RpmPkgPolicy.compose_full_version({'epoch': '2', 'upstreamversion': '1.0', 'release': '2.3'})
+        '2:1.0-2.3'
+        >>> RpmPkgPolicy.compose_full_version({'epoch': '2', 'upstreamversion': '', 'release': '2.3'})
         """
         if 'upstreamversion' in evr and evr['upstreamversion']:
             version = ""
