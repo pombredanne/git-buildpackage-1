@@ -218,8 +218,6 @@ def main(argv):
         # Real srpm, we need to unpack, first
         if not os.path.isdir(srpm) and not srpm.endswith(".spec"):
             src = parse_srpm(srpm)
-            if options.verbose:
-                src.debugprint()
             dirs['pkgextract'] = tempfile.mkdtemp(dir=dirs['tmp_base'],
                                                   prefix='pkgextract_')
             gbp.log.info("Extracting src rpm to '%s'" % dirs['pkgextract'])

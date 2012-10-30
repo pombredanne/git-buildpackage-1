@@ -115,17 +115,6 @@ class SrcRpmFile(object):
                           shell=True)(dir=dest_dir)
 
 
-    def debugprint(self):
-        """
-        Print info about the RPM in readable way
-        """
-        gbp.log.debug("Package %s" % self.rpmhdr[rpm.RPMTAG_NAME])
-        gbp.log.debug("Version: %s" % self.rpmhdr[rpm.RPMTAG_VERSION])
-        gbp.log.debug("Release: %s" % self.rpmhdr[rpm.RPMTAG_RELEASE])
-        if self.rpmhdr[rpm.RPMTAG_EPOCH]:
-            gbp.log.debug("Epoch: %s" % self.rpmhdr[rpm.RPMTAG_EPOCH])
-
-
 class SpecFile(object):
     """Class for parsing/modifying spec files"""
     source_re = re.compile(r'^Source(?P<srcnum>[0-9]+)?\s*:\s*(?P<name>[^\s].*[^\s])\s*$', flags=re.I)
@@ -551,31 +540,6 @@ class SpecFile(object):
                     orig['prefix'] = "%s-%s/" % (self.name,
                                                  self.upstreamversion)
         return orig_num
-
-
-    def debugprint(self):
-        """
-        Print info about the spec in readable way
-        """
-        gbp.log.debug("Name: %s" % (self.name))
-        gbp.log.debug("Version: %s" % (self.upstreamversion))
-        gbp.log.debug("Release: %s" % self.release)
-        gbp.log.debug("Epoch: %s" % self.epoch)
-        gbp.log.debug("Spec file: %s" % self.specfile)
-        orig_fn = self.orig_src['filename'] if self.orig_src else None
-        gbp.log.debug("Orig file: %s" % orig_fn)
-
-        for n, s in sorted(self.sources.iteritems()):
-            items = []
-            for k, v in s.iteritems():
-                items.append("%s: %s" % (k, v))
-            gbp.log.debug("Source %s: " % n + ",".join(items))
-
-        for n, p in sorted(self.patches.iteritems()):
-            items = []
-            for k, v in p.iteritems():
-                items.append("%s: %s" % (k, v))
-            gbp.log.debug("Patch %s: " % n + ", ".join(items))
 
 
 def parse_srpm(srpmfile):

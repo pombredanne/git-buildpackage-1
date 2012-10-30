@@ -276,7 +276,6 @@ def export_patches(repo, branch, options):
         spec = SpecFile(specfilename)
     except KeyError:
         raise GbpError, "Can't parse spec"
-    spec.debugprint()
 
     # Find upstream version
     tag_str_fields = dict(upstreamversion=spec.upstreamversion, vendor="Upstream")
@@ -378,7 +377,6 @@ def import_spec_patches(repo, branch, tries, options):
         spec = SpecFile(specfilename)
     except KeyError:
         raise GbpError, "Can't parse spec"
-    spec.debugprint()
 
     # Find upstream version
     tag_str_fields = dict(upstreamversion=spec.upstreamversion, vendor="Upstream")

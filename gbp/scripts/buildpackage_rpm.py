@@ -471,7 +471,6 @@ def main(argv):
                                       os.path.basename(repo.path) + '.spec')
         spec = rpm.SpecFile(specfile)
         gbp.log.debug("Using spec file '%s'" % specfile)
-        spec.debugprint()
 
         if not options.tag_only:
             # Setup builder opts
