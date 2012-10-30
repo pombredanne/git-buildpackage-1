@@ -80,7 +80,7 @@ class SrcRpmFile(object):
         version = dict(upstreamversion = self.rpmhdr[rpm.RPMTAG_VERSION],
                        release = self.rpmhdr[rpm.RPMTAG_RELEASE])
         if self.rpmhdr[rpm.RPMTAG_EPOCH] != None:
-            version['epoch'] = self.rpmhdr[rpm.RPMTAG_EPOCH]
+            version['epoch'] = str(self.rpmhdr[rpm.RPMTAG_EPOCH])
         return version
     version = property(_get_version)
 
@@ -156,11 +156,13 @@ class SpecFile(object):
             except IOError as err:
                 raise NoSpecError("Unable to read spec file: %s" % err)
 
-        self.name = self.specinfo.packages[0].header[rpm.RPMTAG_NAME]
-        self.upstreamversion = self.specinfo.packages[0].header[rpm.RPMTAG_VERSION]
-        self.release = self.specinfo.packages[0].header[rpm.RPMTAG_RELEASE]
-        self.epoch = self.specinfo.packages[0].header[rpm.RPMTAG_EPOCH]
-        self.packager = self.specinfo.packages[0].header[rpm.RPMTAG_PACKAGER]
+        source_header = self.specinfo.sourceHeader
+        self.name = source_header[rpm.RPMTAG_NAME]
+        self.upstreamversion = source_header[rpm.RPMTAG_VERSION]
+        self.release = source_header[rpm.RPMTAG_RELEASE]
+        self.epoch = str(source_header[rpm.RPMTAG_EPOCH]) \
+            if source_header[rpm.RPMTAG_EPOCH] != None else None
+        self.packager = source_header[rpm.RPMTAG_PACKAGER]
         self.specfile = os.path.abspath(specfile)
         self.specdir = os.path.dirname(self.specfile)
         self.patches = {}
