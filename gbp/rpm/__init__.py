@@ -53,7 +53,7 @@ class MacroExpandError(Exception):
 
 
 class RpmUpstreamSource(UpstreamSource):
-    """Upstream source class for Debian"""
+    """Upstream source class for RPM packages"""
     def __init__(self, name, unpacked=None):
         super(RpmUpstreamSource, self).__init__(name,
                                                 unpacked,
@@ -104,10 +104,6 @@ class SrcRpmFile(object):
         """
         return self.rpmhdr[rpm.RPMTAG_PACKAGER]
     packager = property(_get_packager)
-
-    def __str__(self):
-        return "<%s object %s>" % (self.__class__.__name__, self.srpmfile)
-
 
     def unpack(self, dest_dir):
         """
@@ -406,8 +402,7 @@ class SpecFile(object):
 
     def update_patches(self, patchfilenames):
         """
-        Update spec by putting autoupdate markers
-        Returns the number of lines added
+        Update spec with new patch tags and patch macros.
         """
         loc = self.parse_content()
 
