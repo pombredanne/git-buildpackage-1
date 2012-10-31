@@ -205,12 +205,16 @@ def main(argv):
 
     options, args = parse_args(argv)
 
+    if len(args) != 1:
+        gbp.log.err("Need to give exactly one package to import. Try --help.")
+        return 1
     try:
-        if len(args) != 1:
-            raise GbpError, "Need to give exactly one package to import. "\
-                            "Try --help."
         dirs['tmp_base'] = tempfile.mkdtemp(dir=options.tmp_dir,
                                             prefix='import-srpm')
+    except GbpError as err:
+        gbp.log.err(err)
+        return 1
+    try:
         srpm = args[0]
         if options.download:
             srpm = download_source(srpm, dirs)
