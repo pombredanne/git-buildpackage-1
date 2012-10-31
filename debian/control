@@ -43,7 +43,7 @@ Description: Suite to help with Debian packages in Git repositories
 
 Package: git-buildpackage-rpm
 Architecture: all
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-rpm, git-buildpackage-common (= ${binary:Version})
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-rpm, git-buildpackage-common (= ${binary:Version}), rpm2cpio
 Description: Suite to help with rpm packages in Git repositories
  This package contains the following tools:
   * git-import-srpm: import existing rpm source packages into a git
