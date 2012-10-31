@@ -1,0 +1,3 @@
+[submodule "tests/TestRpmTools/testdata"]
+	path = tests/TestRpmTools/testdata
+	url = git://github.com/marquiz/git-buildpackage-rpm-testdata.git
