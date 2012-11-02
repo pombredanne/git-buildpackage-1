@@ -118,6 +118,15 @@ class TestSpecFile(object):
         assert orig['compression'] == None
         assert orig['prefix'] == 'gbp-test-native-1.0/'
 
+    def test_spec_4(self):
+        """Test parsing of spec without orig tarball"""
+        spec_filepath = os.path.join(SPEC_DIR, 'gbp-test-native2.spec')
+        spec = SpecFile(spec_filepath)
+
+        # Test basic properties
+        assert spec.name == 'gbp-test-native2'
+        assert spec.orig_src is None
+
     def test_update_spec(self):
         """Test spec autoupdate functionality"""
         # Create temporary spec file
