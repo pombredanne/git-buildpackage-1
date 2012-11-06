@@ -82,7 +82,8 @@ def committer_from_author(author, options):
 def move_tag_stamp(repo, tag_format, tag_str_fields):
     "Move tag out of the way appending the current timestamp"
     old = repo.version_to_tag(tag_format, tag_str_fields)
-    new = "%s~%s" % (old, int(time.time()))
+    new = repo.version_to_tag('%s~%d' % (tag_format, int(time.time())),
+                              tag_str_fields)
     repo.move_tag(old, new)
 
 
