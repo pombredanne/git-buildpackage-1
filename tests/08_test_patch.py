@@ -8,7 +8,7 @@ import unittest
 from gbp.patch_series import Patch
 
 class TestPatch(unittest.TestCase):
-    data_dir = "tests/%s_data" % __module__
+    data_dir = os.path.splitext(__file__)[0] + '_data'
 
     def test_filename(self):
         """Get patch information from the filename"""

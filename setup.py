@@ -59,7 +59,7 @@ setup(name = "gbp",
                   'bin/gbp-pq-rpm',
                   'bin/git-buildpackage-rpm',
                   'bin/git-import-orig-rpm'],
-      packages = find_packages(),
+      packages = find_packages(exclude=['tests', 'tests.*']),
       data_files = [("/etc/git-buildpackage/", ["gbp.conf"]),],
       setup_requires=['nose>=0.11.1', 'coverage>=2.85'],
 )

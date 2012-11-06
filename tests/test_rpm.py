@@ -12,7 +12,7 @@ from gbp.errors import GbpError
 from gbp.rpm import (SrcRpmFile, SpecFile, parse_srpm, parse_spec, guess_spec,
                     NoSpecError)
 
-DATA_DIR = os.path.abspath(os.path.join('tests', '%s_data' % __name__))
+DATA_DIR = os.path.abspath(os.path.splitext(__file__)[0] + '_data')
 SRPM_DIR = os.path.join(DATA_DIR, 'srpms')
 SPEC_DIR = os.path.join(DATA_DIR, 'specs')
 
