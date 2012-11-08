@@ -1487,7 +1487,8 @@ class GitRepository(object):
         @rtype: C{str}
         """
         options = GitArgs(obj1, obj2)
-        options.add_cond(paths, ['--'] + paths)
+        if paths:
+            options.add('--', paths)
         output, stderr, ret = self._git_inout('diff', options.args)
         if ret:
             raise GitRepositoryError("Git diff failed")
