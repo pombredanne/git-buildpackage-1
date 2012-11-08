@@ -223,17 +223,12 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
     return patches
 
 
-def update_patch_series(repo, spec, start, end, options):
+def rm_patch_files(spec):
     """
-    Export patches to packaging directory and update spec file accordingly.
+    Delete the patch files listed in the spec files. Doesn't delete patches
+    marked as not maintained by gbp.
     """
-    tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='patchexport_')
-    # Create "vanilla" patches
-    squash = options.patch_export_squash_until.split(':', 1)
-    squash_point = squash[0]
-    squash_name = squash[1] if len(squash) > 1 else ""
-
-    # Remove all old patches from packaging dir
+    # Remove all old patches from the spec dir
     for n, p in spec.patches.iteritems():
         if p['autoupdate']:
             f = os.path.join(spec.specdir, p['filename'])
@@ -246,6 +241,19 @@ def update_patch_series(repo, spec, start, end, options):
                 else:
                     gbp.log.debug("%s does not exist." % f)
 
+
+def update_patch_series(repo, spec, start, end, options):
+    """
+    Export patches to packaging directory and update spec file accordingly.
+    """
+    tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='patchexport_')
+    # Create "vanilla" patches
+    squash = options.patch_export_squash_until.split(':', 1)
+    squash_point = squash[0]
+    squash_name = squash[1] if len(squash) > 1 else ""
+
+    # Unlink old patch files and generate new patches
+    rm_patch_files(spec)
     patches = generate_patches(repo, start, squash_point, end, squash_name,
                                spec.specdir, options)
 

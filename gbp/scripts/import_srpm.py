@@ -36,7 +36,7 @@ from gbp.config import (GbpOptionParserRpm, GbpOptionGroup,
                        no_upstream_branch_msg)
 from gbp.errors import GbpError
 import gbp.log
-from gbp.scripts.pq_rpm import safe_patches
+from gbp.scripts.pq_rpm import safe_patches, rm_patch_files
 from gbp.scripts.common.pq import apply_and_commit_patch
 
 no_packaging_branch_msg = """
@@ -45,6 +45,12 @@ file:///usr/share/doc/git-buildpackage/manual-html/gbp.import.html#GBP.IMPORT.CO
 on howto create it otherwise use --packaging-branch to specify it.
 """
 
+PATCH_AUTODELETE_COMMIT_MSG = """
+Autoremove imported patches from packaging
+
+Removed all imported patches from %s
+and patch files from the packaging dir.
+"""
 
 class SkipImport(Exception):
     """Nothing imported"""
@@ -102,8 +108,11 @@ def import_spec_patches(repo, spec, dirs):
     Import patches from a spec file to the current branch
     """
     queue = spec.patchseries()
-    tmpdir = tempfile.mkdtemp(dir=dirs['tmp_base'], prefix='import_')
+    if len(queue) == 0:
+        return
 
+    gbp.log.info("Importing patches to '%s' branch" % repo.get_branch())
+    tmpdir = tempfile.mkdtemp(dir=dirs['tmp_base'], prefix='import_')
     orig_head = repo.rev_parse("HEAD")
 
     # Put patches in a safe place
@@ -116,6 +125,19 @@ def import_spec_patches(repo, spec, dirs):
             repo.force_head(orig_head, hard=True)
             raise GbpError, "Couldn't import patches, you need to apply and "\
                             "commit manually"
+
+    # Remove patches from spec and packaging directory
+    gbp.log.info("Removing imported patch files from spec and packaging dir")
+    rm_patch_files(spec)
+    try:
+        spec.update_patches([])
+        spec.write_spec_file()
+    except GbpError:
+        raise GbpError("Unable to update spec file, you need to edit and "
+                       "commit it  manually")
+        repo.force_head('HEAD', hard=True)
+    repo.commit_all(msg=PATCH_AUTODELETE_COMMIT_MSG %
+                        os.path.basename(spec.specfile))
 
 
 def force_to_branch_head(repo, branch):
@@ -417,6 +439,9 @@ def main(argv):
                 # (only for non-native packages with non-orphan packaging)
                 force_to_branch_head(repo, options.packaging_branch)
                 if options.patch_import:
+                    spec = parse_spec(os.path.join(repo.path,
+                                            options.packaging_dir,
+                                            os.path.basename(spec.specfile)))
                     import_spec_patches(repo, spec, dirs)
                     commit = options.packaging_branch
 
