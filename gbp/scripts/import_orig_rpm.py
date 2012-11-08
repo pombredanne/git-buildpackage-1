@@ -131,8 +131,7 @@ def find_source(options, args):
     elif len(args) == 0:
         raise GbpError, "No archive to import specified. Try --help."
     else:
-        archive = RpmUpstreamSource(args[0])
-        return archive
+        return RpmUpstreamSource(args[0])
 
 
 def pristine_tarball_name(source, name, version, options):
@@ -235,9 +234,6 @@ def main(argv):
     tmpdir = tempfile.mkdtemp(dir=options.tmp_dir, prefix='import-orig-rpm_')
     try:
         source = find_source(options, args)
-        if not source:
-            return ret
-
         try:
             repo = RpmGitRepository('.')
         except GitRepositoryError:
@@ -323,9 +319,6 @@ def main(argv):
                                      other_parents=parents,
                                      create_missing_branch=True,
                                      )
-            if not commit:
-                raise GbpError, "Import of upstream version %s failed." % version
-
             if options.pristine_tar:
                 if pristine_orig:
                     repo.pristine_tar.commit(pristine_orig, options.upstream_branch)
