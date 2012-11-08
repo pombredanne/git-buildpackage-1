@@ -31,7 +31,7 @@ from gbp.rpm import (RpmUpstreamSource, SpecFile, NoSpecError, parse_spec,
 from gbp.rpm.pkgpolicy import RpmPkgPolicy
 from gbp.rpm.git import (GitRepositoryError, RpmGitRepository)
 from gbp.config import GbpOptionParserRpm, GbpOptionGroup, no_upstream_branch_msg
-from gbp.errors import (GbpError, GbpNothingImported)
+from gbp.errors import GbpError
 import gbp.log
 from gbp.scripts.common.import_orig import (orig_needs_repack,
                                             cleanup_tmp_tree, is_link_target,
@@ -356,10 +356,6 @@ def main(argv):
                     repo.force_head(options.packaging_branch, hard=True)
         except (GitRepositoryError, gbpc.CommandExecFailed):
             raise GbpError, "Import of %s failed" % source.path
-    except GbpNothingImported, err:
-        gbp.log.err(err)
-        repo.set_branch(initial_branch)
-        ret = 1
     except GbpError, err:
         if len(err.__str__()):
             gbp.log.err(err)
