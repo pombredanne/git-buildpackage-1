@@ -353,7 +353,8 @@ def main(argv):
                         gbpc.Command(options.postimport % info, extra_env=env, shell=True)()
                 else:
                     repo.create_branch(options.packaging_branch, rev=options.upstream_branch)
-                    repo.force_head(options.packaging_branch, hard=True)
+                    if repo.get_branch() == options.packaging_branch:
+                        repo.force_head(options.packaging_branch, hard=True)
         except (GitRepositoryError, gbpc.CommandExecFailed):
             raise GbpError, "Import of %s failed" % source.path
     except GbpError, err:
