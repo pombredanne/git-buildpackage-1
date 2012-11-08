@@ -340,14 +340,15 @@ def main(argv):
                         repo.merge(tag)
                     except GitRepositoryError:
                         raise GbpError, """Merge failed, please resolve."""
-                    if options.postimport:
-                        info = { 'upstreamversion': version }
-                        env = { 'GBP_BRANCH': options.packaging_branch }
-                        gbpc.Command(options.postimport % info, extra_env=env, shell=True)()
                 else:
                     repo.create_branch(options.packaging_branch, rev=options.upstream_branch)
                     if repo.get_branch() == options.packaging_branch:
                         repo.force_head(options.packaging_branch, hard=True)
+                if options.postimport:
+                    info = { 'upstreamversion': version }
+                    env = { 'GBP_BRANCH': options.packaging_branch }
+                    gbpc.Command(options.postimport % info, extra_env=env,
+                                 shell=True)()
         except (GitRepositoryError, gbpc.CommandExecFailed):
             raise GbpError, "Import of %s failed" % source.path
     except GbpError, err:
