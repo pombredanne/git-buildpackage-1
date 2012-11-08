@@ -142,7 +142,7 @@ class SpecFile(object):
             except IOError as err:
                 raise NoSpecError("Unable to read spec file: %s" % err)
 
-        source_header = self.specinfo.sourceHeader
+        source_header = self.specinfo.packages[0].header
         self.name = source_header[rpm.RPMTAG_NAME]
         self.upstreamversion = source_header[rpm.RPMTAG_VERSION]
         self.release = source_header[rpm.RPMTAG_RELEASE]
