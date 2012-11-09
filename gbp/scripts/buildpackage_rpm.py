@@ -270,6 +270,7 @@ def update_tag_str_fields(tag_format_str, fields, repo, commit):
     commit_info = repo.get_commit_info(commit)
     extra['authortime'] = datetime.datetime.fromtimestamp(int(commit_info['author'].date.split()[0])).strftime(RpmPkgPolicy.tag_timestamp_format)
     extra['committime'] = datetime.datetime.fromtimestamp(int(commit_info['committer'].date.split()[0])).strftime(RpmPkgPolicy.tag_timestamp_format)
+    extra['version'] = version=RpmPkgPolicy.compose_full_version(fields)
 
     # Parse tags with incremental numbering
     re_fields = dict(extra,
