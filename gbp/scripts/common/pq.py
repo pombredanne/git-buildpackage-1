@@ -125,14 +125,15 @@ def pq_branch_base(pq_branch, options):
 
 def get_maintainer_from_control():
     """Get the maintainer from the control file"""
-    cmd = 'sed -n -e \"s/Maintainer: \\+\\(.*\\)/\\1/p\" debian/control'
-    cmdout = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.readlines()
-
-    if len(cmdout) > 0:
-        maintainer = cmdout[0].strip()
-        m = re.match('(?P<name>.*[^ ]) *<(?P<email>.*)>', maintainer)
-        if m:
-            return m.group('name'), m.group('email')
+    if os.path.exists('debian/control'):
+        cmd = 'sed -n -e \"s/Maintainer: \\+\\(.*\\)/\\1/p\" debian/control'
+        cmdout = subprocess.Popen(cmd, shell=True,
+                                  stdout=subprocess.PIPE).stdout.readlines()
+        if len(cmdout) > 0:
+            maintainer = cmdout[0].strip()
+            m = re.match('(?P<name>.*[^ ]) *<(?P<email>.*)>', maintainer)
+            if m:
+                return m.group('name'), m.group('email')
 
     return None, None
 
