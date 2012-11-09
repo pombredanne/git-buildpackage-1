@@ -90,9 +90,11 @@ def move_tag_stamp(repo, tag_format, tag_str_fields):
 def set_bare_repo_options(options):
     """Modify options for import into a bare repository"""
     if options.pristine_tar:
-        gbp.log.info("Bare repository: setting %s option"
-                      % (["", " '--no-pristine-tar'"][options.pristine_tar], ))
+        gbp.log.info("Bare repository: setting %s option '--no-pristine-tar'")
         options.pristine_tar = False
+    if options.patch_import:
+        gbp.log.info("Bare repository: setting %s option '--no-patch-import')")
+        options.patch_import = False
 
 
 def import_spec_patches(repo, spec, dirs):
