@@ -71,7 +71,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|oneiric|precise); urgency=low\n", lines[0]))
+        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_new_upstream_version_with_auto(self):
@@ -168,7 +168,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|oneiric|precise); urgency=low\n", lines[0]))
+        self.assertIsNotNone(re.match("test-package \(1.0-1\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_new_upstream_version_with_auto_snapshot(self):
@@ -214,7 +214,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|oneiric|precise); urgency=low\n", lines[0]))
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_auto(self):
@@ -254,7 +254,7 @@ class TestScriptDch(DebianGitTestRepo):
         ret = dch.main(options)
         self.assertEqual(ret, 0)
         lines = file("debian/changelog").readlines()
-        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|oneiric|precise); urgency=low\n", lines[0]))
+        self.assertIsNotNone(re.match("test-package \(0.9(-2|-1ubuntu1)\) (unstable|precise|oneiric|quantal); urgency=low\n", lines[0]))
         self.assertIn("""  * added debian/control\n""", lines)
 
     def test_dch_main_increment_debian_version_with_auto_snapshot(self):
