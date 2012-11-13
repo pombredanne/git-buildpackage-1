@@ -21,7 +21,6 @@ import os
 import sys
 import logging
 
-
 COLORS = dict([('none', 0)] + zip(['black', 'red', 'green', 'yellow', 'blue',
                                    'magenta', 'cyan', 'white'], range(30, 38)))
 
@@ -30,6 +29,7 @@ DEFAULT_COLOR_SCHEME = {logging.DEBUG: COLORS['green'],
                         logging.WARNING: COLORS['red'],
                         logging.ERROR: COLORS['red'],
                         logging.CRITICAL: COLORS['red']}
+
 
 class GbpStreamHandler(logging.StreamHandler):
     """Special stream handler for enabling colored output"""
@@ -40,6 +40,7 @@ class GbpStreamHandler(logging.StreamHandler):
     def __init__(self, stream=None, color=True):
         super(GbpStreamHandler, self).__init__(stream)
         self._color = color
+        self._color_scheme = DEFAULT_COLOR_SCHEME
         msg_fmt = "%(name)s:%(levelname)s: %(message)s"
         self.setFormatter(logging.Formatter(fmt=msg_fmt))
 
@@ -47,12 +48,17 @@ class GbpStreamHandler(logging.StreamHandler):
         """Set/unset colorized output"""
         self._color = color
 
+    def set_color_scheme(self, color_scheme={}):
+        """Set logging colors"""
+        self._color_scheme = DEFAULT_COLOR_SCHEME
+        self._color_scheme.update(color_scheme)
+
     def format(self, record):
         """Colorizing formatter"""
         msg = super(GbpStreamHandler, self).format(record)
         # Never write color-escaped output to non-tty streams
         if self._color and self.stream.isatty():
-            return (self.COLOR_SEQ % DEFAULT_COLOR_SCHEME[record.levelno] +
+            return (self.COLOR_SEQ % self._color_scheme[record.levelno] +
                     msg + self.OFF_SEQ)
         else:
             return msg
@@ -69,6 +75,10 @@ class GbpLogger(logging.Logger):
     def set_color(self, color):
         """Set/unset colorized output of the default handler"""
         self._default_handler.set_color(color)
+
+    def set_color_scheme(self, color_scheme={}):
+        """Set the color scheme of the default handler"""
+        self._default_handler.set_color_scheme(color_scheme)
 
 
 def err(msg):
@@ -100,9 +110,25 @@ def _use_color(color):
             return not in_emacs
     return False
 
-def setup(color, verbose):
+def _parse_color_scheme(color_scheme=""):
+    """Set logging colors"""
+    scheme = {}
+    colors = color_scheme.split(':')
+    levels = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR)
+    for field, color in enumerate(colors):
+        level = levels[field]
+        try:
+            scheme[level] = int(color)
+        except ValueError:
+            try:
+                scheme[level] = COLORS[color.lower()]
+            except KeyError: pass
+    return scheme
+
+def setup(color, verbose, color_scheme=""):
     """Basic logger setup"""
     LOGGER.set_color(_use_color(color))
+    LOGGER.set_color_scheme(_parse_color_scheme(color_scheme))
     if verbose:
         LOGGER.setLevel(logging.DEBUG)
     else:
