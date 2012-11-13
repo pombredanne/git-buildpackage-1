@@ -379,6 +379,8 @@ def parse_args(argv, prefix):
     parser.add_option("--git-verbose", action="store_true", dest="verbose", default=False,
                       help="verbose command execution")
     parser.add_config_file_option(option_name="color", dest="color", type='tristate')
+    parser.add_config_file_option(option_name="color-scheme",
+                                  dest="color_scheme")
     parser.add_config_file_option(option_name="notify", dest="notify", type='tristate')
     parser.add_config_file_option(option_name="tmp-dir", dest="tmp_dir")
     tag_group.add_option("--git-tag", action="store_true", dest="tag", default=False,
@@ -436,7 +438,7 @@ def parse_args(argv, prefix):
     export_group.add_boolean_config_file_option(option_name="overlay", dest="overlay")
     options, args = parser.parse_args(args)
 
-    gbp.log.setup(options.color, options.verbose)
+    gbp.log.setup(options.color, options.verbose, options.color_scheme)
     if options.retag:
         if not options.tag and not options.tag_only:
             gbp.log.err("'--%sretag' needs either '--%stag' or '--%stag-only'" % (prefix, prefix, prefix))
