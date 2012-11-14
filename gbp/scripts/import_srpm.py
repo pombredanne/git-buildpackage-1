@@ -25,6 +25,7 @@ import glob
 import time
 import shutil
 import errno
+import urllib2
 import gbp.tmpfile as tempfile
 import gbp.command_wrappers as gbpc
 from gbp.rpm import (parse_srpm, guess_spec, NoSpecError, parse_spec,
@@ -64,7 +65,7 @@ class PatchImportError(Exception):
 def download_source(pkg, dirs):
     """Download package from a remote location"""
     if re.match(r'[a-z]{1,5}://', pkg):
-        mode = 'wget'
+        mode = 'python urllib2'
     else:
         mode = 'yumdownloader'
 
@@ -75,7 +76,15 @@ def download_source(pkg, dirs):
                           ['--source', '--destdir=', '.', pkg],
                           shell=False)(dir=tmpdir)
     else:
-        gbpc.RunAtCommand('wget', [pkg], shell=False)(dir=tmpdir)
+        try:
+            url = urllib2.urlopen(pkg)
+            local_fn = os.path.join(tmpdir, os.path.basename(pkg))
+            with open(local_fn, "wb") as local_file:
+                local_file.write(url.read())
+        except urllib2.HTTPError as err:
+            raise GbpError("Download failed: %s" % err)
+        except urllib2.URLError as err:
+            raise GbpError("Download failed: %s" % err.reason)
     srpm = glob.glob(os.path.join(tmpdir, '*.src.rpm'))[0]
     return srpm
 
