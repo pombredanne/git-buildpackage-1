@@ -20,15 +20,16 @@
 import os
 import sys
 import logging
+from logging import (DEBUG, INFO, WARNING, ERROR, CRITICAL, getLogger)
+
 
 COLORS = dict([('none', 0)] + zip(['black', 'red', 'green', 'yellow', 'blue',
                                    'magenta', 'cyan', 'white'], range(30, 38)))
-
-DEFAULT_COLOR_SCHEME = {logging.DEBUG: COLORS['green'],
-                        logging.INFO: COLORS['green'],
-                        logging.WARNING: COLORS['red'],
-                        logging.ERROR: COLORS['red'],
-                        logging.CRITICAL: COLORS['red']}
+DEFAULT_COLOR_SCHEME = {DEBUG: COLORS['green'],
+                        INFO: COLORS['green'],
+                        WARNING: COLORS['red'],
+                        ERROR: COLORS['red'],
+                        CRITICAL: COLORS['red']}
 
 
 class GbpStreamHandler(logging.StreamHandler):
@@ -114,7 +115,7 @@ def _parse_color_scheme(color_scheme=""):
     """Set logging colors"""
     scheme = {}
     colors = color_scheme.split(':')
-    levels = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR)
+    levels = (DEBUG, INFO, WARNING, ERROR)
     for field, color in enumerate(colors):
         level = levels[field]
         try:
@@ -130,13 +131,13 @@ def setup(color, verbose, color_scheme=""):
     LOGGER.set_color(_use_color(color))
     LOGGER.set_color_scheme(_parse_color_scheme(color_scheme))
     if verbose:
-        LOGGER.setLevel(logging.DEBUG)
+        LOGGER.setLevel(DEBUG)
     else:
-        LOGGER.setLevel(logging.INFO)
+        LOGGER.setLevel(INFO)
 
 
 # Initialize the module
 logging.setLoggerClass(GbpLogger)
 
-LOGGER = logging.getLogger("gbp")
+LOGGER = getLogger("gbp")
 
