@@ -42,7 +42,7 @@ class GbpStreamHandler(logging.StreamHandler):
         super(GbpStreamHandler, self).__init__(stream)
         self._color = color
         self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
-        msg_fmt = "%(name)s:%(levelname)s: %(message)s"
+        msg_fmt = "%(color)s%(name)s:%(levelname)s: %(message)s%(coloroff)s"
         self.setFormatter(logging.Formatter(fmt=msg_fmt))
 
     def set_color(self, color):
@@ -54,15 +54,18 @@ class GbpStreamHandler(logging.StreamHandler):
         self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
         self._color_scheme.update(color_scheme)
 
+    def set_format(self, fmt):
+        """Set logging format"""
+        self.setFormatter(logging.Formatter(fmt=fmt))
+
     def format(self, record):
         """Colorizing formatter"""
-        msg = super(GbpStreamHandler, self).format(record)
         # Never write color-escaped output to non-tty streams
+        record.color = record.coloroff = ""
         if self._color and self.stream.isatty():
-            return (self.COLOR_SEQ % self._color_scheme[record.levelno] +
-                    msg + self.OFF_SEQ)
-        else:
-            return msg
+            record.color = self.COLOR_SEQ % self._color_scheme[record.levelno]
+            record.coloroff = self.OFF_SEQ
+        return super(GbpStreamHandler, self).format(record)
 
 
 class GbpLogger(logging.Logger):
@@ -80,6 +83,10 @@ class GbpLogger(logging.Logger):
     def set_color_scheme(self, color_scheme={}):
         """Set the color scheme of the default handler"""
         self._default_handler.set_color_scheme(color_scheme)
+
+    def set_format(self, fmt):
+        """Set the format of the default handler"""
+        self._default_handler.set_format(fmt)
 
 
 def err(msg):
