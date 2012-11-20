@@ -40,7 +40,7 @@ class GbpStreamHandler(logging.StreamHandler):
     def __init__(self, stream=None, color=True):
         super(GbpStreamHandler, self).__init__(stream)
         self._color = color
-        self._color_scheme = DEFAULT_COLOR_SCHEME
+        self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
         msg_fmt = "%(name)s:%(levelname)s: %(message)s"
         self.setFormatter(logging.Formatter(fmt=msg_fmt))
 
@@ -50,7 +50,7 @@ class GbpStreamHandler(logging.StreamHandler):
 
     def set_color_scheme(self, color_scheme={}):
         """Set logging colors"""
-        self._color_scheme = DEFAULT_COLOR_SCHEME
+        self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
         self._color_scheme.update(color_scheme)
 
     def format(self, record):
