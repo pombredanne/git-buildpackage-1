@@ -32,6 +32,18 @@ DEFAULT_COLOR_SCHEME = {DEBUG: COLORS['green'],
                         CRITICAL: COLORS['red']}
 
 
+class GbpFilter(object):
+    """Filter for enabling selective output"""
+    def __init__(self, levels):
+        self._levels = levels
+
+    def filter(self, record):
+        """Do we show the record"""
+        if record.levelno in self._levels:
+            return True
+        return False
+
+
 class GbpStreamHandler(logging.StreamHandler):
     """Special stream handler for enabling colored output"""
 
@@ -73,20 +85,28 @@ class GbpLogger(logging.Logger):
 
     def __init__(self, name, color=True, *args, **kwargs):
         super(GbpLogger, self).__init__(name, *args, **kwargs)
-        self._default_handler = GbpStreamHandler(sys.stdout, color)
-        self.addHandler(self._default_handler)
+        self._default_handlers = [GbpStreamHandler(sys.stdout, color),
+                                  GbpStreamHandler(sys.stderr, color)]
+        self._default_handlers[0].addFilter(GbpFilter([DEBUG, INFO]))
+        self._default_handlers[1].addFilter(GbpFilter([WARNING, ERROR,
+                                                       CRITICAL]))
+        for hdlr in self._default_handlers:
+            self.addHandler(hdlr)
 
     def set_color(self, color):
-        """Set/unset colorized output of the default handler"""
-        self._default_handler.set_color(color)
+        """Set/unset colorized output of the default handlers"""
+        for hdlr in self._default_handlers:
+            hdlr.set_color(color)
 
     def set_color_scheme(self, color_scheme={}):
-        """Set the color scheme of the default handler"""
-        self._default_handler.set_color_scheme(color_scheme)
+        """Set the color scheme of the default handlers"""
+        for hdlr in self._default_handlers:
+            hdlr.set_color_scheme(color_scheme)
 
     def set_format(self, fmt):
-        """Set the format of the default handler"""
-        self._default_handler.set_format(fmt)
+        """Set the format of the default handlers"""
+        for hdlr in self._default_handlers:
+            hdlr.set_format(fmt)
 
 
 def err(msg):
