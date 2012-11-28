@@ -351,6 +351,12 @@ def main(argv):
                     env = { 'GBP_BRANCH': options.packaging_branch }
                     gbpc.Command(options.postimport % info, extra_env=env,
                                  shell=True)()
+            # Update working copy and index if we've possibly updated the
+            # checked out branch
+            current_branch = repo.get_branch()
+            if (current_branch == options.upstream_branch or
+                current_branch == repo.pristine_tar_branch):
+                repo.force_head(current_branch, hard=True)
         except (GitRepositoryError, gbpc.CommandExecFailed):
             raise GbpError, "Import of %s failed" % source.path
     except GbpError, err:
