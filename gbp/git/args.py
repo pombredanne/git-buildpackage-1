@@ -71,7 +71,7 @@ class GitArgs(object):
         @param args: arguments to add
         """
         if condition:
-            self.add(args)
+            self.add(*args)
         return self
 
     def add_false(self, condition, *args):
