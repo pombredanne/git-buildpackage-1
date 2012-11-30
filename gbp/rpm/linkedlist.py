@@ -40,6 +40,26 @@ class LinkedListNode(object):
             return("")
         return self._data
 
+    def set_data(self, data):
+        """
+        Set data stored into node
+
+        >>> node = LinkedListNode('foo')
+        >>> node.data
+        'foo'
+        >>> node.set_data('bar')
+        >>> node.data
+        'bar'
+        >>> node.set_data(None)
+        >>> node.data
+        ''
+        """
+        if data is None:
+            gbp.log.err("BUG: trying to store 'None', not allowed")
+            data = ""
+        self._data = data
+
+
     def delete(self):
         """Delete node"""
         if self.prev:
