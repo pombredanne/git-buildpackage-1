@@ -259,10 +259,14 @@ def test_find_tag():
     >>> repo = gbp.git.GitRepository(repo_dir)
     >>> repo.find_tag('HEAD')
     'tag2'
+    >>> repo.find_tag('HEAD', longfmt=True)[:7]
+    'tag2-0-'
     >>> repo.find_tag('HEAD', pattern='foo*')
     Traceback (most recent call last):
     ...
     GitRepositoryError: Can't find tag for HEAD. Git error: fatal: No names found, cannot describe anything.
+    >>> len(repo.find_tag('HEAD', pattern='foo*', always=True))
+    7
     """
 
 def test_move_tag():
