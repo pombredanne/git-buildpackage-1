@@ -585,7 +585,7 @@ class GitRepository(object):
         out, ret = self._git_getoutput('tag', [ '-l', tag ])
         return [ False, True ][len(out)]
 
-    def find_tag(self, commit, pattern=None):
+    def find_tag(self, commit, pattern=None, longfmt=False, always=False):
         """
         Find the closest tag to a given commit
 
@@ -593,15 +593,24 @@ class GitRepository(object):
         @type commit: C{str}
         @param pattern: only look for tags matching I{pattern}
         @type pattern: C{str}
+        @param longfmt: return the tag in the long format
+        @type longfmt: C{bool}
+        @param always: return commit sha1 as fallback
+        @type always: C{bool}
         @return: the found tag
         @rtype: C{str}
         """
-        args =  [ '--abbrev=0' ]
-        if pattern:
-            args += [ '--match' , pattern ]
-        args += [ commit ]
+        args = GitArgs()
+        args.add_true(pattern, ['--match' , pattern])
+        if not longfmt and not always:
+            args.add('--abbrev=0')
+        else:
+            args.add_true(longfmt, '--long')
+            args.add_true(always, '--always')
+        args.add(commit)
 
-        tag, err, ret = self._git_inout('describe', args, capture_stderr=True)
+        tag, err, ret = self._git_inout('describe', args.args,
+                                        capture_stderr=True)
         if ret:
             raise GitRepositoryError("Can't find tag for %s. Git error: %s" % \
                                          (commit, err.strip()))
