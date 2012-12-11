@@ -30,20 +30,19 @@ class RpmPkgPolicy(PkgPolicy):
     # Special rpmlib python module for GBP (only)
     python_rpmlib_module_name = "rpmlibgbp"
 
-    # "Do NOT use an underscore a plus '+', or a period '.' as a delimiter"
+    # "Do NOT use a plus '+', or a period '.' as a delimiter"
     # Additionally, name must begin with an alphanumeric
     packagename_re = re.compile("^[a-zA-Z0-9][a-zA-Z0-9\-_]+$")
     packagename_msg = """Package names must be at least two characters long, start with an
     alphanumeric and can only contain alphanumerics or minus signs (-)"""
 
-    # From http://wiki.meego.com/Packaging/Guidelines#Version_and_Release
-    # The upstream_version may contain only alphanumerics and the
-    # characters . ~ (full stop, tilde) and# should start with a digit.
+    # The upstream_version may contain only alphanumerics and the characters
+    # . ~ _ (full stop, tilde, underscores) and# should start with a digit.
     # "We can use letters and tilde into the version tag. We do not use the
     # Release field for this."
-    upstreamversion_re = re.compile("^[0-9][a-zA-Z0-9\.\~]*$")
+    upstreamversion_re = re.compile("^[0-9][a-zA-Z0-9\.\~_]*$")
     upstreamversion_msg = """Upstream version numbers must start with a digit and can only containg alphanumerics,
-    full stops (.) and tildes (~)"""
+    full stops (.),tildes (~) and underscores (_)"""
 
     # Time stamp format to be used in tagging
     tag_timestamp_format = "%Y%m%d"
