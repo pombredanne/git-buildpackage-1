@@ -25,6 +25,7 @@ from nose.tools import assert_raises
 from gbp.errors import GbpError
 from gbp.rpm import (SrcRpmFile, SpecFile, parse_srpm, parse_spec, guess_spec,
                     NoSpecError)
+from gbp.rpm import rpm as rpmlib
 
 DATA_DIR = os.path.abspath(os.path.splitext(__file__)[0] + '_data')
 SRPM_DIR = os.path.join(DATA_DIR, 'srpms')
@@ -77,9 +78,11 @@ class TestSpecFile(object):
     """Test L{gbp.rpm.SpecFile}"""
 
     def setup(self):
+        os.environ['GBP_RPM_VERSION'] = rpmlib.__version__
         self.tmpdir = tempfile.mkdtemp(prefix='gbp_%s_' % __name__, dir='.')
 
     def teardown(self):
+        os.environ.pop('GBP_RPM_VERSION')
         shutil.rmtree(self.tmpdir)
 
     def test_spec(self):
@@ -229,6 +232,25 @@ class TestSpecFile(object):
 
         # Check that we quess orig source and prefix correctly
         assert spec.orig_src['prefix'] == 'foobar/'
+
+    def test_tags(self):
+        """Test parsing of all the different tags of spec file"""
+        spec_filepath = os.path.join(SPEC_DIR, 'gbp-test-tags.spec')
+        spec = SpecFileTester(spec_filepath)
+
+        # Check all the tags
+        for name, val in spec.protected('_tags').iteritems():
+            rval = None
+            if name in ('version', 'release', 'epoch', 'nosource', 'nopatch'):
+                rval = '0'
+            elif name in ('autoreq', 'autoprov', 'autoreqprov'):
+                rval = 'No'
+            elif name not in spec.protected('_listtags'):
+                rval = 'my_%s' % name
+            if rval:
+                assert val['value'] == rval, ("'%s:' is '%s', expecting '%s'" %
+                                              (name, val['value'], rval))
+            assert spec.ignorepatches == []
 
 
 class TestUtilityFunctions(object):

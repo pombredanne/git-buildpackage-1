@@ -28,7 +28,7 @@ class RpmPkgPolicy(PkgPolicy):
     """Packaging policy for RPM"""
 
     # Special rpmlib python module for GBP (only)
-    python_rpmlib_module_name = "rpmlibgbp"
+    python_rpmlib_module_name = "rpm_tizen"
 
     # Do NOT use a plus '+' or a period '.' as a delimiter.
     # Additionally, name must begin with an alphanumeric.
