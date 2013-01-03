@@ -596,7 +596,8 @@ def main(argv):
                 tree_name = repo.find_tag('HEAD', longfmt=True, always=True) +\
                             '-dirty'
         # Put 'VCS:' tag to .spec
-        spec.set_tag('vcs', options.spec_vcs_tag % {'tagname': tree_name})
+        spec.set_tag('VCS', None,
+                     options.spec_vcs_tag % {'tagname': tree_name})
         spec.write_spec_file()
 
     except CommandExecFailed:
