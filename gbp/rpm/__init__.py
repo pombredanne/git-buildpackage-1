@@ -381,7 +381,7 @@ class SpecFile(object):
                             srcnum = int(opts.unpack_after)
                     else:
                         srcnum = 0
-                    if srcnum != None:
+                    if srcnum != None and srcnum in self.sources:
                         self.sources[srcnum]['setup_options'] = opts
                     # Save the occurrence of last setup macro
                     ret['setupmacro'] = lineobj
