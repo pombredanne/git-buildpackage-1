@@ -177,6 +177,14 @@ class TestSpecFile(object):
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
+    def test_quirks(self):
+        """Test spec that is broken/has anomalities"""
+        spec_filepath = os.path.join(SPEC_DIR, 'gbp-test-quirks.spec')
+        spec = SpecFile(spec_filepath)
+
+        # Check that we quess orig source and prefix correctly
+        assert spec.orig_src['prefix'] == 'foobar/'
+
 
 class TestUtilityFunctions(object):
     """Test utility functions of L{gbp.rpm}"""
