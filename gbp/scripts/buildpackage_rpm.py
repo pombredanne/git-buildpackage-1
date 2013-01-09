@@ -478,6 +478,8 @@ def main(argv):
         if options.spec_file != 'auto':
             specfile = os.path.join(dump_dir, options.spec_file)
             options.packaging_dir = os.path.dirname(specfile)
+            if not os.path.exists(specfile):
+                raise rpm.NoSpecError("Failed to export specfile: %s" % options.spec_file)
         else:
             specfile = rpm.guess_spec(os.path.join(dump_dir, options.packaging_dir),
                                       True,
@@ -611,7 +613,7 @@ def main(argv):
             gbp.log.err(err)
         retval = 1
     except rpm.NoSpecError, err:
-        gbp.log.err("Failed determine spec file (%s)" % err)
+        gbp.log.err(err)
         retval = 1
     finally:
         drop_index(repo)
