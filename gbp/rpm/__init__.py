@@ -43,9 +43,6 @@ except ImportError:
     gbp.log.debug("Failed to import '%s' as rpm python module, using host's default rpm library instead" % RpmPkgPolicy.python_rpmlib_module_name)
     import rpm
 
-# define a large number to check the valid id of source file
-MAX_SOURCE_NUMBER = 99999
-
 class NoSpecError(Exception):
     """no changelog found"""
     pass
@@ -270,7 +267,7 @@ class SpecFile(object):
                         'setup_options': None, }
         # 'Patch:' tags
         elif tagname == 'patch':
-            tagnum = 0 if tagnum is None else tagnum
+            tagnum = -1 if tagnum is None else tagnum
             new_patch = {'name': matchobj.group('name').strip(),
                          'filename': matchobj.group('name'),
                          'apply': False,
@@ -347,7 +344,7 @@ class SpecFile(object):
             elif opts.patchnum:
                 directiveid = int(opts.patchnum)
             else:
-                directiveid = 0
+                directiveid = -1
 
             if opts.strip:
                 self.patches[directiveid]['strip'] = opts.strip
@@ -421,8 +418,6 @@ class SpecFile(object):
         # And, double-check that we parsed spec content correctly
         for (name, num, typ) in self._specinfo.sources:
             # workaround rpm parsing bug
-            if num >= MAX_SOURCE_NUMBER:
-                num = 0
             if typ == 1 or typ == 9:
                 if num in self.sources:
                     self.sources[num]['filename'] = os.path.basename(name)
@@ -440,6 +435,10 @@ class SpecFile(object):
                 else:
                     gbp.log.err("BUG: we didn't correctly parse all 'Source' tags!")
             if typ == 2 or typ == 10:
+                # Patch tag without any number defined is treated by RPM as
+                # having number (2^31-1), we use number -1
+                if num >= pow(2,30):
+                    num = -1
                 if num in self.patches:
                     self.patches[num]['filename'] = name
                 else:
