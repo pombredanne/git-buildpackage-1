@@ -25,10 +25,19 @@ from nose.tools import assert_raises
 from gbp.errors import GbpError
 from gbp.rpm import (SrcRpmFile, SpecFile, parse_srpm, parse_spec, guess_spec,
                     NoSpecError)
+from gbp.rpm import rpm as rpmlib
 
 DATA_DIR = os.path.abspath(os.path.splitext(__file__)[0] + '_data')
 SRPM_DIR = os.path.join(DATA_DIR, 'srpms')
 SPEC_DIR = os.path.join(DATA_DIR, 'specs')
+
+class SpecFileTester(SpecFile):
+    """Helper class for testing"""
+
+    def protected(self, name):
+        """Get a protected member"""
+        return super(SpecFileTester, self).__getattribute__(name)
+
 
 class TestSrcRpmFile(object):
     """Test L{gbp.rpm.SrcRpmFile}"""
@@ -69,15 +78,17 @@ class TestSpecFile(object):
     """Test L{gbp.rpm.SpecFile}"""
 
     def setup(self):
+        os.environ['GBP_RPM_VERSION'] = rpmlib.__version__
         self.tmpdir = tempfile.mkdtemp(prefix='gbp_%s_' % __name__, dir='.')
 
     def teardown(self):
+        os.environ.pop('GBP_RPM_VERSION')
         shutil.rmtree(self.tmpdir)
 
     def test_spec(self):
         """Test parsing of a valid spec file"""
         spec_filepath = os.path.join(SPEC_DIR, 'gbp-test.spec')
-        spec = SpecFile(spec_filepath)
+        spec = SpecFileTester(spec_filepath)
 
         # Test basic properties
         assert spec.specfile == spec_filepath
@@ -114,7 +125,6 @@ class TestSpecFile(object):
 
         orig = spec.orig_src
         assert orig['filename'] == 'gbp-test2-3.0.tar.gz'
-        assert orig['full_path'] == 'ftp://ftp.host.com/gbp-test2-3.0.tar.gz'
         assert orig['archive_fmt'] == 'tar'
         assert orig['compression'] == 'gzip'
         assert orig['prefix'] == ''
@@ -155,7 +165,7 @@ class TestSpecFile(object):
 
         # Test adding the VCS tag
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test-reference2.spec')
-        spec.set_tag('vcs', 'myvcstag')
+        spec.set_tag('VCS', None, 'myvcstag')
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
@@ -166,14 +176,52 @@ class TestSpecFile(object):
 
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test2-reference2.spec')
         spec = SpecFile(tmp_spec)
+        spec.update_patches(['1.patch', '2.patch'])
+        spec.set_tag('VCS', None, 'myvcstag')
         spec.update_patches(['new.patch'])
-        spec.set_tag('vcs', 'myvcstag')
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
         # Test removing the VCS tag
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test2-reference.spec')
-        spec.set_tag('vcs', '')
+        spec.set_tag('VCS', None, '')
+        spec.write_spec_file()
+        assert filecmp.cmp(tmp_spec, reference_spec) is True
+
+    def test_modifying(self):
+        """Test updating/deleting of tags and macros"""
+        tmp_spec = os.path.join(self.tmpdir, 'gbp-test.spec')
+        shutil.copy2(os.path.join(SPEC_DIR, 'gbp-test-updates.spec'), tmp_spec)
+        reference_spec = os.path.join(SPEC_DIR,
+                                      'gbp-test-updates-reference.spec')
+        spec = SpecFileTester(tmp_spec)
+
+        # Mangle tags
+        prev = spec.protected('_delete_tag')('Vendor', None)
+        spec.protected('_set_tag')('License', None, 'new license', prev)
+        spec.protected('_delete_tag')('source', 0)
+        spec.protected('_delete_tag')('patch', 1)
+        spec.protected('_delete_tag')('patch', 0)
+        prev = spec.protected('_delete_tag')('invalidtag', None)
+
+        with assert_raises(GbpError):
+            # Check that setting empty value fails
+            spec.protected('_set_tag')('Version', None, '', prev)
+        with assert_raises(GbpError):
+            # Check that setting invalid tag with public method fails
+            spec.set_tag('invalidtag', None, 'value')
+
+        # Mangle macros
+        prev = spec.protected('_delete_special_macro')('patch', 0)
+        spec.protected('_delete_special_macro')('patch', 123)
+        spec.protected('_set_special_macro')('patch', 1, 'my new args', prev)
+        with assert_raises(GbpError):
+            spec.protected('_delete_special_macro')('invalidmacro', 0)
+        with assert_raises(GbpError):
+            spec.protected('_set_special_macro')('invalidmacro', 0, 'args',
+                           prev)
+
+        # Check resulting spec file
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
@@ -184,6 +232,25 @@ class TestSpecFile(object):
 
         # Check that we quess orig source and prefix correctly
         assert spec.orig_src['prefix'] == 'foobar/'
+
+    def test_tags(self):
+        """Test parsing of all the different tags of spec file"""
+        spec_filepath = os.path.join(SPEC_DIR, 'gbp-test-tags.spec')
+        spec = SpecFileTester(spec_filepath)
+
+        # Check all the tags
+        for name, val in spec.protected('_tags').iteritems():
+            rval = None
+            if name in ('version', 'release', 'epoch', 'nosource', 'nopatch'):
+                rval = '0'
+            elif name in ('autoreq', 'autoprov', 'autoreqprov'):
+                rval = 'No'
+            elif name not in spec.protected('_listtags'):
+                rval = 'my_%s' % name
+            if rval:
+                assert val['value'] == rval, ("'%s:' is '%s', expecting '%s'" %
+                                              (name, val['value'], rval))
+            assert spec.ignorepatches == []
 
 
 class TestUtilityFunctions(object):
