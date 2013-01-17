@@ -179,6 +179,23 @@ def get_current_branch(repo):
     return branch
 
 
+def get_vcs_info(repo, treeish):
+    """Get the info for spec vcs tag"""
+    info = {}
+    try:
+        info['tagname'] = repo.describe(treeish, longfmt=True, always=True,
+                                        abbrev=40)
+        info['commit'] = repo.rev_parse('%s^0' % treeish)
+        info['commitish'] = repo.rev_parse('%s' % treeish)
+    except GitRepositoryError:
+        # If tree is not commit-ish, expect it to be from current HEAD
+        info['tagname'] = repo.describe('HEAD', longfmt=True, always=True,
+                                        abbrev=40) + '-dirty'
+        info['commit'] = repo.rev_parse('HEAD') + '-dirty'
+        info['commitish'] = info['commit']
+    return info
+
+
 def git_archive_build_orig(repo, spec, output_dir, options):
     """
     Build orig tarball using git-archive
@@ -385,6 +402,7 @@ def build_parser(name, prefix=None):
                     dest="packaging_dir")
     export_group.add_config_file_option(option_name="spec-file",
                     dest="spec_file")
+    export_group.add_config_file_option("spec-vcs-tag", dest="spec_vcs_tag")
     return parser
 
 
@@ -544,12 +562,19 @@ def main(argv):
         if options.tag or options.tag_only:
             gbp.log.info("Tagging %s" % rpm.compose_version_str(spec.version))
             tag = create_packaging_tag(repo, tree, spec, options)
+            vcs_info = get_vcs_info(repo, tag)
             if options.posttag:
                 sha = repo.rev_parse("%s^{}" % tag)
                 Command(options.posttag, shell=True,
                         extra_env={'GBP_TAG': tag,
                                    'GBP_BRANCH': branch,
                                    'GBP_SHA1': sha})()
+        else:
+            vcs_info = get_vcs_info(repo, tree)
+
+        # Put 'VCS:' tag to .spec
+        spec.set_tag('VCS', None, format_str(options.spec_vcs_tag, vcs_info))
+        spec.write_spec_file()
 
     except CommandExecFailed:
         retval = 1

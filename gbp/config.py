@@ -588,6 +588,7 @@ class GbpOptionParserRpm(GbpOptionParser):
             'builder'                   : 'rpmbuild',
             'export-specdir'            : 'SPECS',
             'export-sourcedir'          : 'SOURCES',
+            'spec-vcs-tag'              : '',
             'import-files'              : ['.gbp.conf',
                                            'debian/gbp.conf'],
                     })
@@ -624,6 +625,9 @@ class GbpOptionParserRpm(GbpOptionParser):
                 "Subdir (under EXPORT_DIR) where packaging sources (other than "
                 "the spec file) are exported, default is "
                 "'%(export-sourcedir)s'",
+            'spec-vcs-tag':
+                "Set/update the 'VCS:' tag in the spec file, empty value "
+                "removes the tag entirely, default is '%(spec-vcs-tag)s'",
             'import-files':
                 "Comma-separated list of additional file(s) to import from "
                 "packaging branch. These will appear as one monolithic patch "
