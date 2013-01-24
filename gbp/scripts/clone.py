@@ -22,10 +22,13 @@
 import sys
 import os, os.path
 from gbp.config import (GbpOptionParser, GbpOptionGroup)
-from gbp.deb.git import DebianGitRepository
-from gbp.git import (GitRepository, GitRepositoryError)
+from gbp.git import GitRepositoryError
 from gbp.errors import GbpError
 import gbp.log
+try:
+    from gbp.deb.git import DebianGitRepository as GitRepository
+except ImportError:
+    from gbp.rpm.git import RpmGitRepository as GitRepository
 
 
 def parse_args (argv):
@@ -74,7 +77,7 @@ def main(argv):
         pass
 
     try:
-        repo = DebianGitRepository.clone(os.path.curdir, source, options.depth)
+        repo = GitRepository.clone(os.path.curdir, source, options.depth)
         os.chdir(repo.path)
 
         # Reparse the config files of the cloned repository so we pick up the
