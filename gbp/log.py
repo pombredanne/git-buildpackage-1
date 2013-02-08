@@ -95,7 +95,7 @@ class GbpLogger(logging.Logger):
     """Logger class for git-buildpackage"""
 
     def __init__(self, name, color='auto', *args, **kwargs):
-        super(GbpLogger, self).__init__(name, *args, **kwargs)
+        logging.Logger.__init__(self, name, *args, **kwargs)
         self._default_handlers = [GbpStreamHandler(sys.stdout, color),
                                   GbpStreamHandler(sys.stderr, color)]
         self._default_handlers[0].addFilter(GbpFilter([DEBUG, INFO]))
