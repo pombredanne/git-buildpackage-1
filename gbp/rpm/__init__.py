@@ -460,7 +460,10 @@ class SpecFile(object):
             tagvalue = None
         tagvalue = None if type(tagvalue) is list else value
 
-        text = '%-12s%s\n' % ('%s:' % tagname, value)
+        # Try to guess the correct indentation from the previous tag
+        match = re.match(r'^([a-z]+([0-9]+)?\s*:\s*)', str(insertafter), re.I)
+        indent = 12 if not match else len(match.group(1))
+        text = '%-*s%s\n' % (indent, '%s:' % tagname, value)
         if key in self._tags:
             self._tags[key]['value'] = tagvalue
             for line in reversed(self._tags[key]['lines']):

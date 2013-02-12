@@ -9,7 +9,7 @@ Name:           my_name
 Version:        0
 Release:        1
 Summary:        my_summary
-License:    new license
+License:        new license
 Distribution:   my_distribution
 Group:          my_group
 Packager:       my_packager
