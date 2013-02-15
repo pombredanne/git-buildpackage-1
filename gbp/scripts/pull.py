@@ -145,11 +145,17 @@ def main(argv):
             branches.add(repo.pristine_tar_branch)
 
         if options.all:
-            current_remote = repo.get_merge_branch(current).split('/')[0]
+            current_remote = repo.get_merge_branch(current)
+            if current_remote:
+                fetch_remote = current_remote.split('/')[0]
+            else:
+                fetch_remote = 'origin'
             for branch in repo.get_local_branches():
-                rem, rem_br = repo.get_merge_branch(branch).split('/', 1)
-                if rem == current_remote and branch == rem_br:
-                    branches.add(branch)
+                merge_branch = repo.get_merge_branch(branch)
+                if merge_branch:
+                    rem, rem_br = merge_branch.split('/', 1)
+                    if rem == fetch_remote and branch == rem_br:
+                        branches.add(branch)
 
         (ret, out) = repo.is_clean()
         if not ret:
