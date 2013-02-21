@@ -1,4 +1,4 @@
-git-buildpackage (0.6.0git20121124-tizen20130123) unstable; urgency=low
+git-buildpackage (0.6.0git20121124-tizen20130221) unstable; urgency=low
 
   [ Guido Günther ]
   * [c3c2778] Add minimal debian/source/format parser
