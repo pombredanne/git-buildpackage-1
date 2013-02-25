@@ -47,12 +47,13 @@ def compress_patches(patches, compress_size=0):
     ret_patches = []
     for num, patch in enumerate(patches):
         # Compress if patch file is larger than "threshold" value
-        if compress_size and os.path.getsize(patch) > compress_size:
-            gbp.log.debug("Compressing %s" % os.path.basename(patch))
-            subprocess.Popen(['gzip', '-n', patch]).communicate()
-            patch += ".gz"
+        suffix = ''
+        if compress_size and os.path.getsize(patch[0]) > compress_size:
+            gbp.log.debug("Compressing %s" % os.path.basename(patch[0]))
+            subprocess.Popen(['gzip', '-n', patch[0]]).communicate()
+            suffix = '.gz'
 
-        ret_patches.append(os.path.basename(patch))
+        ret_patches.append((os.path.basename(patch[0]) + suffix, patch[1]))
 
     return ret_patches
 
@@ -132,6 +133,21 @@ def patch_path_filter(file_status, exclude_regex=None):
 
     return include_paths
 
+def parse_export_cmds(info):
+    """Parse export commands from commit message"""
+    cmd_re = re.compile(r'^\s*gbp-rpm-(?P<cmd>[a-z-]+):\s*(?P<args>\S.*)',
+                        flags=re.I)
+    commands = {}
+    for line in info['body'].splitlines():
+        match = re.match(cmd_re, line)
+        if match:
+            cmd = match.group('cmd').lower()
+            if cmd in ('if', 'ifarch'):
+                commands[cmd] = match.group('args')
+            else:
+                gbp.log.warn("Ignoring unknow gbp-command '%s' in commit %s"
+                                % (line, info['id']))
+    return commands
 
 def generate_patches(repo, start, squash_point, end, squash_diff_name,
                      outdir, options):
@@ -184,7 +200,7 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
                 diff_filepath = os.path.join(outdir, diff_filename)
                 if write_diff_file(repo, diff_filepath, start_sha1,
                                    squash_sha1, paths):
-                    patches.append(diff_filepath)
+                    patches.append((diff_filepath, None))
                 start = squash_sha1
 
     # Generate patches
@@ -201,7 +217,8 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
                                          signature=False, paths=paths,
                                          filter_fn=patch_content_filter)
             if patch_fn:
-                patches.append(patch_fn)
+                export_cmds = parse_export_cmds(info)
+                patches.append((patch_fn, export_cmds))
             if options.patch_numbers:
                 patch_num += 1
 
@@ -216,7 +233,7 @@ def generate_patches(repo, start, squash_point, end, squash_diff_name,
                          (diff_filename, end_commit, end))
             diff_filepath = os.path.join(outdir, diff_filename)
             if write_diff_file(repo, diff_filepath, end_commit, end, paths):
-                patches.append(diff_filepath)
+                patches.append((diff_filepath, None))
 
     # Compress
     patches = compress_patches(patches, options.patch_export_compress)
@@ -256,9 +273,7 @@ def update_patch_series(repo, spec, start, end, options):
 
     patches = generate_patches(repo, start, squash_point, end, squash_name,
                                spec.specdir, options)
-
-    filenames = [os.path.basename(patch) for patch in patches]
-    spec.update_patches(filenames)
+    spec.update_patches(patches)
     spec.write_spec_file()
 
 
