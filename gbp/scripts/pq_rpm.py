@@ -235,7 +235,7 @@ def rm_patch_files(spec):
         try:
             os.unlink(patch.path)
         except OSError as err:
-            if err != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 raise GbpError("Failed to remove patch: %s" % err)
             else:
                 gbp.log.debug("Patch %s does not exist." % patch.path)
