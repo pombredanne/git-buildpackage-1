@@ -29,7 +29,7 @@ This package contains the original Debian tools.
 %package common
 Summary:    Common files for git-buildpackage debian and rpm tools
 Group:      Development/Tools/Building
-Requires:   git-core >= 1.7.2
+Requires:   git-core
 
 %if 0%{?fedora}
 Requires:   man-db
