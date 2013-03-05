@@ -7,7 +7,11 @@ import os
 import shutil
 import tarfile
 import tempfile
-import unittest
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import zipfile
 
 from gbp.pkg import UpstreamSource

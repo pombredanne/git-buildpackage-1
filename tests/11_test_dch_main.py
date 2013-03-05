@@ -2,8 +2,11 @@
 
 """Test L{gbp.scripts.dch} main"""
 
-import unittest
-
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 from tests.testutils import DebianGitTestRepo
 
 from gbp.scripts import dch

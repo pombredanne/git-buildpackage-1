@@ -2,7 +2,11 @@
 
 """Test L{Changelog}'s guess_version_from_upstream"""
 
-import unittest
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from gbp.scripts import dch
 from gbp.errors import GbpError
