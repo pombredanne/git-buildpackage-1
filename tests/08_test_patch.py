@@ -3,7 +3,11 @@
 """Test L{Patch} class"""
 
 import os
-import unittest
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from gbp.patch_series import Patch
 

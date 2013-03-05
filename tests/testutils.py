@@ -2,7 +2,11 @@
 
 import os
 import shutil
-import unittest
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import gbp.log
 import gbp.deb.git

@@ -17,7 +17,11 @@
 
 import os
 import logging
-import unittest
+# Try unittest2 for CentOS
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import gbp.scripts.common.pq as pq
 import gbp.patch_series
