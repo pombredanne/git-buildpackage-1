@@ -1,3 +1,5 @@
+%define do_unittests 0
+
 Name:       git-buildpackage
 Summary:    Build packages from git
 Version:    0.6.0git20121124
@@ -18,8 +20,10 @@ BuildRequires:  python-setuptools
 BuildRequires:  docbook-utils
 BuildRequires:  gtk-doc
 BuildRequires:  epydoc
+%if 0%{?do_unittests}
 BuildRequires:  python-coverage
 BuildRequires:  python-nose
+%endif
 
 %description
 Set of tools from Debian that integrate the package build system with Git.
@@ -67,7 +71,7 @@ This package contains the tools for building RPM packages.
 
 
 %build
-python ./setup.py build
+WITHOUT_NOSETESTS=1 python ./setup.py build
 
 # Prepare apidocs
 epydoc -n git-buildpackage --no-sourcecode -o docs/apidocs/ \
@@ -77,10 +81,15 @@ epydoc -n git-buildpackage --no-sourcecode -o docs/apidocs/ \
 HAVE_SGML2X=0 make -C docs/
 
 
+%if 0%{?do_unittests}
+%check
+GIT_CEILING_DIRECTORIES=%{_builddir} python setup.py nosetests
+%endif
+
 
 %install
 rm -rf %{buildroot}
-python ./setup.py install --root=%{buildroot} --prefix=/usr
+WITHOUT_NOSETESTS=1 python ./setup.py install --root=%{buildroot} --prefix=/usr
 rm -rf %{buildroot}%{python_sitelib}/*info
 
 
