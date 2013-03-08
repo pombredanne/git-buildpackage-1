@@ -1476,7 +1476,7 @@ class GitRepository(object):
         """
         options = GitArgs('-N', '-k',
                           '-o', output_dir)
-        if (self._cmd_has_feature('format-patch', '--no-signature')):
+        if (self._cmd_has_feature('format-patch', 'no-signature')):
             options.add_cond(not signature, '--no-signature')
         else:
             log.debug("Your git suite doesn't support --signature/"
@@ -1508,7 +1508,7 @@ class GitRepository(object):
         @rtype: C{str}
         """
         args = GitArgs('-k', '--stdout', '-a', '--ignore-submodules')
-        if (self._cmd_has_feature('format-patch', '--no-signature')):
+        if (self._cmd_has_feature('format-patch', 'no-signature')):
             args.add_cond(not signature, '--no-signature')
         else:
             log.debug("Your git suite doesn't support --signature/"
