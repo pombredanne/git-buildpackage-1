@@ -163,6 +163,7 @@ def main(argv):
             gbp.log.err(out)
             raise GbpError
 
+        repo.fetch(depth=options.depth)
         repo.fetch(depth=options.depth, tags=True)
         for branch in branches:
             if not update_branch(branch, repo, options):
