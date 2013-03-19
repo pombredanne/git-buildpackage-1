@@ -25,7 +25,6 @@ from nose.tools import assert_raises
 from gbp.errors import GbpError
 from gbp.rpm import (SrcRpmFile, SpecFile, parse_srpm, parse_spec, guess_spec,
                     NoSpecError)
-from gbp.rpm import rpm as rpmlib
 
 DATA_DIR = os.path.abspath(os.path.splitext(__file__)[0] + '_data')
 SRPM_DIR = os.path.join(DATA_DIR, 'srpms')
@@ -78,11 +77,9 @@ class TestSpecFile(object):
     """Test L{gbp.rpm.SpecFile}"""
 
     def setup(self):
-        os.environ['GBP_RPM_VERSION'] = rpmlib.__version__
         self.tmpdir = tempfile.mkdtemp(prefix='gbp_%s_' % __name__, dir='.')
 
     def teardown(self):
-        os.environ.pop('GBP_RPM_VERSION')
         shutil.rmtree(self.tmpdir)
 
     def test_spec(self):

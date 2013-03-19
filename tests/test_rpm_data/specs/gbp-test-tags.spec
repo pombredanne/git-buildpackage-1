@@ -2,7 +2,11 @@
 # Spec file for testing all RPM tags (that we know of
 #
 
-%define rpm_version_env %(test -n "$GBP_RPM_VERSION" && echo "$GBP_RPM_VERSION" | cut --output-delimiter=0 -d. -f1,2 || echo 0)
+%define suse_release %(test -e /etc/SuSE-release && head -n1 /etc/SuSE-release | cut -d ' ' -f2 | cut --output-delimiter=0 -d. -f1,2 || echo 0)
+%if %suse_release >= 1201
+%define test_weak_dep_tags 1
+%endif
+
 %define test_arch_os_tags %(test -n "$GBP_SKIP_ARCH_OS_TAGS" && echo 0 || echo 1)
 
 %define source_fn_base source
@@ -45,15 +49,13 @@ DistTag:        my_disttag
 BugUrl:         my_bugurl
 Collections:    my_collections
 
-%if %rpm_version_env > 409
+%if 0%{?test_weak_dep_tags}
 Recommends:     my_recommends
 Suggests:       my_suggests
+Supplements:    my_supplements
+Enhances:       my_enhances
 BuildRecommends:my_buildrecommends
 BuildSuggests:  my_buildsuggests
-%endif
-%if %rpm_version_env >= 4010
-Supplements     my_supplements
-Enhances:       my_enhances
 BuildSupplements:my_buildsupplements
 BuildEnhances:  my_buildenhances
 %endif
