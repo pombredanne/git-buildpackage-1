@@ -462,7 +462,7 @@ def rebase_pq(repo, branch, options):
     try:
         if options.spec_file != 'auto':
             specfilename = options.spec_file
-            options.packaging_dir = os.path.dirname(specfile)
+            options.packaging_dir = os.path.dirname(specfilename)
         else:
             specfilename = guess_spec(options.packaging_dir,
                                       True,
