@@ -281,38 +281,52 @@ class GbpOptionParser(OptionParser):
                          '%(git_dir)s/gbp.conf' ]
 
     @classmethod
-    def get_config_files(klass):
+    def get_config_files(klass, no_local=False):
         """
         Get list of config files from the I{GBP_CONF_FILES} environment
         variable.
 
+        @param no_local: don't return the per-repo configuration files
+        @type no_local: C{str}
         @return: list of config files we need to parse
         @rtype: C{list}
 
         >>> if os.environ.has_key('GBP_CONF_FILES'): del os.environ['GBP_CONF_FILES']
-        >>> files = GbpOptionParser.get_config_files()
 
         >>> homedir = os.path.expanduser("~")
-        >>> topdir = gbp.git.GitRepository('.').path if os.path.isdir('.git') else os.path.abspath('.')
-        >>> files_mangled = [file.replace(topdir, 'TOPDIR').replace(homedir, 'HOME') for file in files]
+        >>> files = GbpOptionParser.get_config_files()
+        >>> files_mangled = [file.replace(homedir, 'HOME') for file in files]
         >>> files_mangled
-        ['/etc/git-buildpackage/gbp.conf', 'HOME/.gbp.conf', 'TOPDIR/.gbp.conf', 'TOPDIR/debian/gbp.conf', 'TOPDIR/.git/gbp.conf']
-
+        ['/etc/git-buildpackage/gbp.conf', 'HOME/.gbp.conf', '%(top_dir)s/.gbp.conf', '%(top_dir)s/debian/gbp.conf', '%(git_dir)s/gbp.conf']
+        >>> files = GbpOptionParser.get_config_files(no_local=True)
+        >>> files_mangled = [file.replace(homedir, 'HOME') for file in files]
+        >>> files_mangled
+        ['/etc/git-buildpackage/gbp.conf', 'HOME/.gbp.conf']
         >>> os.environ['GBP_CONF_FILES'] = 'test1:test2'
         >>> GbpOptionParser.get_config_files()
         ['test1', 'test2']
         """
         envvar = os.environ.get('GBP_CONF_FILES')
         files = envvar.split(':') if envvar else klass.def_config_files
-        try:
-            repo = GitRepository(".")
-            str_fields = {'git_dir': repo.git_dir,
-                          'top_dir': repo.path}
-        except GitRepositoryError:
-            str_fields = {'git_dir': os.path.abspath('.git'),
-                          'top_dir': os.path.abspath('.')}
+        files = [os.path.expanduser(fname) for fname in files]
+        if no_local:
+            files = [fname for fname in files if fname.startswith('/')]
+        return files
 
-        return [ os.path.expanduser(f % str_fields) for f in files ]
+    def _read_config_file(self, parser, repo, filename):
+        """Read config file"""
+        str_fields = {}
+        if repo:
+            str_fields['git_dir'] = repo.git_dir
+            if not repo.bare:
+                str_fields['top_dir'] = repo.path
+
+        try:
+            filename = filename % str_fields
+        except KeyError:
+            # Skip if filename wasn't expanded, i.e. we're not in git repo
+            return
+        parser.read(filename)
 
     def _parse_config_files(self):
         """
@@ -320,7 +334,14 @@ class GbpOptionParser(OptionParser):
         default values
         """
         parser = SafeConfigParser(self.defaults)
-        parser.read(self.config_files)
+        config_files = self.get_config_files()
+        try:
+            repo = GitRepository(".")
+        except GitRepositoryError:
+            repo = None
+        # Read all config files
+        for filename in config_files:
+            self._read_config_file(parser, repo, filename)
         self.config = dict(parser.defaults())
 
         if parser.has_section(self.command):
@@ -358,7 +379,6 @@ class GbpOptionParser(OptionParser):
         self.sections = sections
         self.prefix = prefix
         self.config = {}
-        self.config_files = self.get_config_files()
         self._parse_config_files()
         OptionParser.__init__(self, option_class=GbpOption,
                               usage=usage, version='%s %s' % (self.command,
