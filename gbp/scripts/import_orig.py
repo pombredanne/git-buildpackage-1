@@ -384,7 +384,7 @@ def main(argv):
                 repo.force_head(current_branch, hard=True)
         except (gbpc.CommandExecFailed, GitRepositoryError):
             raise GbpError("Import of %s failed" % source.path)
-    except GbpError as err:
+    except (GbpError, GitRepositoryError) as err:
         if len(err.__str__()):
             gbp.log.err(err)
         ret = 1
