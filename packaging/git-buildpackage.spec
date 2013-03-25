@@ -1,4 +1,5 @@
 %define do_unittests 0
+%define do_builddoc  0
 
 Name:       git-buildpackage
 Summary:    Build packages from git
@@ -17,9 +18,13 @@ Requires:   dpkg
 %endif
 BuildRequires:  python
 BuildRequires:  python-setuptools
+
+%if 0%{?do_builddoc}
 BuildRequires:  docbook-utils
 BuildRequires:  gtk-doc
 BuildRequires:  epydoc
+%endif
+
 %if 0%{?do_unittests}
 BuildRequires:  python-coverage
 BuildRequires:  python-nose
@@ -41,7 +46,7 @@ Requires:   man-db
 Requires:   man
 %endif
 
-%if 0%{?fedora} || 0%{?centos_ver}
+%if 0%{?fedora} || 0%{?centos_ver} || 0%{?tizen_version:1}
 Requires:   python
 %else
 Requires:   python-base
@@ -56,7 +61,11 @@ Summary:    Build RPM packages from git
 Group:      Development/Tools/Building
 Requires:   %{name}-common = %{version}-%{release}
 Requires:   rpm
+%if 0%{?tizen_version:1}
+Requires:   python-rpm
+%else
 Requires:   rpm-python
+%endif
 Provides:   tizen-gbp-rpm = 20130308
 
 %description rpm
@@ -73,12 +82,14 @@ This package contains the tools for building RPM packages.
 %build
 WITHOUT_NOSETESTS=1 python ./setup.py build
 
+%if 0%{?do_builddoc}
 # Prepare apidocs
 epydoc -n git-buildpackage --no-sourcecode -o docs/apidocs/ \
     gbp*.py git*.py gbp/
 
 # HTML docs
 HAVE_SGML2X=0 make -C docs/
+%endif
 
 
 %if 0%{?do_unittests}
