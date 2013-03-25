@@ -359,7 +359,7 @@ def main(argv):
                     gbpc.Command(options.postimport % info, extra_env=env, shell=True)()
         except (gbpc.CommandExecFailed, GitRepositoryError):
             raise GbpError("Import of %s failed" % source.path)
-    except GbpError as err:
+    except (GbpError, GitRepositoryError) as err:
         if len(err.__str__()):
             gbp.log.err(err)
         ret = 1

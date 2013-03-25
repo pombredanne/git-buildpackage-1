@@ -23,7 +23,6 @@ from collections import defaultdict
 
 import gbp.log as log
 from gbp.command_wrappers import (GitCommand, CommandExecFailed)
-from gbp.errors import GbpError
 from gbp.git.modifier import GitModifier
 from gbp.git.commit import GitCommit
 from gbp.git.errors import GitError
@@ -682,7 +681,7 @@ class GitRepository(object):
                                        args.args,
                                        extra_env={'LC_ALL': 'C'})
         if ret:
-            raise GbpError("Can't get repository status")
+            raise GitRepositoryError("Can't get repository status")
         ret = False
         for line in out:
             if line.startswith('#'):
@@ -1099,7 +1098,8 @@ class GitRepository(object):
         if not ret:
             return self.strip_sha1(sha1)
         else:
-            raise GbpError("Failed to hash %s: %s" % (filename, stderr))
+            raise GitRepositoryError("Failed to hash %s: %s" % (filename,
+                                                                stderr))
 #}
 
 #{ Comitting
@@ -1208,7 +1208,7 @@ class GitRepository(object):
         commit = self.commit_tree(tree=tree, msg=msg, parents=parents,
                                   author=author, committer=committer)
         if not commit:
-            raise GbpError("Failed to commit tree")
+            raise GitRepositoryError("Failed to commit tree")
         self.update_ref("refs/heads/%s" % branch, commit, cur)
         return commit
 
@@ -1243,7 +1243,7 @@ class GitRepository(object):
         if not ret:
             return self.strip_sha1(sha1)
         else:
-            raise GbpError("Failed to commit tree: %s" % stderr)
+            raise GitRepositoryError("Failed to commit tree: %s" % stderr)
 
 #{ Commit Information
 
