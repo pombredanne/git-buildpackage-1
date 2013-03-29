@@ -699,7 +699,9 @@ class SpecFile(object):
                 else:
                     # RPM default
                     prefix = "%s-%s/" % (self.name, self.upstreamversion)
-            return prefix
+            break
+
+        return prefix
 
     def _guess_orig_file(self):
         """
