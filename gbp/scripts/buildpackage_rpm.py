@@ -542,8 +542,7 @@ def main(argv):
 
             # Get/build the orig tarball
             if is_native(repo, options):
-                orig_file = spec.orig_src['filename']
-                if spec.orig_src and not RpmPkgPolicy.has_orig(orig_file, source_dir):
+                if spec.orig_src and not RpmPkgPolicy.has_orig(spec.orig_src['filename'], source_dir):
                     # Just build source archive from the exported tree
                     gbp.log.info("Creating (native) source archive %s from '%s'" % (spec.orig_src['filename'], tree))
                     if spec.orig_src['compression']:
