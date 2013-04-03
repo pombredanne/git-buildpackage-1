@@ -252,12 +252,12 @@ def test_add_section():
     >>> cl = gbp.deb.changelog.ChangeLog(filename=testclname)
     >>> cl.add_section(msg=["Test add section"], distribution=None, author="Debian Maintainer", email="maint@debian.org")
     >>> cl = gbp.deb.changelog.ChangeLog(filename=testclname)
-    >>> cl.version
-    '0.5.33'
-    >>> cl.debian_version
-    '0.5.33'
-    >>> cl['Distribution']
-    'UNRELEASED'
+    >>> cl.version in ['0.5.33', '0.5.32ubuntu1']
+    True
+    >>> cl.debian_version in ['0.5.33', '0.5.32ubuntu1']
+    True
+    >>> cl['Distribution'] in ['UNRELEASED', 'precise', 'oneiric', 'quantal']
+    True
     >>> 'Test add section' in cl['Changes']
     True
     >>> os.chdir(olddir)
@@ -295,12 +295,12 @@ def test_add_entry():
     >>> cl.add_section(msg=["Test add section"], distribution=None, author="Debian Maintainer", email="maint@debian.org")
     >>> cl.add_entry(msg=["Test add entry"], author="Debian Maintainer", email="maint@debian.org")
     >>> cl = gbp.deb.changelog.ChangeLog(filename=testclname)
-    >>> cl.version
-    '0.5.33'
-    >>> cl.debian_version
-    '0.5.33'
-    >>> cl['Distribution']
-    'UNRELEASED'
+    >>> cl.version in ['0.5.33', '0.5.32ubuntu1']
+    True
+    >>> cl.debian_version in ['0.5.33', '0.5.32ubuntu1']
+    True
+    >>> cl['Distribution'] in ['UNRELEASED', 'precise', 'oneiric', 'quantal']
+    True
     >>> 'Test add entry' in cl['Changes']
     True
     >>> os.chdir(olddir)
