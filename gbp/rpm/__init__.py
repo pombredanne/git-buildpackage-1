@@ -460,8 +460,11 @@ class SpecFile(object):
             tagvalue = None
         tagvalue = None if type(tagvalue) is list else value
 
-        # Try to guess the correct indentation from the previous tag
-        match = re.match(r'^([a-z]+([0-9]+)?\s*:\s*)', str(insertafter), re.I)
+        # Try to guess the correct indentation from the previous or next tag
+        indent_re = re.compile(r'^([a-z]+([0-9]+)?\s*:\s*)', flags=re.I)
+        match = indent_re.match(str(insertafter))
+        if not match:
+            match = indent_re.match(str(insertafter.next))
         indent = 12 if not match else len(match.group(1))
         text = '%-*s%s\n' % (indent, '%s:' % tagname, value)
         if key in self._tags:
