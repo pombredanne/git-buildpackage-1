@@ -603,10 +603,10 @@ def main(argv):
                                    'GBP_SHA1': sha})()
         else:
             try:
-                tree_name = repo.find_tag(tree, longfmt=True, always=True)
+                tree_name = repo.describe(tree, longfmt=True, always=True)
             except GitRepositoryError:
                 # If tree is not commit-ish, expect it to be from current HEAD
-                tree_name = repo.find_tag('HEAD', longfmt=True, always=True) +\
+                tree_name = repo.describe('HEAD', longfmt=True, always=True) +\
                             '-dirty'
         # Put 'VCS:' tag to .spec
         spec.set_tag('VCS', None,

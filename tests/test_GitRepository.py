@@ -252,6 +252,33 @@ def test_tag():
     ['tag', 'tag2']
     """
 
+def test_describe():
+    """
+    Describe commit-ish
+
+    Methods tested:
+         - L{gbp.git.GitRepository.describe}
+
+    >>> import gbp.git
+    >>> repo = gbp.git.GitRepository(repo_dir)
+    >>> sha = repo.rev_parse('HEAD')
+    >>> repo.describe('HEAD')
+    'tag2'
+    >>> repo.describe('HEAD', longfmt=True) == 'tag2-0-g%s' % sha[:7]
+    True
+    >>> repo.describe('HEAD', pattern='foo*')
+    Traceback (most recent call last):
+    ...
+    GitRepositoryError: Can't describe HEAD. Git error: fatal: No names found, cannot describe anything.
+    >>> repo.describe('HEAD', pattern='foo*', always=True) == sha[:7]
+    True
+    >>> repo.describe('HEAD', always=True, abbrev=16)
+    'tag2'
+    >>> repo.describe('HEAD', pattern='foo*', always=True, abbrev=16) == sha[:16]
+    True
+    >>> tag = repo.describe('HEAD', longfmt=True, abbrev=16) == 'tag2-0-g%s' % sha[:16]
+    """
+
 def test_find_tag():
     """
     Find tags
@@ -263,14 +290,10 @@ def test_find_tag():
     >>> repo = gbp.git.GitRepository(repo_dir)
     >>> repo.find_tag('HEAD')
     'tag2'
-    >>> repo.find_tag('HEAD', longfmt=True)[:7]
-    'tag2-0-'
     >>> repo.find_tag('HEAD', pattern='foo*')
     Traceback (most recent call last):
     ...
-    GitRepositoryError: Can't find tag for HEAD. Git error: fatal: No names found, cannot describe anything.
-    >>> len(repo.find_tag('HEAD', pattern='foo*', always=True))
-    7
+    GitRepositoryError: Can't describe HEAD. Git error: fatal: No names found, cannot describe anything.
     """
 
 def test_move_tag():
