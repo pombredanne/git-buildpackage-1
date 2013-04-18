@@ -1,5 +1,5 @@
-%define do_unittests 0
-%define with_docs 0
+# Add --with docs rpmbuild option, disabled by default
+%bcond_with docs
 
 Name:       git-buildpackage
 Summary:    Build packages from git
@@ -19,7 +19,7 @@ Requires:   dpkg
 BuildRequires:  python
 BuildRequires:  python-setuptools
 
-%if 0%{?with_docs}
+%if %{with docs}
 BuildRequires:  docbook-utils
 BuildRequires:  gtk-doc
 BuildRequires:  epydoc
@@ -82,7 +82,7 @@ This package contains the tools for building RPM packages.
 %build
 WITHOUT_NOSETESTS=1 python ./setup.py build
 
-%if 0%{?with_docs}
+%if %{with docs}
 # Prepare apidocs
 epydoc -n git-buildpackage --no-sourcecode -o docs/apidocs/ \
     gbp*.py git*.py gbp/
