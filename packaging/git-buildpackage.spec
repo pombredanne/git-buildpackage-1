@@ -175,9 +175,7 @@ cp -r docs/manual-html %{buildroot}%{_docdir}/%{name}
 cp -r docs/apidocs %{buildroot}%{_docdir}/%{name}
 %endif
 
-
-%files
-%defattr(-,root,root,-)
+cat > files.list << EOF
 %{_bindir}/git-pbuilder
 %{python_sitelib}/gbp/deb
 %{python_sitelib}/gbp/scripts/pq.py*
@@ -187,7 +185,10 @@ cp -r docs/apidocs %{buildroot}%{_docdir}/%{name}
 %{python_sitelib}/gbp/scripts/import_dscs.py*
 %{python_sitelib}/gbp/scripts/import_orig.py*
 %{python_sitelib}/gbp/scripts/create_remote_repo.py*
+EOF
+
 %if %{with docs}
+cat >> files.list << EOF
 %{_mandir}/man1/gbp-buildpackage.1*
 %{_mandir}/man1/gbp-create-remote-repo.1*
 %{_mandir}/man1/gbp-dch.1*
@@ -196,6 +197,19 @@ cp -r docs/apidocs %{buildroot}%{_docdir}/%{name}
 %{_mandir}/man1/gbp-import-orig.1*
 %{_mandir}/man1/gbp-pq.1*
 %{_mandir}/man1/git-pbuilder.1*
+EOF
+%endif
+
+# Disable the Debian tools for old CentOS
+%if 0%{?centos_version} && 0%{?centos_ver} < 7
+for f in `cat files.list`; do
+    rm -rfv %{buildroot}/$f
+done
+
+%else
+
+%files -f files.list
+%defattr(-,root,root,-)
 %endif
 
 %files common
