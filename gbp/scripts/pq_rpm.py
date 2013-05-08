@@ -35,6 +35,7 @@ from gbp.patch_series import (PatchSeries, Patch)
 from gbp.rpm import (SpecFile, guess_spec)
 from gbp.scripts.common.pq import (is_pq_branch, pq_branch_name, pq_branch_base,
                                    parse_gbp_commands, format_patch,
+                                   format_diff,
                                    switch_to_pq_branch, apply_single_patch,
                                    apply_and_commit_patch, drop_pq)
 
@@ -49,8 +50,21 @@ def generate_patches(repo, start, end, outdir, options):
         if not repo.has_treeish(treeish):
             raise GbpError('%s not a valid tree-ish' % treeish)
 
+    try:
+        end_commit = end
+        end_commit_sha1 = repo.rev_parse("%s^0" % end_commit)
+    except GitRepositoryError:
+        # In case of plain tree-ish objects, assume current branch head is the
+        # last commit
+        end_commit = "HEAD"
+        end_commit_sha1 = repo.rev_parse("%s^0" % end_commit)
+
+    if repo.get_merge_base(start_sha1, end_commit_sha1) != start_sha1:
+        raise GbpError("Start commit '%s' not an ancestor of end commit "
+                       "'%s'" % (start, end_commit))
+    rev_list = reversed(repo.get_commits(start, end_commit))
+
     # Generate patches
-    rev_list = reversed(repo.get_commits(start, end))
     patch_num = 1 if options.patch_numbers else None
     for commit in rev_list:
         info = repo.get_commit_info(commit)
@@ -63,6 +77,13 @@ def generate_patches(repo, start, end, outdir, options):
             gbp.log.info('Ignoring commit %s' % info['id'])
         if options.patch_numbers:
             patch_num += 1
+
+    # Generate diff to the tree-ish object
+    if end_commit != end:
+        gbp.log.info("Generating diff file %s..%s" % (end_commit, end))
+        patch_fn = format_diff(outdir, None, repo, end_commit, end)
+        if patch_fn:
+            patches.append((patch_fn, None))
 
     return patches
 
