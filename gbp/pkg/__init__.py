@@ -346,7 +346,7 @@ class UpstreamSource(object):
         run_dir = os.path.dirname(self.unpacked.rstrip('/'))
         pack_this = os.path.basename(self.unpacked.rstrip('/'))
         transform = None
-        if newprefix != None:
+        if newprefix is not None:
             newprefix = newprefix.strip('/.')
             if newprefix:
                 transform = 's!%s!%s!' % (pack_this, newprefix)
@@ -354,10 +354,10 @@ class UpstreamSource(object):
                 transform = 's!%s!%s!' % (pack_this, '.')
         try:
             repackArchive = gbpc.PackTarArchive(newarchive,
-                                run_dir,
-                                pack_this,
-                                filters,
-                                transform=transform)
+                                                run_dir,
+                                                pack_this,
+                                                filters,
+                                                transform=transform)
             repackArchive()
         except gbpc.CommandExecFailed:
             # repackArchive already printed an error
