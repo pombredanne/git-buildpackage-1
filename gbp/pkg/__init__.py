@@ -331,6 +331,8 @@ class UpstreamSource(object):
         @type newarchive: string
         @param filters: tar filters to apply
         @type filters: array of strings
+        @param newprefix: new prefix, None implies that prefix is not mangled
+        @type newprefix: string or None
         @return: the new upstream source
         @rtype: UpstreamSource
         """
