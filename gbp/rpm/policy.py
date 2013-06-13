@@ -20,29 +20,32 @@ import re
 import gbp.log
 from gbp.pkg import PkgPolicy, parse_archive_filename
 
-# When trying to parse a version-number, these are
-# the valid characters.
-rpm_version_chars = 'a-zA-Z\d.~+'
-
 class RpmPkgPolicy(PkgPolicy):
     """Packaging policy for RPM"""
 
     # Special rpmlib python module for GBP (only)
     python_rpmlib_module_name = "rpm_tizen"
 
-    # Do NOT use a plus '+' or a period '.' as a delimiter.
-    # Additionally, name must begin with an alphanumeric.
-    packagename_re = re.compile("^[a-zA-Z0-9][a-zA-Z0-9\-_]+$")
-    packagename_msg = """Package names must be at least two characters long, start with an
-    alphanumeric and can only contain alphanumerics or minus signs (-)"""
+    alnum = 'a-zA-Z0-9'
+    # Valid characters for RPM pkg name
+    name_whitelist_chars = '.-_+%{}'
+    # Valid characters for RPM pkg version
+    version_whitelist_chars = '._+%{}~'
 
-    # The upstream_version may contain only alphanumerics and the characters
-    # . ~ _ (full stop, tilde, underscores) and should start with a digit.
-    # We can use letters and tilde into the version tag. We do not use the
-    # Release field for this.
-    upstreamversion_re = re.compile("^[0-9][a-zA-Z0-9\.\~_]*$")
-    upstreamversion_msg = """Upstream version numbers must start with a digit and can only containg alphanumerics,
-    full stops (.),tildes (~) and underscores (_)"""
+    # Regexp for checking the validity of package name
+    packagename_re = re.compile("^[%s][%s%s]+$" %
+                                        (alnum, alnum, name_whitelist_chars))
+    packagename_msg = ("Package names must be at least two characters long, "
+                       "start with an alphanumeric and can only contain "
+                       "alphanumerics or characters in %s" %
+                            list(name_whitelist_chars))
+
+    # Regexp for checking the validity of package (upstream) version
+    upstreamversion_re = re.compile("^[0-9][%s%s]*$" %
+                                        (alnum, version_whitelist_chars))
+    upstreamversion_msg = ("Upstream version numbers must start with a digit "
+                           "and can only containg alphanumerics or characters "
+                           "in %s" % list(version_whitelist_chars))
 
     # Time stamp format to be used in tagging
     tag_timestamp_format = "%Y%m%d"
