@@ -17,7 +17,6 @@
 """Default packaging policy for RPM"""
 
 import re
-import gbp.log
 from gbp.pkg import PkgPolicy, parse_archive_filename
 
 class RpmPkgPolicy(PkgPolicy):
@@ -69,7 +68,7 @@ class RpmPkgPolicy(PkgPolicy):
         >>> RpmPkgPolicy.is_valid_orig_archive("foo.gz")
         False
         """
-        (base, arch_fmt, compression) = parse_archive_filename(filename)
+        _base, arch_fmt, _compression = parse_archive_filename(filename)
         if arch_fmt:
             return True
         return False
@@ -108,10 +107,12 @@ class RpmPkgPolicy(PkgPolicy):
         if len(v_r) > 1:
             release = v_r[1]
 
-        return {'epoch': epoch, 'upstreamversion': upstreamversion, 'release': release}
+        return {'epoch': epoch,
+                'upstreamversion': upstreamversion,
+                'release': release}
 
     @classmethod
-    def compose_full_version(cls, evr = {}):
+    def compose_full_version(cls, evr):
         """
         Compose a full version string from individual "version components",
         i.e. epoch, version and release
