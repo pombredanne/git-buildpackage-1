@@ -27,7 +27,7 @@ class RpmPkgPolicy(PkgPolicy):
 
     alnum = 'a-zA-Z0-9'
     # Valid characters for RPM pkg name
-    name_whitelist_chars = '.-_+%{}'
+    name_whitelist_chars = '._+%{}\-'
     # Valid characters for RPM pkg version
     version_whitelist_chars = '._+%{}~'
 
