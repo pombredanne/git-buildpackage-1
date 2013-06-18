@@ -61,10 +61,10 @@ def generate_patches(repo, start, end, outdir, options):
                                     topic_regex=topic_regex)
             if patch_fn:
                 patches.append(patch_fn)
+                if options.patch_numbers:
+                    patch_num += 1
         else:
             gbp.log.info('Ignoring commit %s' % info['id'])
-        if options.patch_numbers:
-            patch_num += 1
 
     return patches
 

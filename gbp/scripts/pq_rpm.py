@@ -113,10 +113,10 @@ def generate_patches(repo, start, squash, end, outdir, options):
                                     options.patch_export_ignore_path)
             if patch_fn:
                 patches.append((patch_fn, cmds))
+                if options.patch_numbers:
+                    patch_num += 1
         else:
             gbp.log.info('Ignoring commit %s' % info['id'])
-        if options.patch_numbers:
-            patch_num += 1
 
     # Generate diff to the tree-ish object
     if end_commit != end:
