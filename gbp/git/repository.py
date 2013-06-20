@@ -646,8 +646,8 @@ class GitRepository(object):
         out, ret = self._git_getoutput('tag', [ '-l', tag ])
         return [ False, True ][len(out)]
 
-    def describe(self, commitish, pattern=None, longfmt=False, always=False,
-                 abbrev=None):
+    def describe(self, commitish, pattern=None, longfmt=False,
+            always=False, abbrev=None, tags=False, exact_match=False):
         """
         Describe commit, relative to the latest tag reachable from it.
 
@@ -661,6 +661,11 @@ class GitRepository(object):
         @type always: C{bool}
         @param abbrev: abbreviate sha1 to given length instead of the default
         @type abbrev: None or C{long}
+        @param tags: enable matching a lightweight (non-annotated) tag.
+        @type tags: C{bool}
+        @param exact_match: only output exact matches (a tag directly
+        references the supplied commit).
+        @type exact_match: C{bool}
         @return: tag name plus/or the abbreviated sha1
         @rtype: C{str}
         """
@@ -674,6 +679,8 @@ class GitRepository(object):
         elif abbrev is not None:
             args.add('--abbrev=%s' % abbrev)
         args.add_true(always, '--always')
+        args.add_true(tags, '--tags')
+        args.add_true(exact_match, '--exact-match')
         args.add(commitish)
 
         tag, err, ret = self._git_inout('describe', args.args,
@@ -694,7 +701,7 @@ class GitRepository(object):
         @return: the found tag
         @rtype: C{str}
         """
-        return self.describe(commit, pattern, abbrev=0)
+        return self.describe(commit, pattern=pattern, abbrev=0)
 
     def get_tags(self, pattern=None):
         """
