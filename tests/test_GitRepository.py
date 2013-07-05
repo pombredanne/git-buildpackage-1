@@ -593,6 +593,7 @@ def test_pull():
     >>> clone = gbp.git.GitRepository(d)
     >>> clone.set_branch('master')
     >>> clone.pull()
+    >>> clone.pull(all_repos=True)
     """
 
 def test_fetch():
