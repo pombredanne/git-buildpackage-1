@@ -595,6 +595,7 @@ def test_fetch():
     >>> clone.push()
     >>> clone.push('origin')
     >>> clone.push('origin', 'master')
+    >>> clone.push('origin', 'master', force=True)
     >>> clone.create_tag('tag3')
     >>> clone.push_tag('origin', 'tag3')
     >>> clone.add_remote_repo('foo', repo_dir)
