@@ -1116,7 +1116,7 @@ class GitRepository(object):
         args += [ repo ] if repo else []
         self._git_command("pull", args)
 
-    def push(self, repo=None, src=None, dst=None, ff_only=True):
+    def push(self, repo=None, src=None, dst=None, ff_only=True, force=False):
         """
         Push changes to the remote repo
 
@@ -1128,9 +1128,15 @@ class GitRepository(object):
         @type dst: C{str}
         @param ff_only: only push if it's a fast forward update
         @type ff_only: C{bool}
+        @param force: usually, the command refuses to update a remote ref that
+        is not an ancestor of the local ref used to overwrite it. This flag
+        disables the check. This can cause the remote repository to lose
+        commits; use it with care.
+        @type force: C{bool}
         """
         args = GitArgs()
         args.add_cond(repo, repo)
+        args.add_true(force, "-f")
 
         # Allow for src == '' to delete dst on the remote
         if src != None:
@@ -1140,6 +1146,7 @@ class GitRepository(object):
             if not ff_only:
                 refspec = '+%s' % refspec
             args.add(refspec)
+
         self._git_command("push", args.args)
 
     def push_tag(self, repo, tag):
