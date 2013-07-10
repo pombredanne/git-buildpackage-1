@@ -1084,7 +1084,7 @@ class GitRepository(object):
         args = GitArgs('rm', name)
         self._git_command("remote", args.args)
 
-    def fetch(self, repo=None, tags=False, depth=0):
+    def fetch(self, repo=None, tags=False, depth=0, refspec=None):
         """
         Download objects and refs from another repository.
 
@@ -1094,11 +1094,16 @@ class GitRepository(object):
         @type tags: C{bool}
         @param depth: deepen the history of (shallow) repository to depth I{depth}
         @type depth: C{int}
+        @param refspec: the format of a <refspec> parameter is an optional plus
+        +, followed by the source ref <src>, followed by a colon :, followed by
+        the destination ref <dst>. More detail, please see <git help fetch>
+        @type refspec: C{str}
         """
         args = GitArgs('--quiet')
         args.add_true(tags, '--tags')
         args.add_cond(depth, '--depth=%s' % depth)
         args.add_cond(repo, repo)
+        args.add_cond(refspec, refspec)
 
         self._git_command("fetch", args.args)
 
