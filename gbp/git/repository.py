@@ -787,6 +787,30 @@ class GitRepository(object):
             break
         return (ret, "".join(out))
 
+    def clean(self, directories=False, force=False, dry_run=False):
+        """
+        Remove untracked files from the working tree.
+
+        @param directories: remove untracked directories in addition to
+        untracked files.
+        @type directories: C{bool}
+        @param force: if the Git configuration variable clean.requireForce is
+        not set to false, git clean will refuse to run unless given -f or -n.
+        @type force: C{bool}
+        @param dry_run: don’t actually remove anything, just show what would
+        be done. if this is set to True, others' options will not work yet.
+        @type dry_run: C{bool}
+        """
+        options = GitArgs()
+        options.add_true(directories, '-d')
+        options.add_true(force, '-f')
+        options.add_true(dry_run, '-n')
+
+        _out, err, ret = self._git_inout('clean', options.args,
+                                        extra_env={'LC_ALL': 'C'})
+        if ret:
+            raise GitRepositoryError("Can't execute repository clean: %s" % err)
+
     def status(self, pathlist=None):
         """
         Check status of repository.
