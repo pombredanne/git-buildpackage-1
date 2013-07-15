@@ -3,7 +3,7 @@
 #
 
 %define suse_release %(test -e /etc/SuSE-release && head -n1 /etc/SuSE-release | cut -d ' ' -f2 | cut --output-delimiter=0 -d. -f1,2 || echo 0)
-%if %suse_release >= 1201
+%if "%{suse_release}" >= "1201"
 %define test_weak_dep_tags 1
 %endif
 
@@ -61,7 +61,7 @@ BuildEnhances:  my_buildenhances
 %endif
 
 # These should be filtered out by GBP
-%if %test_arch_os_tags
+%if "%{test_arch_os_tags}" != "0"
 BuildArch:      my_buildarch
 ExcludeArch:    my_excludearch
 ExclusiveArch:  my_exclusivearch
