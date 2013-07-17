@@ -1498,7 +1498,7 @@ class GitRepository(object):
         @return: diff
         @rtype: C{str}
         """
-        options = GitArgs('-p', '-a')
+        options = GitArgs('-p', '-a', '--no-ext-diff')
         if stat is True:
             options.add('--stat')
         elif stat:
