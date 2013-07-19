@@ -1541,7 +1541,7 @@ class GitRepository(object):
         @return: diff
         @rtype: C{str}
         """
-        options = GitArgs('-p', '-a')
+        options = GitArgs('-p', '-a', '--ignore-submodules')
         if stat is True:
             options.add('--stat')
         elif stat:
