@@ -1124,7 +1124,8 @@ class GitRepository(object):
         args.add_true(repo, repo)
         self._git_command("pull", args.args)
 
-    def push(self, repo=None, src=None, dst=None, ff_only=True, force=False):
+    def push(self, repo=None, src=None, dst=None, ff_only=True, force=False,
+            tags=False):
         """
         Push changes to the remote repo
 
@@ -1141,10 +1142,14 @@ class GitRepository(object):
         disables the check. This can cause the remote repository to lose
         commits; use it with care.
         @type force: C{bool}
+        @param tags: all refs under refs/tags are pushed, in addition to
+        refspecs explicitly listed on the command line.
+        @type tags: C{bool}
         """
         args = GitArgs()
         args.add_cond(repo, repo)
         args.add_true(force, "-f")
+        args.add_true(tags, "--tags")
 
         # Allow for src == '' to delete dst on the remote
         if src != None:
