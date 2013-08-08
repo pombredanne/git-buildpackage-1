@@ -1188,7 +1188,7 @@ class GitRepository(object):
 
         args = GitArgs()
         args.add_true(force, '-f')
-        args.add_false(untracked, '-u')
+        args.add_cond(untracked, '-A', '-u')
         args.add(paths)
 
         if index_file:
