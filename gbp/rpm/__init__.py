@@ -118,6 +118,8 @@ class SpecFile(object):
     def __init__(self, specfile):
 
         # Load spec file into our special data structure
+        self.specfile = os.path.basename(specfile)
+        self.specdir = os.path.dirname(os.path.abspath(specfile))
         self._content = LinkedList()
         try:
             with open(specfile) as spec_file:
@@ -147,8 +149,6 @@ class SpecFile(object):
         self.epoch = str(source_header[rpm.RPMTAG_EPOCH]) \
             if source_header[rpm.RPMTAG_EPOCH] != None else None
         self.packager = source_header[rpm.RPMTAG_PACKAGER]
-        self.specfile = os.path.basename(specfile)
-        self.specdir = os.path.dirname(os.path.abspath(specfile))
         self._tags = {}
         self._special_directives = defaultdict(list)
         self._gbp_tags = defaultdict(list)
@@ -179,7 +179,8 @@ class SpecFile(object):
                     rpm.spec(temp.name)
                     return rpm.spec(temp.name)
                 except ValueError as err:
-                    raise GbpError("RPM error while parsing spec: %s" % err)
+                    raise GbpError("RPM error while parsing %s: %s" %
+                                    (self.specfile, err))
 
     def _get_version(self):
         """
@@ -784,8 +785,9 @@ def guess_spec(topdir, recursive=True, preferred_name=None):
     if len(specs) == 0:
         raise NoSpecError, ("No spec file found.")
     elif len(specs) > 1:
-        raise NoSpecError, ("Multiple spec files found, don't know which to use.")
-
+        filenames = [os.path.relpath(spec, abstop) for spec in specs]
+        raise NoSpecError, ("Multiple spec files found (%s), don't know which "
+                            "to use." % ', '.join(filenames))
     return specs[0]
 
 def guess_spec_repo(repo, branch, packaging_dir):
