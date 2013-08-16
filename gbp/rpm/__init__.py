@@ -167,20 +167,18 @@ class SpecFile(object):
     def _parse_filtered_spec(self, skip_tags):
         """Parse a filtered spec file in rpm-python"""
         skip_tags = [tag.lower() for tag in skip_tags]
-        with tempfile.NamedTemporaryFile(prefix='gbp') as temp:
-            with open(temp.name, 'w') as filtered:
-                filtered.writelines(str(line) for line in self._content
-                    if str(line).split(":")[0].strip().lower()
-                        not in skip_tags)
-                filtered.flush()
-                try:
-                    # Parse two times to circumvent a rpm-python problem where
-                    # macros are not expanded if used before their definition
-                    rpm.spec(temp.name)
-                    return rpm.spec(temp.name)
-                except ValueError as err:
-                    raise GbpError("RPM error while parsing %s: %s" %
-                                    (self.specfile, err))
+        with tempfile.NamedTemporaryFile(prefix='gbp') as filtered:
+            filtered.writelines(str(line) for line in self._content
+                    if str(line).split(":")[0].strip().lower() not in skip_tags)
+            filtered.flush()
+            try:
+                # Parse two times to circumvent a rpm-python problem where
+                # macros are not expanded if used before their definition
+                rpm.spec(filtered.name)
+                return rpm.spec(filtered.name)
+            except ValueError as err:
+                raise GbpError("RPM error while parsing %s: %s" %
+                                (self.specfile, err))
 
     def _get_version(self):
         """
