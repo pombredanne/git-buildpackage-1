@@ -3,6 +3,9 @@
 from . import context
 
 import os
+import shutil
+import tarfile
+import tempfile
 import unittest
 
 import gbp.log
@@ -86,4 +89,26 @@ class MockedChangeLog(ChangeLog):
     def __init__(self, version, changes = "a important change"):
         ChangeLog.__init__(self,
                            contents=self.contents % (version, changes))
+
+
+def ls_dir(directory):
+    """List the contents of directory, recurse to subdirectories"""
+    contents = set()
+    for root, dirs, files in os.walk(directory):
+        prefix = ''
+        if root != directory:
+            prefix = os.path.relpath(root, directory) + '/'
+        contents.update(['%s%s' % (prefix, fname) for fname in files] +
+                        ['%s%s' % (prefix, dname) for dname in dirs])
+    return contents
+
+def ls_tar(tarball):
+    """List the contents of tar archive"""
+    tmpdir = tempfile.mkdtemp()
+    try:
+        tarobj = tarfile.open(tarball, 'r')
+        tarobj.extractall(tmpdir)
+        return ls_dir(tmpdir)
+    finally:
+        shutil.rmtree(tmpdir)
 
