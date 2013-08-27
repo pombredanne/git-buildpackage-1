@@ -44,13 +44,14 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
 
     Exception handling is left to the caller.
     """
-
+    if prefix:
+        prefix = prefix.strip('/') + '/'
     tarfile = output.rsplit('.', 1)[0]
     tempdir = tempfile.mkdtemp()
     submodule_tarfile = os.path.join(tempdir, "submodule.tar")
     try:
         # generate main tarfile
-        repo.archive(format='tar', prefix='%s/' % (prefix),
+        repo.archive(format='tar', prefix=prefix,
                      output=tarfile, treeish=treeish)
 
         # generate each submodule's tarfile and append it to the main archive
@@ -58,7 +59,7 @@ def git_archive_submodules(repo, treeish, output, prefix, comp_type, comp_level,
             tarpath = [subdir, subdir[2:]][subdir.startswith("./")]
 
             gbp.log.debug("Processing submodule %s (%s)" % (subdir, commit[0:8]))
-            repo.archive(format='tar', prefix='%s/%s/' % (prefix, tarpath),
+            repo.archive(format='tar', prefix='%s%s/' % (prefix, tarpath),
                          output=submodule_tarfile, treeish=commit, cwd=subdir)
             CatenateTarArchive(tarfile)(submodule_tarfile)
 
@@ -76,8 +77,10 @@ def git_archive_single(treeish, output, prefix, comp_type, comp_level, comp_opts
 
     Exception handling is left to the caller.
     """
+    if prefix:
+        prefix = prefix.strip('/') + '/'
     pipe = pipes.Template()
-    pipe.prepend("git archive --format=tar --prefix=%s/ %s" % (prefix, treeish), '.-')
+    pipe.prepend("git archive --format=tar --prefix=%s %s" % (prefix, treeish), '.-')
     pipe.append('%s -c -%s %s' % (comp_type, comp_level, comp_opts),  '--')
     ret = pipe.copy('', output)
     if ret:
