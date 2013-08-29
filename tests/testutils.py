@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import tempfile
 import unittest
+import zipfile
 
 import gbp.log
 import gbp.deb.git
@@ -108,6 +109,16 @@ def ls_tar(tarball):
     try:
         tarobj = tarfile.open(tarball, 'r')
         tarobj.extractall(tmpdir)
+        return ls_dir(tmpdir)
+    finally:
+        shutil.rmtree(tmpdir)
+
+def ls_zip(archive):
+    """List the contents of zip file"""
+    tmpdir = tempfile.mkdtemp()
+    try:
+        zipobj = zipfile.ZipFile(archive, 'r')
+        zipobj.extractall(tmpdir)
         return ls_dir(tmpdir)
     finally:
         shutil.rmtree(tmpdir)
