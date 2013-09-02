@@ -1,0 +1,2 @@
+extend-diff-ignore = "^tests/test_rpm_data/.*"
+diff-ignore
