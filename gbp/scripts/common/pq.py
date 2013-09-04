@@ -157,12 +157,11 @@ def write_patch_file(filename, repo, commit_info, diff):
 
 
 def format_patch(outdir, repo, commit, patch_num, topic_regex=None,
-                 path_exclude_regex=None):
+                 path_exclude_regex=None, topic=''):
     """Create patch of a single commit"""
     info = repo.get_commit_info(commit)
 
     # Parse and filter commit message body
-    topic = ""
     mangled_body = ""
     for line in info['body'].splitlines():
         if topic_regex:

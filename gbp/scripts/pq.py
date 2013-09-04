@@ -55,11 +55,12 @@ def generate_patches(repo, start, end, outdir, options):
     topic_regex = 'gbp-pq-topic:\s*(?P<topic>\S.*)'
     for commit in rev_list:
         info = repo.get_commit_info(commit)
-        cmds = parse_gbp_commands(info, 'gbp', ('ignore'), None)
-        cmds.update(parse_gbp_commands(info, 'gbp-pq', ('ignore'), None))
+        cmds = parse_gbp_commands(info, 'gbp', ('ignore'), ('topic'))
+        cmds.update(parse_gbp_commands(info, 'gbp-pq', ('ignore'), ('topic')))
         if not 'ignore' in cmds:
+            topic = cmds['topic'] if 'topic' in cmds else ''
             patch_fn = format_patch(outdir, repo, commit, patch_num,
-                                    topic_regex=topic_regex)
+                                    topic_regex=topic_regex, topic=topic)
             if patch_fn:
                 patches.append(patch_fn)
                 if options.patch_numbers:
