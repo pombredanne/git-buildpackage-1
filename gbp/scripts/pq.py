@@ -56,6 +56,7 @@ def generate_patches(repo, start, end, outdir, options):
     for commit in rev_list:
         info = repo.get_commit_info(commit)
         cmds = parse_gbp_commands(info, 'gbp', ('ignore'), None)
+        cmds.update(parse_gbp_commands(info, 'gbp-pq', ('ignore'), None))
         if not 'ignore' in cmds:
             patch_fn = format_patch(outdir, repo, commit, patch_num,
                                     topic_regex=topic_regex)
