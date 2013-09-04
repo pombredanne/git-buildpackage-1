@@ -156,7 +156,7 @@ def write_patch_file(filename, repo, commit_info, diff):
     return filename
 
 
-def format_patch(outdir, repo, commit, patch_num, topic_regex=None,
+def format_patch(outdir, repo, commit, patch_num, old_style_topic_cmd=False,
                  path_exclude_regex=None, topic=''):
     """Create patch of a single commit"""
     info = repo.get_commit_info(commit)
@@ -164,11 +164,14 @@ def format_patch(outdir, repo, commit, patch_num, topic_regex=None,
     # Parse and filter commit message body
     mangled_body = ""
     for line in info['body'].splitlines():
-        if topic_regex:
+        if old_style_topic_cmd:
+            topic_regex = 'gbp-pq-topic:\s*(?P<topic>\S.*)'
             match = re.match(topic_regex, line, flags=re.I)
             if match:
                 topic = match.group('topic')
                 gbp.log.debug("Topic %s found for %s" % (topic, commit))
+                gbp.log.warn("Using 'gbp-pq-topic: <topic>' is deprecated, "
+                             "please use 'Gbp[-Pq]: Topic <topic>' instead")
                 continue
         mangled_body += line + '\n'
     info['body'] = mangled_body
