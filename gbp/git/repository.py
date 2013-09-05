@@ -1127,6 +1127,8 @@ class GitRepository(object):
         """
         Get all remote repositories
 
+        @deprecated: Use get_remotes() instead
+
         @return: remote repositories
         @rtype: C{dict} of C{list} of C{str}
         """
