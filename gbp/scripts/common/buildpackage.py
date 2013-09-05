@@ -35,6 +35,23 @@ wc_names = {'WC':           {'force': True, 'untracked': True},
             'WC.UNTRACKED': {'force': False, 'untracked': True},
             'WC.IGNORED':   {'force': True, 'untracked': True}}
 
+
+def sanitize_prefix(prefix):
+    """
+    Sanitize the prefix used for generating source archives
+
+    >>> sanitize_prefix('')
+    '/'
+    >>> sanitize_prefix('foo/')
+    'foo/'
+    >>> sanitize_prefix('/foo/bar')
+    'foo/bar/'
+    """
+    if prefix:
+        return prefix.strip('/') + '/'
+    return '/'
+
+
 def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
                            comp_type, comp_level, comp_opts, format='tar'):
     """
@@ -45,8 +62,7 @@ def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
 
     Exception handling is left to the caller.
     """
-    if prefix:
-        prefix = prefix.strip('/') + '/'
+    prefix = sanitize_prefix(prefix)
     tempdir = tempfile.mkdtemp(dir=tmpdir_base, prefix='git-archive_')
     main_archive = os.path.join(tempdir, "main.%s" % format)
     submodule_archive = os.path.join(tempdir, "submodule.%s" % format)
@@ -99,8 +115,7 @@ def git_archive_single(repo, treeish, output, prefix, comp_type, comp_level,
 
     Exception handling is left to the caller.
     """
-    if prefix:
-        prefix = prefix.strip('/') + '/'
+    prefix = sanitize_prefix(prefix)
     filter_fn = None
     filter_args = {}
     if comp_type:
@@ -126,10 +141,10 @@ def untar_filter(f_in, f_out, target_dir):
 def dump_tree(repo, export_dir, treeish, with_submodules):
     """Dump a git tree-ish to output_dir"""
     output_dir = os.path.dirname(os.path.abspath(export_dir))
-    prefix = os.path.basename(export_dir)
+    prefix = sanitize_prefix(os.path.basename(export_dir))
     try:
         untar_args = {'target_dir': output_dir}
-        repo.archive(format="tar", prefix='%s/' % prefix, output=os.devnull,
+        repo.archive(format="tar", prefix=prefix, output=os.devnull,
                      treeish=treeish, filter_fn=untar_filter,
                      filter_args=untar_args)
         if with_submodules and repo.has_submodules():
@@ -140,7 +155,7 @@ def dump_tree(repo, export_dir, treeish, with_submodules):
                 tarpath = [subdir, subdir[2:]][subdir.startswith("./")]
                 subrepo = GitRepository(os.path.join(repo.path, subdir))
                 subrepo.archive(format='tar',
-                                prefix='%s/%s/' % (prefix, tarpath),
+                                prefix='%s%s/' % (prefix, tarpath),
                                 output=os.devnull, treeish=treeish,
                                 filter_fn=untar_filter, filter_args=untar_args)
     except GitRepositoryError as err:
