@@ -231,8 +231,8 @@ def write_patch_file(filename, repo, commit_info, diff):
     return filename
 
 
-def format_patch(outdir, repo, commit, patch_num, old_style_topic_cmd=False,
-                 path_exclude_regex=None, topic=''):
+def format_patch(outdir, repo, commit, series, numbered=True,
+                 old_style_topic_cmd=False, path_exclude_regex=None, topic=''):
     """Create patch of a single commit"""
     info = repo.get_commit_info(commit)
 
@@ -255,20 +255,28 @@ def format_patch(outdir, repo, commit, patch_num, old_style_topic_cmd=False,
     outdir = os.path.join(outdir, topic)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    filename = '' if patch_num is None else '%04d-' % patch_num
+    filename = '%04d-' % (len(series) + 1) if numbered else ''
     filename += info['patchname']
     suffix = ".patch"
     filename = filename[:64-len(suffix)]
-    filename = os.path.join(outdir, filename) + suffix
+    filepath = os.path.join(outdir, filename) + suffix
+    # Make sure that we don't overwrite existing patches in the series
+    if filepath in series:
+        presuffix = '-%d' % len(series)
+        filename = filename[:64-len(presuffix)-len(suffix)] + presuffix
+        filepath = os.path.join(outdir, filename) + suffix
 
     # Determine files to include
     paths = patch_path_filter(info['files'], path_exclude_regex)
 
     # Finally, create the patch
+    patch = None
     if paths:
         diff = repo.diff('%s^!' % commit, paths=paths, stat=80, summary=True)
-        return write_patch_file(filename, repo, info, diff)
-    return None
+        patch = write_patch_file(filepath, repo, info, diff)
+        if patch:
+            series.append(patch)
+    return patch
 
 
 def format_diff(outdir, filename, repo, start, end, path_exclude_regex=None):

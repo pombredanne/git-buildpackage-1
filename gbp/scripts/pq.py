@@ -51,19 +51,14 @@ def generate_patches(repo, start, end, outdir, options):
 
     # Generate patches
     rev_list = reversed(repo.get_commits(start, end))
-    patch_num = 1 if options.patch_numbers else None
     for commit in rev_list:
         info = repo.get_commit_info(commit)
         cmds = parse_gbp_commands(info, 'gbp', ('ignore'), ('topic'))
         cmds.update(parse_gbp_commands(info, 'gbp-pq', ('ignore'), ('topic')))
         if not 'ignore' in cmds:
             topic = cmds['topic'] if 'topic' in cmds else ''
-            patch_fn = format_patch(outdir, repo, commit, patch_num,
-                                    old_style_topic_cmd=True, topic=topic)
-            if patch_fn:
-                patches.append(patch_fn)
-                if options.patch_numbers:
-                    patch_num += 1
+            format_patch(outdir, repo, commit, patches, options.patch_numbers,
+                         old_style_topic_cmd=True, topic=topic)
         else:
             gbp.log.info('Ignoring commit %s' % info['id'])
 
