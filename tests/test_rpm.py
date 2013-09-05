@@ -174,7 +174,7 @@ class TestSpecFile(object):
 
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test-reference.spec')
         spec = SpecFile(tmp_spec)
-        spec.update_patches([('new.patch', None)])
+        spec.update_patches(['new.patch'], {})
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
@@ -191,15 +191,16 @@ class TestSpecFile(object):
 
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test2-reference2.spec')
         spec = SpecFile(tmp_spec)
-        spec.update_patches([('1.patch', {'if': 'true'}),
-                             ('2.patch', {'ifarch': '%ix86'})])
+        spec.update_patches(['1.patch', '2.patch'],
+                            {'1.patch': {'if': 'true'},
+                             '2.patch': {'ifarch': '%ix86'}})
         spec.set_tag('VCS', None, 'myvcstag')
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
 
         # Test updating patches again and removing the VCS tag
         reference_spec = os.path.join(SPEC_DIR, 'gbp-test2-reference.spec')
-        spec.update_patches([('new.patch',  {'if': '1'})])
+        spec.update_patches(['new.patch'], {'new.patch': {'if': '1'}})
         spec.set_tag('VCS', None, '')
         spec.write_spec_file()
         assert filecmp.cmp(tmp_spec, reference_spec) is True
@@ -282,11 +283,10 @@ class TestSpecFile(object):
         spec = SpecFileTester(spec_filepath)
 
         assert len(spec.patchseries()) == 0
-        spec.update_patches([('1.patch', None), ('2.patch', None),
-                             ('3.patch', None)])
+        spec.update_patches(['1.patch', '2.patch', '3.patch'], {})
         assert len(spec.patchseries()) == 3
         spec.protected('_gbp_tags')['ignore-patches'].append({'args': "0"})
-        spec.update_patches([('4.patch', None)])
+        spec.update_patches(['4.patch'], {})
         assert len(spec.patchseries()) == 1
         assert len(spec.patchseries(ignored=True)) == 2
         spec.protected('_delete_special_macro')('patch', 0)
