@@ -49,7 +49,7 @@ def compress_patches(patches, compress_size=0):
     Rename and/or compress patches
     """
     ret_patches = []
-    for patch, cmds in patches:
+    for patch in patches:
         # Compress if patch file is larger than "threshold" value
         suffix = ''
         if compress_size and os.path.getsize(patch) > compress_size:
@@ -57,7 +57,7 @@ def compress_patches(patches, compress_size=0):
             subprocess.Popen(['gzip', '-n', patch]).communicate()
             suffix = '.gz'
 
-        ret_patches.append((os.path.basename(patch) + suffix, cmds))
+        ret_patches.append(os.path.basename(patch) + suffix)
     return ret_patches
 
 
@@ -67,6 +67,7 @@ def generate_patches(repo, start, squash, end, outdir, options):
     """
     gbp.log.info("Generating patches from git (%s..%s)" % (start, end))
     patches = []
+    commands = {}
     for treeish in [start, end]:
         if not repo.has_treeish(treeish):
             raise GbpError('%s not a valid tree-ish' % treeish)
@@ -101,21 +102,19 @@ def generate_patches(repo, start, squash, end, outdir, options):
                                    start_sha1, squash_sha1,
                                    options.patch_export_ignore_path)
             if patch_fn:
-                patches.append((patch_fn, None))
+                patches.append(patch_fn)
                 start = squash_sha1
 
     # Generate patches
-    patch_num = 1 if options.patch_numbers else None
     for commit in reversed(repo.get_commits(start, end_commit)):
         info = repo.get_commit_info(commit)
         cmds = parse_gbp_commands(info, 'gbp-rpm', ('ignore'), ('if', 'ifarch'))
         if not 'ignore' in cmds:
-            patch_fn = format_patch(outdir, repo, commit, patch_num, None,
+            patch_fn = format_patch(outdir, repo, commit, patches,
+                                    options.patch_numbers, None,
                                     options.patch_export_ignore_path)
             if patch_fn:
-                patches.append((patch_fn, cmds))
-                if options.patch_numbers:
-                    patch_num += 1
+                commands[os.path.basename(patch_fn)] = cmds
         else:
             gbp.log.info('Ignoring commit %s' % info['id'])
 
@@ -125,12 +124,12 @@ def generate_patches(repo, start, squash, end, outdir, options):
         patch_fn = format_diff(outdir, None, repo, end_commit, end,
                                options.patch_export_ignore_path)
         if patch_fn:
-            patches.append((patch_fn, None))
+            patches.append(patch_fn)
 
     # Compress
     patches = compress_patches(patches, options.patch_export_compress)
 
-    return patches
+    return patches, commands
 
 
 def rm_patch_files(spec):
@@ -163,8 +162,9 @@ def update_patch_series(repo, spec, start, end, options):
     # Unlink old patch files and generate new patches
     rm_patch_files(spec)
 
-    patches = generate_patches(repo, start, squash, end, spec.specdir, options)
-    spec.update_patches(patches)
+    patches, commands = generate_patches(repo, start, squash, end,
+                                         spec.specdir, options)
+    spec.update_patches(patches, commands)
     spec.write_spec_file()
 
 
