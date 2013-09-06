@@ -181,13 +181,11 @@ def export_patches(repo, branch, options):
     # Find and parse .spec file
     try:
         if options.spec_file != 'auto':
-            specfilename = options.spec_file
             options.packaging_dir = os.path.dirname(specfilename)
+            spec = SpecFile(options.packaging_dir)
         else:
-            specfilename = guess_spec(options.packaging_dir,
-                                      True,
-                                      os.path.basename(repo.path) + '.spec')
-        spec = SpecFile(specfilename)
+            spec = guess_spec(options.packaging_dir, True,
+                              os.path.basename(repo.path) + '.spec')
     except KeyError:
         raise GbpError, "Can't parse spec"
 
@@ -289,13 +287,11 @@ def import_spec_patches(repo, branch, options):
     # Find and parse .spec file
     try:
         if options.spec_file != 'auto':
-            specfilename = options.spec_file
-            options.packaging_dir = os.path.dirname(specfilename)
+            options.packaging_dir = os.path.dirname(options.spec_file)
+            spec = SpecFile(options.spec_file)
         else:
-            specfilename = guess_spec(options.packaging_dir,
-                                      True,
-                                      os.path.basename(repo.path) + '.spec')
-        spec = SpecFile(specfilename)
+            spec = guess_spec(options.packaging_dir, True,
+                              os.path.basename(repo.path) + '.spec')
     except KeyError:
         raise GbpError, "Can't parse spec"
 
@@ -348,13 +344,11 @@ def rebase_pq(repo, branch, options):
     # Find and parse .spec file
     try:
         if options.spec_file != 'auto':
-            specfilename = options.spec_file
-            options.packaging_dir = os.path.dirname(specfilename)
+            options.packaging_dir = os.path.dirname(options.spec_file)
+            spec = SpecFile(options.spec_file)
         else:
-            specfilename = guess_spec(options.packaging_dir,
-                                      True,
-                                      os.path.basename(repo.path) + '.spec')
-        spec = SpecFile(specfilename)
+            spec = guess_spec(options.packaging_dir, True,
+                              os.path.basename(repo.path) + '.spec')
     except KeyError:
         raise GbpError, "Can't parse spec"
 
