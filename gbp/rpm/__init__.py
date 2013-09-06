@@ -39,10 +39,11 @@ from gbp.rpm.lib_rpm import librpm, get_librpm_log
 
 
 class NoSpecError(Exception):
-    """no changelog found"""
+    """Spec file parsing error"""
     pass
 
 class MacroExpandError(Exception):
+    """Macro expansion in spec file failed"""
     pass
 
 
