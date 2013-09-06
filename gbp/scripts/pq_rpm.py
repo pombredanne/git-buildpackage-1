@@ -257,15 +257,13 @@ def get_packager(spec):
     return GitModifier()
 
 
-def import_spec_patches(repo, branch, tries, options):
+def import_spec_patches(repo, branch, options):
     """
     apply a series of patches in a spec/packaging dir to branch
     the patch-queue branch for 'branch'
 
     @param repo: git repository to work on
     @param branch: branch to base pqtch queue on
-    @param tries: try that many times to apply the patches going back one
-                  commit in the branches history after each failure.
     @param options: command options
     """
     tmpdir = None
@@ -305,7 +303,6 @@ def import_spec_patches(repo, branch, tries, options):
     tag_str_fields = dict(upstreamversion=spec.upstreamversion, vendor="Upstream")
     commit = repo.find_version(options.upstream_tag, tag_str_fields)
     if commit:
-        #commits = repo.commits(num=tries, first_parent=True)
         commits=[commit]
     else:
         raise GbpError, ("Couldn't find upstream version %s. Don't know on what base to import." % spec.upstreamversion)
@@ -462,9 +459,7 @@ def main(argv):
         if action == "export":
             export_patches(repo, current, options)
         elif action == "import":
-#            tries = options.time_machine if (options.time_machine > 0) else 1
-            tries = 1
-            specfile=import_spec_patches(repo, current, tries, options)
+            specfile=import_spec_patches(repo, current, options)
             current = repo.get_branch()
             gbp.log.info("Patches listed in '%s' imported on '%s'" %
                           (specfile, current))
