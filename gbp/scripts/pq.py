@@ -87,7 +87,7 @@ def export_patches(repo, branch, options):
     if patches:
         with open(SERIES_FILE, 'w') as seriesfd:
             for patch in patches:
-                seriesfd.write(os.path.basename(patch) + '\n')
+                seriesfd.write(os.path.relpath(patch, PATCH_DIR) + '\n')
         GitCommand('status')(['--', PATCH_DIR])
     else:
         gbp.log.info("No patches on '%s' - nothing to do." % pq_branch)
