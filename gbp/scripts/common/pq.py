@@ -258,12 +258,12 @@ def format_patch(outdir, repo, commit, series, numbered=True,
     filename = '%04d-' % (len(series) + 1) if numbered else ''
     filename += info['patchname']
     suffix = ".patch"
-    filename = filename[:64-len(suffix)]
+    filename = filename[:63-len(suffix)]
     filepath = os.path.join(outdir, filename) + suffix
     # Make sure that we don't overwrite existing patches in the series
     if filepath in series:
         presuffix = '-%d' % len(series)
-        filename = filename[:64-len(presuffix)-len(suffix)] + presuffix
+        filename = filename[:63-len(presuffix)-len(suffix)] + presuffix
         filepath = os.path.join(outdir, filename) + suffix
 
     # Determine files to include
