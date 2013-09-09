@@ -187,7 +187,7 @@ def patch_path_filter(file_status, exclude_regex=None):
     return include_paths
 
 
-def write_patch_file(filename, repo, commit_info, diff):
+def write_patch_file(filename, commit_info, diff):
     """Write patch file"""
     if not diff:
         gbp.log.debug("I won't generate empty diff %s" % filename)
@@ -273,7 +273,7 @@ def format_patch(outdir, repo, commit, series, numbered=True,
     patch = None
     if paths:
         diff = repo.diff('%s^!' % commit, paths=paths, stat=80, summary=True)
-        patch = write_patch_file(filepath, repo, info, diff)
+        patch = write_patch_file(filepath, info, diff)
         if patch:
             series.append(patch)
     return patch
