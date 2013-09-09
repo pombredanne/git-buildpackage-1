@@ -231,14 +231,14 @@ def write_patch_file(filename, commit_info, diff):
     return filename
 
 
-def format_patch(outdir, repo, commit, series, numbered=True,
+def format_patch(outdir, repo, commit_info, series, numbered=True,
                  old_style_topic_cmd=False, path_exclude_regex=None, topic=''):
     """Create patch of a single commit"""
-    info = repo.get_commit_info(commit)
+    commit = commit_info['id']
 
     # Parse and filter commit message body
     mangled_body = ""
-    for line in info['body'].splitlines():
+    for line in commit_info['body'].splitlines():
         if old_style_topic_cmd:
             topic_regex = 'gbp-pq-topic:\s*(?P<topic>\S.*)'
             match = re.match(topic_regex, line, flags=re.I)
@@ -249,14 +249,14 @@ def format_patch(outdir, repo, commit, series, numbered=True,
                              "please use 'Gbp[-Pq]: Topic <topic>' instead")
                 continue
         mangled_body += line + '\n'
-    info['body'] = mangled_body
+    commit_info['body'] = mangled_body
 
     # Determine filename and path
     outdir = os.path.join(outdir, topic)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     filename = '%04d-' % (len(series) + 1) if numbered else ''
-    filename += info['patchname']
+    filename += commit_info['patchname']
     suffix = ".patch"
     filename = filename[:63-len(suffix)]
     filepath = os.path.join(outdir, filename) + suffix
@@ -267,13 +267,13 @@ def format_patch(outdir, repo, commit, series, numbered=True,
         filepath = os.path.join(outdir, filename) + suffix
 
     # Determine files to include
-    paths = patch_path_filter(info['files'], path_exclude_regex)
+    paths = patch_path_filter(commit_info['files'], path_exclude_regex)
 
     # Finally, create the patch
     patch = None
     if paths:
         diff = repo.diff('%s^!' % commit, paths=paths, stat=80, summary=True)
-        patch = write_patch_file(filepath, info, diff)
+        patch = write_patch_file(filepath, commit_info, diff)
         if patch:
             series.append(patch)
     return patch

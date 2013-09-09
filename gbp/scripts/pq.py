@@ -57,7 +57,7 @@ def generate_patches(repo, start, end, outdir, options):
         cmds.update(parse_gbp_commands(info, 'gbp-pq', ('ignore'), ('topic')))
         if not 'ignore' in cmds:
             topic = cmds['topic'] if 'topic' in cmds else ''
-            format_patch(outdir, repo, commit, patches, options.patch_numbers,
+            format_patch(outdir, repo, info, patches, options.patch_numbers,
                          old_style_topic_cmd=True, topic=topic)
         else:
             gbp.log.info('Ignoring commit %s' % info['id'])
