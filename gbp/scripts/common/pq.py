@@ -297,7 +297,7 @@ def format_diff(outdir, filename, repo, start, end, path_exclude_regex=None):
     paths = patch_path_filter(file_status, path_exclude_regex)
     if paths:
         diff = repo.diff(start, end, paths=paths, stat=80, summary=True)
-        return write_patch_file(filename, repo, info, diff)
+        return write_patch_file(filename, info, diff)
     return None
 
 
