@@ -506,7 +506,7 @@ class SpecFile(object):
             if key in self._tags:
                 insertafter = key
             elif not insertafter in self._tags:
-                insertafter = 'release'
+                insertafter = 'name'
             after_line = self._tags[insertafter]['lines'][-1]['line']
             if value:
                 self._set_tag(tag, num, value, after_line)
