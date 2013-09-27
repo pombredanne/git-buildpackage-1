@@ -135,6 +135,7 @@ class TestPqRpm(RpmRepoTestBase):
         repo.set_branch('development/master')
         branches = repo.get_local_branches()
         # Make development branch out-of-sync
+
         GitCommand("rebase")(['--onto', 'upstream^', 'upstream'])
         # Sanity check for our git rebase...
         ok_(repo.get_merge_base('development/master', 'upstream') !=
@@ -159,15 +160,18 @@ class TestPqRpm(RpmRepoTestBase):
         repo = self.init_test_repo('gbp-test')
         pkg_files = repo.list_files()
         branches = repo.get_local_branches() + ['development/master']
+        upstr_files = ['dummy.sh', 'Makefile', 'README']
         # Switch to non-existent pq-branch should create one
         eq_(mock_pq(['switch']), 0)
-        self._check_repo_state(repo, 'development/master', branches)
+        self._check_repo_state(repo, 'development/master', branches,
+                               upstr_files)
 
         # Switch to base branch and back to pq
         eq_(mock_pq(['switch']), 0)
-        self._check_repo_state(repo, 'master', branches)
+        self._check_repo_state(repo, 'master', branches, pkg_files)
         eq_(mock_pq(['switch']), 0)
-        self._check_repo_state(repo, 'development/master', branches)
+        self._check_repo_state(repo, 'development/master', branches,
+                               upstr_files)
 
     def test_switch_drop(self):
         """Basic test for drop action"""
@@ -340,6 +344,88 @@ class TestPqRpm(RpmRepoTestBase):
                      '--pq-branch=dev/%(branch)s/%(upstreamversion)s']), 0)
         self._check_repo_state(repo, 'master', branches)
 
+    def test_option_export_rev(self):
+        """Test the --export-rev cmdline option"""
+        repo = self.init_test_repo('gbp-test')
+        repo.rename_branch('pq/master', 'development/master')
+        branches = repo.get_local_branches()
+
+        # Export directly from upstream -> no patches expected
+        eq_(mock_pq(['export', '--export-rev=upstream']), 0)
+        files = ['.gbp.conf', '.gitignore', 'bar.tar.gz', 'foo.txt',
+                 'gbp-test.spec', 'my.patch']
+        self._check_repo_state(repo, 'master', branches, files)
+
+        # Export another rev
+        eq_(mock_pq(['export', '--export-rev=development/master~2']), 0)
+        self._check_repo_state(repo, 'master', branches,
+                               files + ['0001-my-gz.patch'])
+
+        # Export from upstream..master should fail
+        eq_(mock_pq(['export', '--export-rev=master']), 1)
+        self._check_log(-1, "gbp:error: Start commit .* not an ancestor of end")
+        # Export invalid rev should fail
+        eq_(mock_pq(['export', '--export-rev=foobar']), 1)
+        self._check_log(-1, "gbp:error: Invalid treeish object foobar")
+
+        # Export plain treeish. Doesn't work in pq (at least) -
+        # just for testing exception handling here
+        content = repo.list_tree('development/master')
+        tree = repo.make_tree(content)
+        eq_(mock_pq(['export', '--export-rev=%s' % tree]), 1)
+        self._check_log(-1, "gbp:error: Start commit .* not an ancestor of end")
+
+    def test_option_patch_compress(self):
+        """Test the --patch-compress cmdline option"""
+        repo = self.init_test_repo('gbp-test')
+        repo.rename_branch('pq/master', 'development/master')
+        branches = repo.get_local_branches()
+
+        # Export, all generated patches should be compressed
+        eq_(mock_pq(['export', '--patch-compress=1']), 0)
+        files = ['.gbp.conf', '.gitignore', 'bar.tar.gz', 'foo.txt',
+                 'gbp-test.spec', '0001-my-gz.patch.gz',
+                 '0002-my-bzip2.patch.gz', '0003-my2.patch.gz', 'my.patch']
+        self._check_repo_state(repo, 'master', branches, files)
+
+    def test_option_patch_export_squash(self):
+        """Test the --patch-squash cmdline option"""
+        repo = self.init_test_repo('gbp-test')
+        repo.rename_branch('pq/master', 'development/master')
+        repo.set_branch('development/master')
+        branches = repo.get_local_branches()
+
+        # Non-existent squash point should fail
+        eq_(mock_pq(['export', '--patch-squash=foo']), 1)
+        self._check_log(-1, r"gbp:error: Git command failed: revision 'foo\^0'")
+
+        # Invalid squash point should fail
+        eq_(mock_pq(['export', '--patch-squash=master']), 1)
+        self._check_log(-1, "gbp:error: Given squash point 'master' not in the "
+                            "history of end commit 'development/master'")
+
+        # Squashing up to the second latest patch -> 1 "normal" patch
+        squash = 'development/master~1'
+        eq_(mock_pq(['export', '--patch-squash=%s' % squash]), 0)
+        squash += ':squash'
+        eq_(mock_pq(['export', '--patch-squash=%s' % squash]), 0)
+        files = ['.gbp.conf', '.gitignore', 'bar.tar.gz', 'foo.txt',
+                 'gbp-test.spec', 'my.patch', 'squash.diff', '0002-my2.patch']
+        self._check_repo_state(repo, 'master', branches, files)
+
+    def test_option_patch_export_ignore(self):
+        """Test the --patch-ignore-path cmdline option"""
+        repo = self.init_test_repo('gbp-test')
+        repo.rename_branch('pq/master', 'development/master')
+        branches = repo.get_local_branches()
+
+        # Export
+        eq_(mock_pq(['export', '--patch-ignore-path=mydir/.*']), 0)
+        files = ['.gbp.conf', '.gitignore', 'bar.tar.gz', 'foo.txt',
+                 'gbp-test.spec', '0001-my-gz.patch', '0002-my-bzip2.patch',
+                 'my.patch']
+        self._check_repo_state(repo, 'master', branches, files)
+
     def test_export_with_merges(self):
         """Test exporting pq-branch with merge commits"""
         repo = self.init_test_repo('gbp-test')
@@ -408,6 +494,6 @@ class TestPqRpm(RpmRepoTestBase):
         repo.add_files(['my2.patch'], force=True)
         repo.commit_files(['my2.patch'], msg="Mangle patch")
         eq_(mock_pq(['import']), 1)
-        self._check_log(-2, "gbp:error: Import failed: Error running git apply")
+        self._check_log(-1, "gbp:error: Import failed: Error running git apply")
         self._check_repo_state(repo, 'master', branches)
 
