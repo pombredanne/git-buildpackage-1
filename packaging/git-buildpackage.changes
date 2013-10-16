@@ -1,4 +1,5 @@
-* Wed Oct 16 2013 Markus Lehtonen <markus.lehtonen@linux.intel.com> 0.6.3
+* Thu Oct 17 2013 Markus Lehtonen <markus.lehtonen@linux.intel.com> 0.6.3
+- buildpackage: support 'commit' variable for VCS tags
 - Clone a repository to a specific directory
 - Fix gbs clone failure if repo url is like host:repo.git
 - SpecFile.set_tag: change the default place for new tags

@@ -1,4 +1,4 @@
-git-buildpackage (0.6.3-tizen20131016) unstable; urgency=low
+git-buildpackage (0.6.3-tizen20131017) unstable; urgency=low
 
   [ Lingchaox Xin ]
   * Fix `fatal: fetch --all does not take a repository argument`
@@ -55,8 +55,8 @@ git-buildpackage (0.6.3-tizen20131016) unstable; urgency=low
   * pq: fix generation of series file
   * pq.write_patch_file: drop unused argument
   * pq: pass commit_info to format_patch()
-  * pq: pass commit_info to format_patch()
   * SpecFile.set_tag: change the default place for new tags
+  * buildpackage: support 'commit' variable for VCS tags
 
   [ Zhang Qiang ]
   * remove 'repo' param to adapt to changes of write_patch_file
@@ -65,7 +65,7 @@ git-buildpackage (0.6.3-tizen20131016) unstable; urgency=low
   * Fix gbs clone failure if repo url is like host:repo.git
   * Clone a repository to a specific directory
 
- -- Markus Lehtonen <markus.lehtonen@linux.intel.com>  Wed, 16 Oct 2013 11:05:02 +0300
+ -- Markus Lehtonen <markus.lehtonen@linux.intel.com>  Thu, 17 Oct 2013 13:45:10 +0300
 
 git-buildpackage (0.6.3) unstable; urgency=low
 
