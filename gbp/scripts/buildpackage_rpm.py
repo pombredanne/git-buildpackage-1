@@ -617,13 +617,16 @@ def main(argv):
             try:
                 tree_name = repo.describe(tree, longfmt=True, always=True,
                                           abbrev=40)
+                commit_sha1 = repo.rev_parse('%s^0' % tree)
             except GitRepositoryError:
                 # If tree is not commit-ish, expect it to be from current HEAD
                 tree_name = repo.describe('HEAD', longfmt=True, always=True,
                                           abbrev=40) + '-dirty'
+                commit_sha1 = repo.rev_parse('HEAD') + '-dirty'
         # Put 'VCS:' tag to .spec
         spec.set_tag('VCS', None,
-                     options.spec_vcs_tag % {'tagname': tree_name})
+                     options.spec_vcs_tag % {'tagname': tree_name,
+                                             'commit': commit_sha1})
         spec.write_spec_file()
 
     except CommandExecFailed:
