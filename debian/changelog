@@ -1,3 +1,9 @@
+git-buildpackage (0.6.6-tizen20131107) UNRELEASED; urgency=low
+
+  * Rebase on top of upstream version 0.6.6
+
+ -- Markus Lehtonen <markus.lehtonen@linux.intel.com>  Thu, 07 Nov 2013 13:49:05 +0200
+
 git-buildpackage (0.6.6) unstable; urgency=low
 
   [ Guan Junchun ]

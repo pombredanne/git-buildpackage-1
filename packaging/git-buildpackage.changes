@@ -1,3 +1,6 @@
+* Thu Nov 07 2013 Markus Lehtonen <markus.lehtonen@linux.intel.com> 0.6.6
+- Rebase on top of upstream version 0.6.6
+
 * Thu Oct 17 2013 Markus Lehtonen <markus.lehtonen@linux.intel.com> 0.6.3
 - buildpackage: support 'commit' variable for VCS tags
 - Clone a repository to a specific directory
