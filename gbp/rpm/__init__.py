@@ -787,6 +787,8 @@ def guess_spec_fn(file_list, preferred_name=None):
 def guess_spec(topdir, recursive=True, preferred_name=None):
     """Guess a spec file"""
     file_list = []
+    if not topdir:
+        topdir = '.'
     for root, dirs, files in os.walk(topdir):
         file_list.extend([os.path.join(root, fname) for fname in files])
         if not recursive:
