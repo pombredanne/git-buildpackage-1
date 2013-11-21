@@ -44,7 +44,8 @@ Architecture: all
 Depends: ${python:Depends},
  ${shlibs:Depends},
  ${misc:Depends},
- devscripts (>= 2.10.66~)
+ devscripts (>= 2.10.66~),
+ git-buildpackage-common (= ${binary:Version})
 Recommends: cowbuilder
 Description: Suite to help with Debian packages in Git repositories
  This package contains the following tools:
