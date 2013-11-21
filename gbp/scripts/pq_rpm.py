@@ -88,6 +88,8 @@ def generate_patches(repo, start, squash, end, outdir, options):
                        "'%s'" % (start, end_commit))
     # Squash commits, if requested
     if squash[0]:
+        if squash[0] == 'HEAD':
+            squash[0] = end_commit
         squash_sha1 = repo.rev_parse("%s^0" % squash[0])
         if start_sha1 != squash_sha1:
             if not squash_sha1 in repo.get_commits(start, end_commit):
