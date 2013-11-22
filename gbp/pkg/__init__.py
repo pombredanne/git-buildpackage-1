@@ -20,6 +20,7 @@
 import os
 import re
 import glob
+import stat
 import subprocess
 import zipfile
 
@@ -320,20 +321,22 @@ class UpstreamSource(object):
 
         >>> UpstreamSource._get_topdir_files([])
         set([])
-        >>> UpstreamSource._get_topdir_files(['foo/bar'])
-        set(['foo/'])
-        >>> UpstreamSource._get_topdir_files(['foo/', 'foo/bar'])
-        set(['foo/'])
-        >>> UpstreamSource._get_topdir_files(['fob', 'foo/', 'foo/bar/', 'foo/bar/baz'])
-        set(['foo/', 'fob'])
+        >>> UpstreamSource._get_topdir_files([('-', 'foo/bar')])
+        set([('d', 'foo')])
+        >>> UpstreamSource._get_topdir_files([('d', 'foo/'), ('-', 'foo/bar')])
+        set([('d', 'foo')])
+        >>> UpstreamSource._get_topdir_files([('d', 'foo'), ('-', 'foo/bar')])
+        set([('d', 'foo')])
+        >>> UpstreamSource._get_topdir_files([('-', 'fob'), ('d', 'foo'), ('d', 'foo/bar'), ('-', 'foo/bar/baz')])
+        set([('-', 'fob'), ('d', 'foo')])
         """
         topdir_files = set()
-        for path in file_list:
+        for typ, path in file_list:
             split = path.lstrip('/').split('/')
             if len(split) == 1:
-                topdir_files.add(path)
+                topdir_files.add((typ, path))
             else:
-                topdir_files.add(split[0] + '/')
+                topdir_files.add(('d', split[0]))
         return topdir_files
 
     def _determine_prefix(self):
@@ -343,16 +346,21 @@ class UpstreamSource(object):
             # For directories we presume that the prefix is just the dirname
             self._prefix = os.path.basename(self.path.rstrip('/'))
         else:
+            files = []
             if self._archive_fmt == 'zip':
                 archive = zipfile.ZipFile(self.path)
-                files = [info.filename for info in archive.infolist()]
+                for info in archive.infolist():
+                    typ = 'd' if stat.S_ISDIR(info.external_attr >> 16) else '?'
+                    files.append((typ, info.filename))
             elif self._archive_fmt == 'tar':
-                popen = subprocess.Popen(['tar', '-t', '-f', self.path],
+                popen = subprocess.Popen(['tar', '-t', '-v', '-f', self.path],
                                          stdout=subprocess.PIPE)
                 out, _err = popen.communicate()
                 if popen.returncode:
                     raise GbpError("Listing tar archive content failed")
-                files = out.splitlines()
+                for line in out.splitlines():
+                    fields = line.split(None, 5)
+                    files.append((fields[0][0], fields[-1]))
             else:
                 raise GbpError("Unsupported archive format %s, unable to "
                                "determine prefix for '%s'" %
@@ -360,9 +368,9 @@ class UpstreamSource(object):
             # Determine prefix from the archive content
             topdir_files = self._get_topdir_files(files)
             if len(topdir_files) == 1:
-                path = topdir_files.pop()
-                if path.endswith('/'):
-                    self._prefix = path.strip('/')
+                typ, name = topdir_files.pop()
+                if typ == 'd':
+                    self._prefix = name
 
     @property
     def archive_fmt(self):
