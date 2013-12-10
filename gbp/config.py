@@ -49,6 +49,11 @@ def check_tristate(option, opt, value):
         return val
 
 
+def optparse_split_cb(option, opt_str, value, parser):
+    """Split option string into a list"""
+    setattr(parser.values, option.dest, value.split(','))
+
+
 def safe_option(f):
     def _decorator(self, *args, **kwargs):
         obj = self
@@ -576,6 +581,8 @@ class GbpOptionParserRpm(GbpOptionParser):
             'packaging-dir'             : '',
             'packaging-tag'             : 'packaging/%(version)s',
             'spec-file'                 : '',
+            'import-files'              : ['.gbp.conf',
+                                           'debian/gbp.conf'],
                     })
 
     help = dict(GbpOptionParser.help)
@@ -598,6 +605,10 @@ class GbpOptionParserRpm(GbpOptionParser):
             'spec-file':
                 "Spec file to use, causes the packaging-dir option to be "
                 "ignored, default is '%(spec-file)s'",
+            'import-files':
+                "Comma-separated list of additional file(s) to import from "
+                "packaging branch. These will appear as one monolithic patch "
+                "in the pq/development branch. Default is %(import-files)s",
                  })
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
