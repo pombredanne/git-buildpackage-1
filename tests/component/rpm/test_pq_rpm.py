@@ -372,7 +372,7 @@ class TestPqRpm(RpmRepoTestBase):
         with open('my2.patch', 'w') as patch_file:
             patch_file.write('-this-does\n+not-apply\n')
         eq_(mock_pq(['import']), 1)
-        self._check_log(-2, "("
+        self._check_log(-1, "("
                              "Aborting|"
                              "Please, commit your changes or stash them|"
                              "gbp:error: Import failed.* You have local changes"
