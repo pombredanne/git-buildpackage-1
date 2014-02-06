@@ -327,10 +327,9 @@ def packaging_tag_time_fields(repo, commit, tag_format_str, other_fields):
     return fields
 
 
-def create_packaging_tag(repo, commit, spec, options):
-    """Create a packaging/release Git tag"""
-    version_dict = dict(spec.version,
-                        version=rpm.compose_version_str(spec.version))
+def packaging_tag_data(repo, commit, name, version, options):
+    """Compose packaging tag name and msg"""
+    version_dict = dict(version, version=rpm.compose_version_str(version))
 
     # Compose tag name and message
     tag_name_fields = dict(version_dict, vendor=options.vendor.lower())
@@ -340,10 +339,16 @@ def create_packaging_tag(repo, commit, spec, options):
     tag_name = repo.version_to_tag(options.packaging_tag, tag_name_fields)
 
     tag_msg = format_str(options.packaging_tag_msg,
-                         dict(version_dict, pkg=spec.name,
+                         dict(version_dict, pkg=name,
                               vendor=options.vendor))
+    return (tag_name, tag_msg)
 
-    # (Re-)create Git tag
+
+def create_packaging_tag(repo, commit, spec, options):
+    """Create a packaging/release Git tag"""
+    tag_name, tag_msg = packaging_tag_data(repo, commit, spec.name,
+                                           spec.version, options)
+
     if options.retag and repo.has_tag(tag_name):
         repo.delete_tag(tag_name)
     repo.create_tag(name=tag_name, msg=tag_msg, sign=options.sign_tags,
