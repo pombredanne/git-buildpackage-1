@@ -134,6 +134,13 @@ class ComponentTestBase(GbpLogTester):
                         (list(extra), list(missing))
         assert not extra and not missing, assert_msg
 
+    @staticmethod
+    def ls_tree(repo, treeish):
+        """List contents (blobs) in a git treeish"""
+        objs = repo.list_tree(treeish, True)
+        blobs = [obj[3] for obj in objs if obj[1] == 'blob']
+        return set(blobs)
+
     @classmethod
     def _check_repo_state(cls, repo, current_branch, branches, files=None,
                           dirs=None):
