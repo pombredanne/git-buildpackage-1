@@ -505,6 +505,8 @@ def main(argv):
     source = None
     branch = None
 
+    gbp.log.initialize()
+
     options, gbp_args, dpkg_args = parse_args(argv, prefix)
 
     if not options:

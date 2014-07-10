@@ -108,6 +108,8 @@ def main(argv):
     retval = 0
     current = None
 
+    gbp.log.initialize()
+
     (options, args) = parse_args(argv)
     if not options:
         return 1
