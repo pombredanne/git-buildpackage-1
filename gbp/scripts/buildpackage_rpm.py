@@ -138,11 +138,11 @@ def pristine_tar_build_orig(repo, orig_file, output_dir, options):
                 raise
     return False
 
-def get_upstream_tree(repo, spec, options):
+def get_upstream_tree(repo, version, options):
     """Determine the upstream tree from the given options"""
     if options.upstream_tree.upper() == 'TAG':
-        tag_str_fields = {'upstreamversion': spec.upstreamversion,
-                          'version': spec.upstreamversion}
+        tag_str_fields = {'upstreamversion': version,
+                          'version': version}
         upstream_tree = repo.version_to_tag(options.upstream_tag,
                                             tag_str_fields)
     elif options.upstream_tree.upper() == 'BRANCH':
@@ -260,7 +260,7 @@ def git_archive_build_orig(repo, spec, output_dir, options):
     @rtype: C{str}
     """
     try:
-        upstream_tree = get_upstream_tree(repo, spec, options)
+        upstream_tree = get_upstream_tree(repo, spec.upstreamversion, options)
         gbp.log.info("%s does not exist, creating from '%s'" % \
                      (spec.orig_src['filename'], upstream_tree))
         if spec.orig_src['compression']:
@@ -280,7 +280,7 @@ def git_archive_build_orig(repo, spec, output_dir, options):
 def export_patches(repo, spec, export_treeish, options):
     """Generate patches and update spec file"""
     try:
-        upstream_tree = get_upstream_tree(repo, spec, options)
+        upstream_tree = get_upstream_tree(repo, spec.upstreamversion, options)
         update_patch_series(repo, spec, upstream_tree, export_treeish, options)
     except (GitRepositoryError, GbpError) as err:
         raise GbpAutoGenerateError(str(err))
@@ -376,10 +376,9 @@ def packaging_tag_data(repo, commit, name, version, options):
     return (tag_name, tag_msg)
 
 
-def create_packaging_tag(repo, commit, spec, options):
+def create_packaging_tag(repo, commit, name, version, options):
     """Create a packaging/release Git tag"""
-    tag_name, tag_msg = packaging_tag_data(repo, commit, spec.name,
-                                           spec.version, options)
+    tag_name, tag_msg = packaging_tag_data(repo, commit, name, version, options)
 
     if options.retag and repo.has_tag(tag_name):
         repo.delete_tag(tag_name)
@@ -724,7 +723,8 @@ def main(argv):
         # Tag (note: tags the exported version)
         if options.tag or options.tag_only:
             gbp.log.info("Tagging %s" % rpm.compose_version_str(spec.version))
-            tag = create_packaging_tag(repo, tree, spec, options)
+            tag = create_packaging_tag(repo, tree, spec.name, spec.version,
+                                       options)
             vcs_info = get_vcs_info(repo, tag)
             if options.posttag:
                 sha = repo.rev_parse("%s^{}" % tag)
