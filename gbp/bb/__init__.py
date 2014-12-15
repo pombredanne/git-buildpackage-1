@@ -497,5 +497,21 @@ def guess_pkg(tinfoil, pkg):
     return pkg_bb
 
 
+def get_layers(cfg_data):
+    """Get enabled layers"""
+    return cfg_data.getVar('BBLAYERS').split()
+
+def get_layer(cfg_data, path):
+    """Get layer under which a certain file resides"""
+    abspath = os.path.abspath(path)
+    layers = get_layers(cfg_data)
+    for layer in layers:
+        if abspath.startswith(layer):
+            return layer
+    raise GbpError("File %s does under any configured layer" % abspath)
+
+
+
+
 # Initialize module
 bb = import_bb()

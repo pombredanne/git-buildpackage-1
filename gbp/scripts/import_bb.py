@@ -310,6 +310,10 @@ def main(argv):
                                             prefix='import-bb')
         tinfoil = init_tinfoil()
         pkg_bb = guess_pkg(tinfoil, args[0])
+        #bb_appends = tinfoil.cooker.collection.get_file_appends(pkg_bb)
+        #layers = get_package_layers(pkg
+
+
         dirs['src'] = os.path.abspath(os.path.dirname(pkg_bb))
         gbp.log.info("Importing '%s' from '%s'" %
                      (os.path.basename(pkg_bb), dirs['src']))
