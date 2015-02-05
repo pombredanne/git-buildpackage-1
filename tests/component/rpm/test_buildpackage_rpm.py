@@ -583,7 +583,7 @@ class TestGbpRpm(RpmRepoTestBase):
 
         # Test exporting an invalid treeish
         eq_(mock_gbp(base_args + ['--git-export=invalid-treeish']), 1)
-        self._check_log(-1, "gbp:error: Invalid treeish object invalid-treeish")
+        self._check_log(-1, "gbp:error: Failed to determine export treeish")
 
     def test_option_spec_file(self):
         """Test the --git-spec-file cmdline option"""

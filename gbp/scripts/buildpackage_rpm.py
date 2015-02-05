@@ -282,11 +282,11 @@ def disable_hooks(options):
             setattr(options, hook, '')
 
 
-def build_parser(name, prefix=None):
+def build_parser(name, prefix=None, git_treeish=None):
     """Construct config/option parser"""
     try:
         parser = GbpOptionParserRpm(command=os.path.basename(name),
-                                    prefix=prefix)
+                                    prefix=prefix, git_treeish=git_treeish)
     except ConfigParser.ParsingError as err:
         gbp.log.err(err)
         return None
@@ -408,7 +408,7 @@ def build_parser(name, prefix=None):
     return parser
 
 
-def parse_args(argv, prefix):
+def parse_args(argv, prefix, git_treeish=None):
     """Parse config and command line arguments"""
     args = [arg for arg in argv[1:] if arg.find('--%s' % prefix) == 0]
     builder_args = [arg for arg in argv[1:] if arg.find('--%s' % prefix) == -1]
@@ -418,7 +418,7 @@ def parse_args(argv, prefix):
         if arg in builder_args:
             args.append(arg)
 
-    parser = build_parser(argv[0], prefix=prefix)
+    parser = build_parser(argv[0], prefix=prefix, git_treeish=git_treeish)
     if not parser:
         return None, None, None
     options, args = parser.parse_args(args)
@@ -451,6 +451,16 @@ def main(argv):
     except GitRepositoryError:
         gbp.log.err("%s is not a git repository" % (os.path.abspath('.')))
         return 1
+
+    # Determine tree-ish to be exported
+    try:
+        tree = get_tree(repo, options.export)
+    except GbpError as err:
+        gbp.log.err('Failed to determine export treeish: %s' % err)
+        return 1
+    # Re-parse config options with using the per-tree config file(s) from the
+    # exported tree-ish
+    options, gbp_args, builder_args = parse_args(argv, prefix, tree)
 
     branch = get_current_branch(repo)
 
