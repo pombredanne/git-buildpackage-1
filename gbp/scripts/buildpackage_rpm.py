@@ -388,6 +388,9 @@ def build_parser(name, prefix=None, git_treeish=None):
                     help="hook run after a successful tag operation, default "
                          "is '%(posttag)s'")
     cmd_group.add_boolean_config_file_option(option_name="hooks", dest="hooks")
+    export_group.add_option("--git-no-build", action="store_true",
+                    dest="no_build",
+                    help="Don't run builder or the associated hooks")
     export_group.add_config_file_option(option_name="export-dir",
                     dest="export_dir", type="path",
                     help="Build topdir, also export the sources under "
@@ -547,7 +550,7 @@ def main(argv):
                                         'GBP_TMP_DIR': export_dir}
                              )(dir=export_dir)
             # Do actual build
-            if not options.tag_only:
+            if not options.no_build and not options.tag_only:
                 if options.prebuild:
                     RunAtCommand(options.prebuild, shell=True,
                                  extra_env={'GBP_GIT_DIR': repo.git_dir,
