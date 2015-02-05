@@ -86,6 +86,7 @@ def test_pristine_tar_commit():
     >>> import gbp.deb.git
     >>> repo = gbp.deb.git.DebianGitRepository(repo_dir)
     >>> repo.pristine_tar.commit('../upstream_1.0.orig.tar.gz', 'upstream')
+    pristine-tar: committed upstream_1.0.orig.tar.gz.delta to branch pristine-tar
     """
 
 def test_pristine_has_commit():
@@ -120,6 +121,7 @@ def test_pristine_tar_checkout():
     >>> import gbp.deb.git
     >>> repo = gbp.deb.git.DebianGitRepository(repo_dir)
     >>> repo.pristine_tar.checkout('upstream', '1.0', 'gzip', '..')
+    pristine-tar: successfully generated ../upstream_1.0.orig.tar.gz
     """
 
 
