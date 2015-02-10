@@ -85,12 +85,12 @@ def generate_patches(repo, start, squash, end, outdir, options):
             raise GbpError('Invalid treeish object %s' % treeish)
 
     start_sha1 = repo.rev_parse("%s^0" % start)
-    try:
-        end_commit = end
-    except GitRepositoryError:
-        # In case of plain tree-ish objects, assume current branch head is the
-        # last commit
+    # In case of plain tree-ish objects, assume current branch head is the
+    # last commit
+    if repo.get_obj_type(end) == 'tree':
         end_commit = "HEAD"
+    else:
+        end_commit = end
     end_commit_sha1 = repo.rev_parse("%s^0" % end_commit)
 
     start_sha1 = repo.rev_parse("%s^0" % start)
