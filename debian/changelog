@@ -1,3 +1,9 @@
+git-buildpackage (0.6.24-tizen20150223) UNRELEASED; urgency=low
+
+  * Rebase on top of upstream version 0.6.24
+
+ -- Markus Lehtonen <markus.lehtonen@linux.intel.com>  Mon, 23 Feb 2015 16:18:33 +0200
+
 git-buildpackage (0.6.24) experimental; urgency=medium
 
   [ Guido Günther ]
