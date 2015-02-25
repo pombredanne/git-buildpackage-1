@@ -67,6 +67,7 @@ BuildRequires:  python-nose
 BuildRequires:  git-core
 BuildRequires:  %{man_pkg_name}
 BuildRequires:  %{dpkg_pkg_name}
+BuildRequires:  rpm-build
 BuildRequires:  %{rpm_python_pkg_name}
 BuildRequires:  pristine-tar
 BuildRequires:  unzip
