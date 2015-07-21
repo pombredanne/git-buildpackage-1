@@ -1,3 +1,6 @@
+* Tue Jul 21 2015 SoonKyu Park <sk7.park@samsung.com> tizen/0.6.25-20150721
+- Upgrade version to 0.6.25-20150721
+
 * Tue Mar 03 2015 Markus Lehtonen <markus.lehtonen@linux.intel.com> tizen/0.6.15-20150303
 - Revert "buildpackage-rpm: always create tarball for native packages"
   (Fixes: DEVT-215)
