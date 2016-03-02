@@ -1,4 +1,4 @@
-git-buildpackage (0.6.27) unstable; urgency=medium
+git-buildpackage (0.6.27-tizen20160302) unstable; urgency=medium
 
   * Fix error logs when __import__ faild,like "No handlers could be found fo logger"
   * Fix build problem on Debian 8
