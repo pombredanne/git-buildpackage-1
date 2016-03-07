@@ -36,45 +36,6 @@ from gbp.scripts.common.import_orig import (cleanup_tmp_tree, ask_package_name,
 						ask_package_version,
 						prepare_sources)
 
-def prepare_pristine_tar(archive, pkg, version):
-    """
-    Prepare the upstream source for pristine tar import.
-
-    This checks if the upstream source is actually a tarball
-    and creates a symlink from I{archive}
-    to I{<pkg>_<version>.orig.tar.<ext>} so pristine-tar will
-    see the correct basename.
-
-    @param archive: the upstream source's name
-    @type archive: C{str}
-    @param pkg: the source package's name
-    @type pkg: C{str}
-    @param version: the upstream version number
-    @type version: C{str}
-    @rtype: C{str}
-    """
-    linked = False
-    if os.path.isdir(archive):
-        return None
-
-    ext = os.path.splitext(archive)[1]
-    if ext in ['.tgz', '.tbz2', '.tlz', '.txz' ]:
-        ext = ".%s" % ext[2:]
-
-    link = "../%s_%s.orig.tar%s" % (pkg, version, ext)
-
-    if os.path.basename(archive) != os.path.basename(link):
-        try:
-            if not is_link_target(archive, link):
-                os.symlink(os.path.abspath(archive), link)
-                linked = True
-        except OSError as err:
-                raise GbpError("Cannot symlink '%s' to '%s': %s" % (archive, link, err[1]))
-        return (link, linked)
-    else:
-        return (archive, linked)
-
-
 def upstream_import_commit_msg(options, version):
     return options.import_msg % dict(version=version)
 

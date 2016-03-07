@@ -160,7 +160,6 @@ class GbpOptionParser(OptionParser):
                  'allow-unauthenticated': 'False',
                  'symlink-orig': 'True',
                  'purge': 'True',
-                 'tmp-dir' : '/var/tmp/gbp/',
                  'drop': 'False',
                  'commit': 'False',
                  'tmp-dir' : '/var/tmp/gbp/',
@@ -311,9 +310,6 @@ class GbpOptionParser(OptionParser):
                    "'%(symlink-orig)s'"),
               'purge':
                   "Purge exported package build directory. Default is '%(purge)s'",
-             'tmp-dir':
-                  ("Base directory under which temporary directories are "
-                   "created, default is '%(tmp-dir)s'"),
               'drop':
                   ("In case of 'export' drop the patch-queue branch "
                    "after export. Default is '%(drop)s'"),
