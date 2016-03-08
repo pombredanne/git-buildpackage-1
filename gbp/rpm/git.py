@@ -19,7 +19,7 @@ import re
 
 from gbp.git import GitRepository, GitRepositoryError
 from gbp.pkg.pristinetar import PristineTar
-from gbp.rpm import compose_version_str
+from gbp.rpm.policy import RpmPkgPolicy
 
 class RpmGitRepository(GitRepository):
     """A git repository that holds the source of an RPM package"""
@@ -66,7 +66,7 @@ class RpmGitRepository(GitRepository):
         'myvendor/v1.0-2'
         """
         version_tag = format % dict(str_fields,
-                                    version=compose_version_str(str_fields))
+                                    version=RpmPkgPolicy.compose_full_version(str_fields))
         return RpmGitRepository._sanitize_tag(version_tag)
 
     @staticmethod

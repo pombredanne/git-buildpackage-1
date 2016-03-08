@@ -1,6 +1,6 @@
 pkgbase='git-buildpackage'
 pkgname=('git-buildpackage-rpm' 'git-buildpackage-common' 'git-buildpackage-doc')
-pkgver=0.6.15
+pkgver=0.6.27
 pkgrel=0
 pkgdesc="Tools from Debian to integrate the package build system with Git"
 arch=(any)
@@ -53,7 +53,7 @@ package_git-buildpackage-common() {
 
 package_git-buildpackage-rpm() {
   depends=("git-buildpackage-common=$pkgver-$pkgrel" "rpm")
-  provides=("tizen-gbp-rpm=20140605")
+  provides=("tizen-gbp-rpm=20160302")
   cd $srcdir/$pkgbase-$pkgver
   WITHOUT_NOSETESTS=1 \
     python2 setup.py install \

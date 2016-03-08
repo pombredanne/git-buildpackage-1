@@ -27,11 +27,10 @@ import re
 import gzip
 import bz2
 import subprocess
-
 import gbp.tmpfile as tempfile
 from gbp.config import GbpOptionParserRpm
 from gbp.rpm.git import GitRepositoryError, RpmGitRepository
-from gbp.git.modifier import GitModifier
+from gbp.git.modifier import GitModifier, GitTz
 from gbp.command_wrappers import GitCommand, CommandExecFailed
 from gbp.errors import GbpError
 import gbp.log
@@ -243,13 +242,14 @@ def parse_spec(options, repo, treeish=None):
     return spec
 
 
-def find_upstream_commit(repo, upstreamversion, upstream_tag):
+def find_upstream_commit(repo, spec, upstream_tag):
     """Find commit corresponding upstream version"""
-    tag_str_fields = {'upstreamversion': upstreamversion,
+    tag_str_fields = {'upstreamversion': spec.upstreamversion,
                       'vendor': 'Upstream'}
     upstream_commit = repo.find_version(upstream_tag, tag_str_fields)
     if not upstream_commit:
-        raise GbpError("Couldn't find upstream version %s" % upstreamversion)
+        raise GbpError("Couldn't find upstream version %s" %
+                       spec.upstreamversion)
     return upstream_commit
 
 
@@ -265,10 +265,11 @@ def export_patches(repo, options):
     else:
         spec = parse_spec(options, repo)
         pq_branch = pq_branch_name(current, options, spec.version)
-    upstream_commit = find_upstream_commit(repo, spec.upstreamversion,
-                                           options.upstream_tag)
+    upstream_commit = find_upstream_commit(repo, spec, options.upstream_tag)
 
     export_treeish = options.export_rev if options.export_rev else pq_branch
+    if not repo.has_treeish(export_treeish):
+        raise GbpError('Invalid treeish object %s' % export_treeish)
 
     update_patch_series(repo, spec, upstream_commit, export_treeish, options)
 
@@ -377,8 +378,7 @@ def import_spec_patches(repo, options):
         spec = parse_spec(options, repo)
         spec_treeish = None
         base = current
-    upstream_commit = find_upstream_commit(repo, spec.upstreamversion,
-                                           options.upstream_tag)
+    upstream_commit = find_upstream_commit(repo, spec, options.upstream_tag)
     packager = get_packager(spec)
     pq_branch = pq_branch_name(base, options, spec.version)
 
@@ -435,8 +435,7 @@ def rebase_pq(repo, options):
     else:
         base = current
         spec = parse_spec(options, repo)
-    upstream_commit = find_upstream_commit(repo, spec.upstreamversion,
-                                           options.upstream_tag)
+    upstream_commit = find_upstream_commit(repo, spec, options.upstream_tag)
 
     switch_to_pq_branch(repo, base, options)
     GitCommand("rebase")([upstream_commit])
@@ -502,8 +501,7 @@ def convert_package(repo, options):
         pq_branch = pq_branch_name(old_packaging, options, spec.version)
         raise GbpError(err_msg_base + "pq branch %s already exists" % pq_branch)
     # Check that the current branch is based on upstream
-    upstream_commit = find_upstream_commit(repo, spec.upstreamversion,
-                                           options.upstream_tag)
+    upstream_commit = find_upstream_commit(repo, spec, options.upstream_tag)
     if not is_ancestor(repo, upstream_commit, old_packaging):
         raise GbpError(err_msg_base + "%s is not based on upstream version %s" %
                        (old_packaging, spec.upstreamversion))
