@@ -1,3 +1,11 @@
+git-buildpackage (0.6.27-tizen20160308) unstable; urgency=medium
+
+  * Check codes in devel branch
+
+ -- Jun Wang  <junbill.wangx@samsung.com>  TUE, 08 Mar 2016 10:20:21 +0800
+
+
+
 git-buildpackage (0.6.27-tizen20160302) unstable; urgency=medium
 
   * Fix error logs when __import__ faild,like "No handlers could be found fo logger"
