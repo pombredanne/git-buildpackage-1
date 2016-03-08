@@ -12,12 +12,9 @@ Build-Depends:
  pychecker,
  python (>> 2.6.6-3~),
  python-epydoc,
- python-mock,
  python-nose,
  python-pkg-resources,
- python-rpm,
  python-setuptools,
- rpm,
  sgml2x,
  librpm-tizen,
 # For rpm (epydoc)
@@ -65,13 +62,15 @@ Description: Suite to help with Debian packages in Git repositories
 Package: git-buildpackage-rpm
 Architecture: all
 Depends: ${python:Depends},
+ ${shlibs:Depends},
  ${misc:Depends},
- git-buildpackage-common (= ${binary:Version}),
  python-rpm,
- rpm,
-Description: Suite to help with RPM packages in Git repositories
+ rpm2cpio,
+ git-buildpackage-common (= ${binary:Version})
+Recommends: rpm
+Description: Suite to help with rpm packages in Git repositories
  This package contains the following tools:
-  * gbp import-srpm: import existing RPM source packages into a git
+  * git-import-srpm: import existing rpm source packages into a git
     repository
   * git-import-orig-rpm: import a new upstream version into the git repository
   * git-buildpackage-rpm: build a package out of a git repository, check for local
