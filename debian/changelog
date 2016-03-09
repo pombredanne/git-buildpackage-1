@@ -1,4 +1,4 @@
-git-buildpackage (0.6.27-tizen20160308) unstable; urgency=medium
+git-buildpackage (0.6.28-tizen20160308) unstable; urgency=medium
 
   * Check codes in devel branch
 
