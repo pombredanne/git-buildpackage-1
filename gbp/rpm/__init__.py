@@ -901,5 +901,34 @@ def string_to_int(val_str):
     else:
         return int(val_str)
 
+def compose_version_str(evr):
+    """
+    Compose a full version string from individual "version components",
+    i.e. epoch, version and release
 
+    @param evr: dict of version components
+    @type evr: C{dict} of C{str}
+    @return: full version
+    @rtype: C{str}
+
+    >>> compose_version_str({'epoch': '', 'upstreamversion': '1.0'})
+    '1.0'
+    >>> compose_version_str({'epoch': '2', 'upstreamversion': '1.0', 'release': None})
+    '2:1.0'
+    >>> compose_version_str({'epoch': None, 'upstreamversion': '1', 'release': '0'})
+    '1-0'
+    >>> compose_version_str({'epoch': '2', 'upstreamversion': '1.0', 'release': '2.3'})
+    '2:1.0-2.3'
+    >>> compose_version_str({'epoch': '2', 'upstreamversion': '', 'release': '2.3'})
+    """
+    if 'upstreamversion' in evr and evr['upstreamversion']:
+        version = ""
+        if 'epoch' in evr and evr['epoch']:
+            version += "%s:" % evr['epoch']
+        version += evr['upstreamversion']
+        if 'release' in evr and evr['release']:
+            version += "-%s" % evr['release']
+        if version:
+            return version
+    return None
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:
