@@ -33,9 +33,8 @@ from gbp.format import format_msg
 import gbp.log
 from gbp.pkg import compressor_opts
 from gbp.scripts.common.import_orig import (cleanup_tmp_tree, ask_package_name,
-                                            ask_package_version,
-                                            prepare_sources)
-
+						ask_package_version,
+						prepare_sources)
 
 def upstream_import_commit_msg(options, version):
     return options.import_msg % dict(version=version)
