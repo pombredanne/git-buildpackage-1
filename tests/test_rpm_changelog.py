@@ -40,8 +40,12 @@ class TestChangelogHeader(object):
         """Test missing properties"""
         time = datetime(2014, 01, 29, 12, 13, 14)
         header = _ChangelogHeader(RpmPkgPolicy, time, name="John", revision="1")
+	assert_raises(ChangelogError, str, header)
+
+	"""
         with assert_raises(ChangelogError):
             str(header)
+	"""
 
     def test_container(self):
         """Test the container methods of the class"""
@@ -190,6 +194,16 @@ class TestChangelogParser(object):
 
     def test_parse_section_fail(self):
         """Basic tests for failures of changelog section parsing"""
+	assert_raises(ChangelogError, self.parser.parse_section,
+            self.cl_broken_header_1)
+	assert_raises(ChangelogError, self.parser.parse_section,
+            self.cl_broken_header_2)
+	assert_raises(ChangelogError, self.parser.parse_section,
+            self.cl_broken_header_3)
+	assert_raises(ChangelogError, self.parser.parse_section,
+            self.cl_broken_header_4)
+
+	"""
         with assert_raises(ChangelogError):
             self.parser.parse_section(self.cl_broken_header_1)
 
@@ -201,11 +215,17 @@ class TestChangelogParser(object):
 
         with assert_raises(ChangelogError):
             self.parser.parse_section(self.cl_broken_header_4)
+	"""
 
     def test_parse_changelog_fail(self):
         """Basic tests for changelog parsing failures"""
+	assert_raises(ChangelogError, self.parser.raw_parse_string,
+            self.cl_broken_header_5)
+
+	"""
         with assert_raises(ChangelogError):
             self.parser.raw_parse_string(self.cl_broken_header_5)
+	"""
 
 
 class TestChangelog(object):

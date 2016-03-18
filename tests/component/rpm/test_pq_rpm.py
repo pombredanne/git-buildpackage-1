@@ -52,8 +52,12 @@ class TestPqRpm(RpmRepoTestBase):
         self._clear_log()
 
         # Test invalid cmdline options
+	assert_raises(SystemExit, mock_pq, ['--invalid-arg=123'])
+
+	"""
         with assert_raises(SystemExit):
             mock_pq(['--invalid-arg=123'])
+	"""
 
     def test_import_outside_repo(self):
         """Run pq-rpm when not in a git repository"""
