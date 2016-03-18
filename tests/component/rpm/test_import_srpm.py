@@ -45,8 +45,12 @@ class TestImportPacked(ComponentTestBase):
     def test_invalid_args(self):
         """See that import-srpm fails gracefully if called with invalid args"""
         eq_(mock_import([]), 1)
+	assert_raises(SystemExit, mock_import, ['--invalid-arg=123'])
+
+	"""
         with assert_raises(SystemExit):
             mock_import(['--invalid-arg=123'])
+	"""
 
     def test_basic_import(self):
         """Test importing of non-native src.rpm"""

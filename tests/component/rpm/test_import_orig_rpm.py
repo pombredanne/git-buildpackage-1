@@ -142,8 +142,12 @@ class TestImportOrig(ImportOrigTestBase):
         self._check_repo_state(repo, None, [])
 
         # Test invalid cmdline options
+	assert_raises(SystemExit, mock_import, ['--invalid-arg=123'])
+
+	"""
         with assert_raises(SystemExit):
             mock_import(['--invalid-arg=123'])
+	"""
 
     def test_import_outside_repo(self):
         """Test importing when not in a git repository"""
