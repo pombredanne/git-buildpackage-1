@@ -390,10 +390,15 @@ class TestUtilityFunctions(object):
     def test_parse_srpm(self):
         """Test parse_srpm() function"""
         parse_srpm(os.path.join(SRPM_DIR, 'gbp-test-1.0-1.src.rpm'))
+	assert_raises(GbpError, parse_srpm, 
+		os.path.join(DATA_DIR, 'notexists.src.rpm'))
+
+	"""
         with assert_raises(GbpError):
             parse_srpm(os.path.join(DATA_DIR, 'notexists.src.rpm'))
         with assert_raises(GbpError):
             parse_srpm(os.path.join(SPEC_DIR, 'gbp-test.spec'))
+	"""
 
     def test_guess_spec(self):
         """Test guess_spec() function"""
