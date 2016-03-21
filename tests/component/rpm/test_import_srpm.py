@@ -158,7 +158,7 @@ class TestImportPacked(ComponentTestBase):
         eq_(len(repo.get_commits(until='upstream')), 2)
         # Check number of tags
         eq_(len(repo.get_tags('upstream/*')), 2)
-        eq_(len(repo.get_tags('packaging/*')), 3)
+        eq_(len(repo.get_tags('vendor/*')), 3)
 
     def test_import_to_existing(self):
         """Test importing to an existing repo"""
