@@ -1,6 +1,6 @@
 [submodule "tests/component/deb/data"]
 	path = tests/component/deb/data
-	url = ssh://jenkins@10.113.136.109:29418/tools/git-buildpackage-deb-testdata
+        url = git://honk.sigxcpu.org/git/gbp/deb-testdata
 [submodule "tests/component/rpm/data"]
 	path = tests/component/rpm/data
-	url = ssh://jenkins@10.113.136.109:29418/tools/git-buildpackage-rpm-testdata
+        url = git://github.com/marquiz/git-buildpackage-rpm-testdata.git
