@@ -56,8 +56,12 @@ class TestRpmCh(RpmRepoTestBase):
         """See that git-rpm-ch fails gracefully when called with invalid args"""
         GitRepository.create('.')
 
+	assert_raises(SystemExit, mock_ch, ['--invalid-opt'])
+
+	"""
         with assert_raises(SystemExit):
             mock_ch(['--invalid-opt'])
+	"""
 
     def test_import_outside_repo(self):
         """Run git-rpm-ch when not in a git repository"""

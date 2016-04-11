@@ -15,7 +15,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-"""run commands to build a debian package out of a git repository"""
+"""Build a debian package out of a GIT repository"""
 
 import ConfigParser
 import errno
@@ -29,6 +29,7 @@ from gbp.command_wrappers import (Command,
 from gbp.config import (GbpOptionParserDebian, GbpOptionGroup)
 from gbp.deb.git import (GitRepositoryError, DebianGitRepository)
 from gbp.deb.source import DebianSource, DebianSourceError
+from gbp.format import format_msg
 from gbp.git.vfs import GitVfs
 from gbp.deb.upstreamsource import DebianUpstreamSource
 from gbp.errors import GbpError
@@ -415,6 +416,7 @@ def build_parser(name, prefix=None):
     tag_group.add_boolean_config_file_option(option_name="sign-tags", dest="sign_tags")
     tag_group.add_config_file_option(option_name="keyid", dest="keyid")
     tag_group.add_config_file_option(option_name="debian-tag", dest="packaging_tag")
+    tag_group.add_config_file_option(option_name="debian-tag-msg", dest="debian_tag_msg")
     tag_group.add_config_file_option(option_name="upstream-tag", dest="upstream_tag")
     orig_group.add_config_file_option(option_name="upstream-tree", dest="upstream_tree")
     orig_group.add_boolean_config_file_option(option_name="pristine-tar", dest="pristine_tar")
@@ -615,13 +617,15 @@ def main(argv):
                      extra_env={'GBP_CHANGES_FILE': changes,
                                 'GBP_BUILD_DIR': build_dir})()
         if options.tag or options.tag_only:
-            gbp.log.info("Tagging %s" % source.changelog.version)
             tag = repo.version_to_tag(options.packaging_tag, source.changelog.version)
+            gbp.log.info("Tagging %s as %s" % (source.changelog.version, tag))
             if options.retag and repo.has_tag(tag):
                 repo.delete_tag(tag)
+            tag_msg = format_msg(options.debian_tag_msg,
+                                 dict(pkg=source.sourcepkg,
+                                      version=source.changelog.version))
             repo.create_tag(name=tag,
-                            msg="%s Debian release %s" % (source.sourcepkg,
-                                                          source.changelog.version),
+                            msg=tag_msg,
                             sign=options.sign_tags, keyid=options.keyid)
             if options.posttag:
                 sha = repo.rev_parse("%s^{}" % tag)

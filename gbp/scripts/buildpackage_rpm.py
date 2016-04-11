@@ -288,7 +288,17 @@ def export_patches(repo, spec, export_treeish, options):
 def is_native(repo, options):
     """Determine whether a package is native or non-native"""
     if options.native.is_auto():
-        return not repo.has_branch(options.upstream_branch)
+        if repo.has_branch(options.upstream_branch):
+            return False
+        # Check remotes, too
+        for remote_branch in repo.get_remote_branches():
+            remote, branch = remote_branch.split('/', 1)
+            if branch == options.upstream_branch:
+                gbp.log.debug("Found upstream branch '%s' from remote '%s'" %
+                               (remote, branch))
+                return False
+        return True
+
     return options.native.is_on()
 
 
@@ -698,6 +708,7 @@ def main(argv):
     if not options.tag_only:
         if spec and options.notify:
             summary = "Gbp-rpm %s" % ["failed", "successful"][not retval]
+            pkg_evr = {'upstreamversion': spec.version}
             message = ("Build of %s %s %s" % (spec.name,
                             RpmPkgPolicy.compose_full_version(spec.version),
                             ["failed", "succeeded"][not retval]))

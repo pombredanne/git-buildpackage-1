@@ -15,7 +15,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-"""Import a new upstream version into a git repository"""
+"""Import a new upstream version into a GIT repository"""
 
 import ConfigParser
 import os
@@ -29,12 +29,12 @@ from gbp.deb.changelog import ChangeLog, NoChangeLogError
 from gbp.deb.git import (GitRepositoryError, DebianGitRepository)
 from gbp.config import GbpOptionParserDebian, GbpOptionGroup, no_upstream_branch_msg
 from gbp.errors import GbpError
+from gbp.format import format_msg
 import gbp.log
 from gbp.pkg import compressor_opts
 from gbp.scripts.common.import_orig import (cleanup_tmp_tree, ask_package_name,
-                                            ask_package_version,
-                                            prepare_sources)
-
+						ask_package_version,
+						prepare_sources)
 
 def upstream_import_commit_msg(options, version):
     return options.import_msg % dict(version=version)
@@ -270,6 +270,12 @@ def main(argv):
                 source, pkg_name, version, prepare_pristine, options.filters,
                 options.filter_pristine_tar, None, tmpdir)
 
+	# Prepare sources for importing
+	pristine_name = pristine_tarball_name(source, pkg_name, version)
+	prepare_pristine = pristine_name if options.pristine_tar else None
+	unpacked_orig, pristine_orig = prepare_sources(
+		source, pkg_name, version, prepare_pristine, options.filters,
+		options.filter_pristine_tar, None, tmpdir)
         # Don't mess up our repo with git metadata from an upstream tarball
         try:
             if os.path.isdir(os.path.join(unpacked_orig, '.git/')):
@@ -331,7 +337,7 @@ def main(argv):
                             epoch = '%s:' % cp.epoch
                     info = { 'version': "%s%s-1" % (epoch, version) }
                     env = { 'GBP_BRANCH': options.packaging_branch }
-                    gbpc.Command(options.postimport % info, extra_env=env, shell=True)()
+                    gbpc.Command(format_msg(options.postimport, info), extra_env=env, shell=True)()
             # Update working copy and index if we've possibly updated the
             # checked out branch
             current_branch = repo.get_branch()

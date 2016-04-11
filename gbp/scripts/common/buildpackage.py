@@ -142,7 +142,6 @@ def untar_data(outdir, data):
     if popen.wait():
         raise GbpError("Error extracting tar to %s" % outdir)
 
-
 #{ Functions to handle export-dir
 def dump_tree(repo, export_dir, treeish, with_submodules, recursive=True):
     """Dump a git tree-ish to output_dir"""

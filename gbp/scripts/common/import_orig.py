@@ -78,59 +78,6 @@ def ask_package_version(default, ver_validator_func, err_msg):
         # bit clearer.
         gbp.log.warn("\nNot a valid upstream version: '%s'.\n%s" % (version, err_msg))
 
-
-def prepare_pristine_tar(source, pkg_name, pkg_version, pristine_commit_name,
-                         filters=None, prefix=None, tmpdir=None):
-    """
-    Prepare the upstream sources for pristine-tar import
-
-    @param source: original upstream sources
-    @type source: C{UpstreamSource}
-    @param pkg_name: package name
-    @type pkg_name: C{str}
-    @param pkg_version: upstream version of the package
-    @type pkg_version: C{str}
-    @param pristine_commit_name: archive filename to commit to pristine-tar
-    @type pristine_commit_name: C{str} or C{None}
-    @param filters: filter to exclude files
-    @type filters: C{list} of C{str} or C{None}
-    @param prefix: prefix (i.e. leading directory of files) to use in
-                   pristine-tar, set to C{None} to not mangle orig archive
-    @type prefix: C{str} or C{None}
-    @param tmpdir: temporary working dir (cleanup left to caller)
-    @type tmpdir: C{str}
-    @return: prepared source archive
-    @rtype: C{UpstreamSource}
-    """
-    need_repack = False
-    if source.is_dir():
-        if prefix is None:
-            prefix = '%s-%s' % (pkg_name, pkg_version)
-            gbp.log.info("Using guessed prefix '%s/' for pristine-tar" % prefix)
-        need_repack = True
-    else:
-        if prefix is not None and prefix == source.prefix:
-            prefix = None
-        comp = parse_archive_filename(pristine_commit_name)[2]
-        if filters or prefix is not None or source.compression != comp:
-            if not source.unpacked:
-                unpack_dir = tempfile.mkdtemp(prefix='pristine_unpack_',
-                                              dir=tmpdir)
-                source.unpack(unpack_dir)
-            need_repack = True
-    pristine_path = os.path.join(tmpdir, pristine_commit_name)
-    if need_repack:
-        gbp.log.debug("Packing '%s' from '%s' for pristine-tar" %
-                        (pristine_path, source.unpacked))
-        pristine = source.pack(pristine_path, filters, prefix)
-    else:
-        # Just create symlink for mangling the pristine tarball name
-        os.symlink(source.path, pristine_path)
-        pristine = source.__class__(pristine_path)
-
-    return pristine
-
-
 def prepare_sources(source, pkg_name, pkg_version, pristine_commit_name,
                     filters, filter_pristine, prefix, tmpdir):
     """
@@ -200,4 +147,56 @@ def prepare_sources(source, pkg_name, pkg_version, pristine_commit_name,
                                             tmpdir)
     pristine_path = pristine.path if pristine else ''
     return (filtered.unpacked, pristine_path)
+
+def prepare_pristine_tar(source, pkg_name, pkg_version, pristine_commit_name,
+                         filters=None, prefix=None, tmpdir=None):
+    """
+    Prepare the upstream sources for pristine-tar import
+
+    @param source: original upstream sources
+    @type source: C{UpstreamSource}
+    @param pkg_name: package name
+    @type pkg_name: C{str}
+    @param pkg_version: upstream version of the package
+    @type pkg_version: C{str}
+    @param pristine_commit_name: archive filename to commit to pristine-tar
+    @type pristine_commit_name: C{str} or C{None}
+    @param filters: filter to exclude files
+    @type filters: C{list} of C{str} or C{None}
+    @param prefix: prefix (i.e. leading directory of files) to use in
+                   pristine-tar, set to C{None} to not mangle orig archive
+    @type prefix: C{str} or C{None}
+    @param tmpdir: temporary working dir (cleanup left to caller)
+    @type tmpdir: C{str}
+    @return: prepared source archive
+    @rtype: C{UpstreamSource}
+    """
+    need_repack = False
+    if source.is_dir():
+        if prefix is None:
+            prefix = '%s-%s' % (pkg_name, pkg_version)
+            gbp.log.info("Using guessed prefix '%s/' for pristine-tar" % prefix)
+        need_repack = True
+    else:
+        if prefix is not None and prefix == source.prefix:
+            prefix = None
+        comp = parse_archive_filename(pristine_commit_name)[2]
+        if filters or prefix is not None or source.compression != comp:
+            if not source.unpacked:
+                unpack_dir = tempfile.mkdtemp(prefix='pristine_unpack_',
+                                              dir=tmpdir)
+                source.unpack(unpack_dir)
+            need_repack = True
+    pristine_path = os.path.join(tmpdir, pristine_commit_name)
+    if need_repack:
+        gbp.log.debug("Packing '%s' from '%s' for pristine-tar" %
+                        (pristine_path, source.unpacked))
+        pristine = source.pack(pristine_path, filters, prefix)
+    else:
+        # Just create symlink for mangling the pristine tarball name
+        os.symlink(source.path, pristine_path)
+        pristine = source.__class__(pristine_path)
+
+    return pristine
+
 

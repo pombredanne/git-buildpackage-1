@@ -27,11 +27,10 @@ import re
 import gzip
 import bz2
 import subprocess
-
 import gbp.tmpfile as tempfile
 from gbp.config import GbpOptionParserRpm
 from gbp.rpm.git import GitRepositoryError, RpmGitRepository
-from gbp.git.modifier import GitModifier
+from gbp.git.modifier import GitModifier, GitTz
 from gbp.command_wrappers import GitCommand, CommandExecFailed
 from gbp.errors import GbpError
 import gbp.log
@@ -269,6 +268,8 @@ def export_patches(repo, options):
     upstream_commit = find_upstream_commit(repo, spec, options.upstream_tag)
 
     export_treeish = options.export_rev if options.export_rev else pq_branch
+    if not repo.has_treeish(export_treeish):
+        raise GbpError('Invalid treeish object %s' % export_treeish)
 
     update_patch_series(repo, spec, upstream_commit, export_treeish, options)
 
@@ -384,7 +385,7 @@ def import_spec_patches(repo, options):
     # Create pq-branch
     if repo.has_branch(pq_branch) and not options.force:
         raise GbpError("Patch-queue branch '%s' already exists. "
-                       "Try 'rebase' instead." % pq_branch)
+                       "Try 'switch' instead." % pq_branch)
     try:
         if repo.get_branch() == pq_branch:
             repo.force_head(upstream_commit, hard=True)

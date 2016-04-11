@@ -154,10 +154,15 @@ class TestSpecFile(object):
 
     def test_parse_raw(self):
         """Test parsing of a valid spec file"""
+	assert_raises(NoSpecError, SpecFile, None, None)
+	assert_raises(NoSpecError, SpecFile, 'filename', 'filedata')
+
+	"""
         with assert_raises(NoSpecError):
             SpecFile(None, None)
         with assert_raises(NoSpecError):
             SpecFile('filename', 'filedata')
+	"""
 
         spec_filepath = os.path.join(SPEC_DIR, 'gbp-test.spec')
         with open(spec_filepath, 'r') as spec_fd:
@@ -229,22 +234,36 @@ class TestSpecFile(object):
         assert spec.protected('_patches')() == {}
         prev = spec.protected('_delete_tag')('invalidtag', None)
 
+	assert_raises(GbpError, spec.protected('_set_tag'),
+            'Version', None, '', prev)
+	assert_raises(GbpError, spec.set_tag,
+            'invalidtag', None, 'value')
+
+	"""
         with assert_raises(GbpError):
             # Check that setting empty value fails
             spec.protected('_set_tag')('Version', None, '', prev)
         with assert_raises(GbpError):
             # Check that setting invalid tag with public method fails
             spec.set_tag('invalidtag', None, 'value')
+	"""
 
         # Mangle macros
         prev = spec.protected('_delete_special_macro')('patch', -1)
         spec.protected('_delete_special_macro')('patch', 123)
         spec.protected('_set_special_macro')('patch', 0, 'my new args', prev)
+	assert_raises(GbpError, spec.protected('_delete_special_macro'),
+            'invalidmacro', 0)
+	assert_raises(GbpError, spec.protected('_set_special_macro'),
+            'invalidmacro', 0, 'args', prev)
+
+	"""
         with assert_raises(GbpError):
             spec.protected('_delete_special_macro')('invalidmacro', 0)
         with assert_raises(GbpError):
             spec.protected('_set_special_macro')('invalidmacro', 0, 'args',
                            prev)
+	"""
 
         # Check resulting spec file
         spec.write_spec_file()
@@ -256,12 +275,21 @@ class TestSpecFile(object):
         spec = SpecFileTester(spec_filepath)
 
         # Unknown/invalid section name
+	assert_raises(GbpError, spec.protected('_set_section'),
+            'patch', 'new content\n')
+	"""
         with assert_raises(GbpError):
             spec.protected('_set_section')('patch', 'new content\n')
+	"""
 
         # Multiple sections with the same name
+	assert_raises(GbpError, spec.protected('_set_section'),
+            'files', '%{_sysconfdir}/foo\n')
+
+	"""
         with assert_raises(GbpError):
             spec.protected('_set_section')('files', '%{_sysconfdir}/foo\n')
+	"""
 
     def test_changelog(self):
         """Test changelog methods"""
@@ -362,21 +390,40 @@ class TestUtilityFunctions(object):
     def test_parse_srpm(self):
         """Test parse_srpm() function"""
         parse_srpm(os.path.join(SRPM_DIR, 'gbp-test-1.0-1.src.rpm'))
+	assert_raises(GbpError, parse_srpm, 
+		os.path.join(DATA_DIR, 'notexists.src.rpm'))
+
+	"""
         with assert_raises(GbpError):
             parse_srpm(os.path.join(DATA_DIR, 'notexists.src.rpm'))
         with assert_raises(GbpError):
             parse_srpm(os.path.join(SPEC_DIR, 'gbp-test.spec'))
+	"""
 
     def test_guess_spec(self):
         """Test guess_spec() function"""
         # Spec not found
+	assert_raises(NoSpecError, guess_spec,
+            DATA_DIR, recursive=False)
+
+	"""
         with assert_raises(NoSpecError):
             guess_spec(DATA_DIR, recursive=False)
+	"""
+
         # Multiple spec files
+	assert_raises(NoSpecError, guess_spec,
+            DATA_DIR, recursive=True)
+	assert_raises(NoSpecError, guess_spec,
+            SPEC_DIR, recursive=False)
+
+	"""
         with assert_raises(NoSpecError):
             guess_spec(DATA_DIR, recursive=True)
         with assert_raises(NoSpecError):
             guess_spec(SPEC_DIR, recursive=False)
+	"""
+
         # Spec found
         spec = guess_spec(SPEC_DIR, recursive=False,
                              preferred_name = 'gbp-test2.spec')
@@ -398,10 +445,18 @@ class TestUtilityFunctions(object):
         repo.commit_all('Add spec file')
 
         # Spec not found
+	assert_raises(NoSpecError, guess_spec_repo,
+            repo, 'HEAD~1', recursive=True)
+	assert_raises(NoSpecError, guess_spec_repo,
+            repo, 'HEAD', recursive=False)
+
+	"""
         with assert_raises(NoSpecError):
             guess_spec_repo(repo, 'HEAD~1', recursive=True)
         with assert_raises(NoSpecError):
             guess_spec_repo(repo, 'HEAD', recursive=False)
+	"""
+
         # Spec found
         spec = guess_spec_repo(repo, 'HEAD', 'packaging', recursive=False)
         spec = guess_spec_repo(repo, 'HEAD', recursive=True)
@@ -410,8 +465,14 @@ class TestUtilityFunctions(object):
         assert spec.specpath == 'packaging/gbp-test.spec'
 
         # Test spec_from_repo()
+	assert_raises(NoSpecError, spec_from_repo,
+            repo, 'HEAD~1', 'packaging/gbp-test.spec')
+
+	"""
         with assert_raises(NoSpecError):
             spec_from_repo(repo, 'HEAD~1', 'packaging/gbp-test.spec')
+	"""
+
         spec = spec_from_repo(repo, 'HEAD', 'packaging/gbp-test.spec')
         assert spec.specfile == 'gbp-test.spec'
 

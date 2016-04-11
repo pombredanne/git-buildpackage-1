@@ -38,9 +38,9 @@ compressor_aliases = { 'bz2' : 'bzip2',
                        'gz'  : 'gzip', }
 
 # Supported archive formats
-arhive_formats = [ 'tar', 'zip' ]
+archive_formats = [ 'tar', 'zip' ]
 
-# Map combined file extensions to arhive and compression format
+# Map combined file extensions to archive and compression format
 archive_ext_aliases = { 'tgz'   : ('tar', 'gzip'),
                         'tbz2'  : ('tar', 'bzip2'),
                         'tlz'   : ('tar', 'lzma'),
@@ -82,7 +82,7 @@ def parse_archive_filename(filename):
         if split[-1] in archive_ext_aliases:
             base_name = ".".join(split[:-1])
             (archive_fmt, compression) = archive_ext_aliases[split[-1]]
-        elif split[-1] in arhive_formats:
+        elif split[-1] in archive_formats:
             base_name = ".".join(split[:-1])
             (archive_fmt, compression) = (split[-1], None)
         else:
@@ -90,7 +90,7 @@ def parse_archive_filename(filename):
                 if o[1] == split[-1]:
                     base_name = ".".join(split[:-1])
                     compression = c
-                    if len(split) > 2 and split[-2] in arhive_formats:
+                    if len(split) > 2 and split[-2] in archive_formats:
                         base_name = ".".join(split[:-2])
                         archive_fmt = split[-2]
 
@@ -142,8 +142,8 @@ class PkgPolicy(object):
             return True
         return False
 
-    @classmethod
-    def guess_upstream_src_version(cls, filename, extra_regex=r''):
+    @staticmethod
+    def guess_upstream_src_version(filename, extra_regex=r''):
         """
         Guess the package name and version from the filename of an upstream
         archive.
@@ -158,7 +158,7 @@ class PkgPolicy(object):
         >>> PkgPolicy.guess_upstream_src_version('foo-bar_0.2.orig.tar.gz')
         ('foo-bar', '0.2')
         >>> PkgPolicy.guess_upstream_src_version('foo-Bar_0.2.orig.tar.gz')
-        ('foo-Bar', '0.2.orig')
+        ('', '')
         >>> PkgPolicy.guess_upstream_src_version('git-bar-0.2.tar.gz')
         ('git-bar', '0.2')
         >>> PkgPolicy.guess_upstream_src_version('git-bar-0.2-rc1.tar.gz')
@@ -175,13 +175,13 @@ class PkgPolicy(object):
         ('', '')
         >>> PkgPolicy.guess_upstream_src_version('foo-bar_0.2.orig.tar.xz')
         ('foo-bar', '0.2')
-        >>> PkgPolicy.guess_upstream_src_version('foo-bar_0.2.tar.gz')
-        ('foo-bar', '0.2')
         >>> PkgPolicy.guess_upstream_src_version('foo-bar_0.2.orig.tar.lzma')
         ('foo-bar', '0.2')
         >>> PkgPolicy.guess_upstream_src_version('foo-bar-0.2.zip')
         ('foo-bar', '0.2')
         >>> PkgPolicy.guess_upstream_src_version('foo-bar-0.2.tlz')
+        ('foo-bar', '0.2')
+        >>> PkgPolicy.guess_upstream_src_version('foo-bar_0.2.tar.gz')
         ('foo-bar', '0.2')
         """
         version_chars = r'[a-zA-Z\d\.\~\-\:\+]'
@@ -190,10 +190,11 @@ class PkgPolicy(object):
         version_filters = map ( lambda x: x % version_chars,
                            ( # Debian upstream tarball: package_'<version>.orig.tar.gz'
                              r'^(?P<package>[a-z\d\.\+\-]+)_(?P<version>%s+)\.orig',
+                             # Debian native: 'package_<version>.tar.gz'
+                             r'^(?P<package>[a-z\d\.\+\-]+)_(?P<version>%s+)',
                              # Upstream 'package-<version>.tar.gz'
-                             # or Debian native 'package_<version>.tar.gz'
                              # or directory 'package-<version>':
-                             r'^(?P<package>[a-zA-Z\d\.\+\-]+)(-|_)(?P<version>[0-9]%s*)'))
+                             r'^(?P<package>[a-zA-Z\d\.\+\-]+)(-)(?P<version>[0-9]%s*)'))
         if extra_regex:
             version_filters = extra_regex + version_filters
 
@@ -358,7 +359,7 @@ class UpstreamSource(object):
                     files.append((typ, info.filename))
             elif self._archive_fmt == 'tar':
                 popen = subprocess.Popen(['tar', '-t', '-v', '-f', self.path],
-                                         stdout=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, _err = popen.communicate()
                 if popen.returncode:
                     raise GbpError("Listing tar archive content failed")
@@ -379,11 +380,25 @@ class UpstreamSource(object):
     @property
     def archive_fmt(self):
         """Archive format of the sources, e.g. 'tar'"""
+        """
+        >>> UpstreamSource('foo/bar.tar.gz').archive_fmt
+        'tar'
+        >>> UpstreamSource('foo.bar.zip').archive_fmt
+        'zip'
+        >>> UpstreamSource('foo.bar.baz').archive_fmt
+        """
         return self._archive_fmt
 
     @property
     def compression(self):
         """Compression format of the sources, e.g. 'gzip'"""
+        """
+        >>> UpstreamSource('foo/bar.tar.gz').compression
+        'gzip'
+        >>> UpstreamSource('foo.bar.zip').compression
+        >>> UpstreamSource('foo.bz2').compression
+        'bzip2'
+        """
         return self._compression
 
     @property
