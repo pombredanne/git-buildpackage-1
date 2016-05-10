@@ -1,8 +1,5 @@
 See https://honk.sigxcpu.org/piki/projects/git-buildpackage/
 
-
-
-
 RPM-related things:
 - unit tests:
   - add unit tests for the rpm command line tools

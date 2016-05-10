@@ -27,7 +27,7 @@ from gbp.rpm import (SrcRpmFile, SpecFile, parse_srpm, NoSpecError, guess_spec,
                      guess_spec_repo, spec_from_repo)
 from gbp.git.repository import GitRepository
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data','rpm')
+DATA_DIR = os.path.abspath(os.path.splitext(__file__)[0] + '_data')
 SRPM_DIR = os.path.join(DATA_DIR, 'srpms')
 SPEC_DIR = os.path.join(DATA_DIR, 'specs')
 
@@ -390,7 +390,7 @@ class TestUtilityFunctions(object):
     def test_parse_srpm(self):
         """Test parse_srpm() function"""
         parse_srpm(os.path.join(SRPM_DIR, 'gbp-test-1.0-1.src.rpm'))
-	assert_raises(GbpError, parse_srpm,
+	assert_raises(GbpError, parse_srpm, 
 		os.path.join(DATA_DIR, 'notexists.src.rpm'))
 
 	"""
