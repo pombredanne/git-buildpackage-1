@@ -1,3 +1,9 @@
+git-buildpackage (0.7.4-tizen20160514) unstable; urgency=medium
+
+  * Keep same version number with upstream source code ,version 0.7.4
+
+ -- Jun Wang  <junbill.wangx@samsung.com>  Sat, 14 May 2016 17:12:00 +0800
+
 git-buildpackage (0.6.27-tizen20160302) unstable; urgency=medium
 
   * Fix error logs when __import__ faild,like "No handlers could be found fo logger"
