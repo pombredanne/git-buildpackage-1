@@ -26,6 +26,7 @@ import sys
 import re
 import gzip
 import bz2
+import tarfile
 import subprocess
 import gbp.tmpfile as tempfile
 from gbp.config import GbpOptionParserRpm
@@ -300,6 +301,9 @@ def safe_patches(queue, tmpdir_base):
             gbp.log.debug("Uncompressing '%s'" % os.path.basename(patch.path))
             src = uncompressors[comp](patch.path, 'r')
             dst_name = os.path.join(tmpdir, os.path.basename(base))
+            if _archive_fmt:
+                tar_name = dst_name
+                dst_name += '.tar'
         elif comp:
             raise GbpError("Unsupported patch compression '%s', giving up"
                            % comp)
@@ -311,6 +315,11 @@ def safe_patches(queue, tmpdir_base):
         dst.writelines(src)
         src.close()
         dst.close()
+        if _archive_fmt:
+            t = tarfile.open(dst_name, 'r:')
+            t.extractall(path = tmpdir)
+            t.close()
+            dst_name = tar_name
 
         safequeue.append(patch)
         safequeue[-1].path = dst_name
