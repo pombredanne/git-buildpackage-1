@@ -3,7 +3,7 @@
 
 Name:       git-buildpackage
 Summary:    Build packages from git
-Version:    0.6.22
+Version:    0.6.27
 Release:    0
 Group:      Development/Tools/Building
 License:    GPLv2
@@ -115,7 +115,7 @@ Recommends: rpm-build
 %else
 Requires:   rpm-build
 %endif
-Provides:   tizen-gbp-rpm = 20150206
+Provides:   tizen-gbp-rpm = 20160302
 
 %description rpm
 Set of tools from Debian that integrate the package build system with Git.
@@ -267,6 +267,7 @@ done
 %files rpm
 %defattr(-,root,root,-)
 %dir %{python_sitelib}/gbp/rpm
+%{_bindir}/*rpm*
 %{python_sitelib}/gbp/scripts/*rpm*.py*
 %{python_sitelib}/gbp/rpm/*py*
 %if %{with docs}
