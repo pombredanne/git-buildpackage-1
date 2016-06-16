@@ -270,12 +270,6 @@ def main(argv):
                 source, pkg_name, version, prepare_pristine, options.filters,
                 options.filter_pristine_tar, None, tmpdir)
 
-	# Prepare sources for importing
-	pristine_name = pristine_tarball_name(source, pkg_name, version)
-	prepare_pristine = pristine_name if options.pristine_tar else None
-	unpacked_orig, pristine_orig = prepare_sources(
-		source, pkg_name, version, prepare_pristine, options.filters,
-		options.filter_pristine_tar, None, tmpdir)
         # Don't mess up our repo with git metadata from an upstream tarball
         try:
             if os.path.isdir(os.path.join(unpacked_orig, '.git/')):

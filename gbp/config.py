@@ -589,101 +589,149 @@ class GbpOptionParserRpm(GbpOptionParser):
     Handles commandline options and parsing of config files for rpm tools
     """
     defaults = dict(GbpOptionParser.defaults)
-    defaults.update( {
-                       'vendor'                 : 'vendor',
-                       'native'                 : 'auto',
-                       'builder'                : 'rpmbuild',
-                       'cleaner'                : '/bin/true',
-                       'merge'                  : 'False',
-                       'packaging-dir'          : '',
-                       'packaging-tag'          : '%(vendor)s/%(version)s',
-                       'upstream-tag'           : 'upstream/%(upstreamversion)s',
-                       'pq-branch'              : 'development/%(branch)s',
-                       'import-files'           : ['.gbp.conf',
-                                                   'debian/gbp.conf'],
-                       'spec-file'              : 'auto',
-                       'export-dir'             : '../rpmbuild',
-                       'ignore-untracked'       : 'False',
-                       'rpmbuild-builddir'      : 'BUILD',
-                       'rpmbuild-rpmdir'        : 'RPMS',
-                       'rpmbuild-sourcedir'     : 'SOURCES',
-                       'rpmbuild-specdir'       : 'SPECS',
-                       'rpmbuild-srpmdir'       : 'SRPMS',
-                       'rpmbuild-buildrootdir'  : 'BUILDROOT',
-                       'patch-export'           : 'False',
-                       'patch-export-ignore-path'   : '',
-                       'patch-export-compress'  : '0',
-                       'patch-export-squash-until'  : '',
-                       'pristine-tarball-name'  : 'auto',
-                       'orig-prefix'            : 'auto',
-                       'patch-import'           : 'True',
-                       'spec-vcs-tag'           : '',
-                       'changelog-file'         : 'auto',
-                       'changelog-revision'     : '',
-                       'spawn-editor'           : 'always',
-                       'editor-cmd'             : 'vim',
-                       'meta-bts'               : '(Close|Closes|Fixes|Fix)',
-                     } )
+    defaults.update({
+            'tmp-dir'                   : '/var/tmp/gbp/',
+            'vendor'                    : 'vendor',
+			'native'                    : 'auto',
+			'builder'                   : 'rpmbuild',
+            'cleaner'                   : '/bin/true',
+			'merge'                     : 'False',
+			'packaging-dir'             : '',
+            'packaging-branch'          : 'master',		
+            'packaging-tag'             : '%(vendor)s/%(version)s',
+            'upstream-tag'              : 'upstream/%(upstreamversion)s',
+            'pq-branch'                 : 'development/%(branch)s',
+            'import-files'              : ['.gbp.conf',
+                                           'debian/gbp.conf'],
+            'spec-file'                 : 'auto',
+            
+            'export-dir'                : '../rpmbuild',
+            'ignore-untracked'          : 'False',
+            'rpmbuild-builddir'         : 'BUILD',
+            'rpmbuild-rpmdir'           : 'RPMS',
+            'rpmbuild-sourcedir'        : 'SOURCES',
+            'rpmbuild-specdir'          : 'SPECS',
+            'rpmbuild-srpmdir'          : 'SRPMS',
+            'rpmbuild-buildrootdir'     : 'BUILDROOT',
+            'patch-export'              : 'False',
+			'patch-export-ignore-path'  : '',
+            'patch-export-compress'     : '0',
+            'patch-export-squash-until' : '',
+			'pristine-tarball-name'     : 'auto',
+			'orig-prefix'               : 'auto',
+            'patch-import'              : 'True',
+            'spec-vcs-tag'              : '',
+                        
+            
+            'changelog-file'            : 'auto',
+            'changelog-revision'        : '',
+            'spawn-editor'              : 'always',
+            'editor-cmd'                : 'vim',
+            'meta-bts'                  : '(Close|Closes|Fixes|Fix)',
+                    })
 
     help = dict(GbpOptionParser.help)
-    help.update( {
-                   'vendor':
-                        "Distribution vendor name",
-                   'native':
-                        "Treat this package as native, default is '%(native)s'",
-                   'packaging-dir':
-                        "subdir where packaging files are stored, default is '%(packaging-dir)s'",
-                   'packaging-tag':
-                        "format string for packaging tags, rpm counterpart of the 'debian-tag' option, default is '%(packaging-tag)s'",
-                   'pq-branch':
-                        "format string for the patch-queue branch name, default is '%(pq-branch)s'",
-                   'import-files':
-                        ("Comma-separated list of additional file(s) to import "
-                         "from packaging branch. These will appear as one "
-                         "monolithic patch in the pq/development branch. "
-                         "Default is %(import-files)s"),
-                   'spec-file':
-                        "Spec file to use, 'auto' makes gbp to guess, other values make the packaging-dir option to be ignored, default is '%(spec-file)s'",
-                   'ignore-untracked':
-                        "build with untracked files in the source tree, default is '%(ignore-untracked)s'",
-                   'patch-export':
-                        "Create patches between upstream and export-treeish, default is '%(patch-export)s'",
-                   'patch-export-ignore-path':
-                        ("Exclude changes to path(s) matching regex, default "
-                        "is '%(patch-export-ignore-path)s'"),
-                   'patch-export-compress':
-                        "Compress (auto-generated) patches larger than given number of bytes, 0 never compresses, default is '%(patch-export-compress)s'",
-                   'patch-export-squash-until':
-                        ("Squash commits (from upstream) until given tree-ish "
-                         "into one big diff, format is "
-                         "'<commit_ish>[:<filename_base>]'. "
-                         "Default is '%(patch-export-squash-until)s'"),
-                   'pristine-tarball-name':
-                        "Filename to record to pristine-tar, set to 'auto' to not mangle the file name, default is '%(pristine-tarball-name)s'",
-                   'orig-prefix':
-                        "Prefix (dir) to be used when generating/importing tarballs, default is '%(orig-prefix)s'",
-                   'patch-import':
-                        "Import patches to the packaging branch, default is '%(patch-import)s'",
-                   'spec-vcs-tag':
-                        ("Set/update the 'VCS:' tag in the spec file, empty "
-                         "value removes the tag entirely, default is "
-                         "'%(spec-vcs-tag)s'"),
-                   'changelog-file':
-                        ("Changelog file to be used, default is "
-                         "'%(changelog-file)s'"),
-                   'changelog-revision':
-                        ("Format string for the revision field in the "
-                         "changelog header. If empty or not defined the "
-                         "default from packaging policy is used."),
-                   'editor-cmd':
-                        "Editor command to use",
-                   'git-author':
-                        ("Use name and email from git-config for the changelog "
-                          "header, default is '%(git-author)s'"),
-                   'meta-bts':
-                        ("Meta tags for the bts commands, default is "
-                         "'%(meta-bts)s'"),
-                 } )
+    help.update({
+            
+            'vendor':
+                "Distribution vendor name, default is '%(vendor)s'",
+			'native':
+                "Treat this package as native, default is '%(native)s'",
+            'packaging-branch':
+                "Branch the packaging is being maintained on, rpm counterpart "
+                "of the 'debian-branch' option, default is "
+                "'%(packaging-branch)s'",
+            'packaging-dir':
+                "Subdir for RPM packaging files, default is '%(packaging-dir)s'",
+            'packaging-tag':
+                "Format string for packaging tags, RPM counterpart of the "
+                "'debian-tag' option, default is '%(packaging-tag)s'",
+            'pq-branch':
+                "format string for the patch-queue branch name, default is '%(pq-branch)s'",
+            'import-files':
+                "Comma-separated list of additional file(s) to import from "
+                "packaging branch. These will appear as one monolithic patch "
+                "in the pq/development branch. Default is %(import-files)s",
+            'spec-file':
+                "Spec file to use, 'auto' makes gbp to guess, other values "
+                "make the packaging-dir option to be ignored, default is "
+                "'%(spec-file)s'",
+            
+            'ignore-untracked':
+                "build with untracked files in the source tree, default is "
+                "'%(ignore-untracked)s'",
+            'patch-export':
+                "Create patches between upstream and export-treeish, default "
+                "is '%(patch-export)s'",
+            'patch-export-compress':
+                "Compress (auto-generated) patches larger than given number of "
+                "bytes, 0 never compresses, default is "
+                "'%(patch-export-compress)s'",
+            'patch-export-ignore-path':
+                "Exclude changes to path(s) matching regex, default is "
+                "'%(patch-export-ignore-path)s'",
+            'patch-export-squash-until':
+                "Squash commits (from upstream) until given tree-ish into one "
+                "big diff, format is '<commit_ish>[:<filename_base>]'. "
+                "Default is '%(patch-export-squash-until)s'",
+            'patch-import':
+                "Import patches to the packaging branch, default is "
+                "'%(patch-import)s'",
+            'spec-vcs-tag':
+                "Set/update the 'VCS:' tag in the spec file, empty value "
+                "removes the tag entirely, default is '%(spec-vcs-tag)s'",
+            'pristine-tarball-name':
+                "Filename to record to pristine-tar, set to 'auto' to not "
+                "mangle the file name, default is '%(pristine-tarball-name)s'",
+            'orig-prefix':
+                "Prefix (dir) to be used when generating/importing tarballs, "
+                "default is '%(orig-prefix)s'",
+            'changelog-file':
+                "Changelog file to be used, default is '%(changelog-file)s'",
+            'changelog-revision':
+                "Format string for the revision field in the changelog header. "
+                "If empty or not defined the default from packaging policy is "
+                "used.",
+            'editor-cmd':
+                "Editor command to use",
+            'git-author':
+                "Use name and email from git-config for the changelog header, "
+                "default is '%(git-author)s'",
+            'meta-bts':
+                "Meta tags for the bts commands, default is '%(meta-bts)s'",
+			'tmp-dir':
+                "Base directory under which temporary directories are "
+                "created, default is '%(tmp-dir)s'",
+                 })
 
+class GbpOptionParserBB(GbpOptionParserRpm):
+    """Commandline and config file option parser for the -bb commands"""
+    defaults = dict(GbpOptionParserRpm.defaults)
+    defaults.update( {
+                       'builder'                : 'bitbake',
+                       'export-dir'             : '',
+                       'meta-dir'               : '',
+                       'bb-file'                : '',
+                       'bb-vcs-info'            : '',
+                       'submit-tag'             : 'submit/%(target)s/%(nowtime)s',
+                       'target'                 : 'tizen',
+                     } )
+
+    help = dict(GbpOptionParserRpm.help)
+    help.update( {
+                   'meta-dir':
+                        "Subdir where bitbake meta files are stored, default "
+                        "is '%(meta-dir)s'",
+                   'bb-file':
+                        "Bitbake recipe file to build",
+                   'bb-vcs-info':
+                        "Format string for the VCS information automatically "
+                        "set in the recipe file, default is '%(bb-vcs-info)s'",
+                   'submit-tag':
+                        "Submit tag format, default is '%(submit-tag)s'",
+                   'target':
+                        "Submit target used in submit tag, default is "
+                        "'%(target)s'",
+                 } )
 
 # vim:et:ts=4:sw=4:et:sts=4:ai:set list listchars=tab\:»·,trail\:·:

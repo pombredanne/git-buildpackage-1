@@ -3,7 +3,7 @@
 
 Name:       git-buildpackage
 Summary:    Build packages from git
-Version:    0.6.27
+Version:    0.7.4
 Release:    0
 Group:      Development/Tools/Building
 License:    GPLv2
@@ -116,6 +116,20 @@ Provides:   tizen-gbp-rpm = 20160302
 %description rpm
 Set of tools from Debian that integrate the package build system with Git.
 This package contains the tools for building RPM packages.
+
+
+%package bb
+Summary:    Build with BitBake from git
+Group:      Development/Tools/Building
+Requires:   %{name}-common = %{version}-%{release}
+Requires:   %{name}-rpm = %{version}-%{release}
+%if 0%{?suse_version} || 0%{?tizen_version:1}
+Recommends: bitbake
+%endif
+
+%description bb
+Set of tools from Debian that integrate the package build system with Git.
+This package contains the tools for building with the BitBake tool.
 
 
 %if %{with docs}
@@ -259,6 +273,13 @@ done
 %{_mandir}/man1/gbp-pq-rpm.1*
 %{_mandir}/man1/gbp-rpm-ch.1*
 %endif
+
+
+%files bb
+%defattr(-,root,root,-)
+%dir %{python_sitelib}/gbp/bb
+%{python_sitelib}/gbp/scripts/*bb*.py*
+%{python_sitelib}/gbp/bb/*py*
 
 
 %if %{with docs}
