@@ -101,8 +101,12 @@ class TestGbpRpm(RpmRepoTestBase):
     def test_invalid_args(self):
         """Check graceful exit when called with invalid args"""
         GitRepository.create('.')
+	assert_raises(SystemExit, mock_gbp, ['--git-invalid-arg'])
+
+	"""
         with assert_raises(SystemExit):
             mock_gbp(['--git-invalid-arg'])
+	"""
 
     def test_outside_repo(self):
         """Run outside a git repository"""

@@ -584,7 +584,6 @@ class GbpOptionParserDebian(GbpOptionParser):
                        'export-dir'         : '',
                      } )
 
-
 class GbpOptionParserRpm(GbpOptionParser):
     """
     Handles commandline options and parsing of config files for rpm tools
@@ -592,19 +591,21 @@ class GbpOptionParserRpm(GbpOptionParser):
     defaults = dict(GbpOptionParser.defaults)
     defaults.update({
             'tmp-dir'                   : '/var/tmp/gbp/',
-            'vendor'                    : 'Downstream',
-            'packaging-branch'          : 'master',
-            'packaging-dir'             : '',
-            'packaging-tag'             : 'packaging/%(version)s',
+            'vendor'                    : 'vendor',
+			'native'                    : 'auto',
+			'builder'                   : 'rpmbuild',
+            'cleaner'                   : '/bin/true',
+			'merge'                     : 'False',
+			'packaging-dir'             : '',
+            'packaging-branch'          : 'master',		
+            'packaging-tag'             : '%(vendor)s/%(version)s',
             'upstream-tag'              : 'upstream/%(upstreamversion)s',
             'pq-branch'                 : 'development/%(branch)s',
             'import-files'              : ['.gbp.conf',
                                            'debian/gbp.conf'],
             'spec-file'                 : 'auto',
-            'builder'                   : 'rpmbuild',
-            'cleaner'                   : '/bin/true',
+            
             'export-dir'                : '../rpmbuild',
-            'native'                    : 'auto',
             'ignore-untracked'          : 'False',
             'rpmbuild-builddir'         : 'BUILD',
             'rpmbuild-rpmdir'           : 'RPMS',
@@ -613,14 +614,15 @@ class GbpOptionParserRpm(GbpOptionParser):
             'rpmbuild-srpmdir'          : 'SRPMS',
             'rpmbuild-buildrootdir'     : 'BUILDROOT',
             'patch-export'              : 'False',
+			'patch-export-ignore-path'  : '',
             'patch-export-compress'     : '0',
-            'patch-export-ignore-path'  : '',
             'patch-export-squash-until' : '',
+			'pristine-tarball-name'     : 'auto',
+			'orig-prefix'               : 'auto',
             'patch-import'              : 'True',
             'spec-vcs-tag'              : '',
-            'merge'                     : 'False',
-            'pristine-tarball-name'     : 'auto',
-            'orig-prefix'               : 'auto',
+                        
+            
             'changelog-file'            : 'auto',
             'changelog-revision'        : '',
             'spawn-editor'              : 'always',
@@ -630,24 +632,22 @@ class GbpOptionParserRpm(GbpOptionParser):
 
     help = dict(GbpOptionParser.help)
     help.update({
-            'tmp-dir':
-                "Base directory under which temporary directories are "
-                "created, default is '%(tmp-dir)s'",
+            
             'vendor':
                 "Distribution vendor name, default is '%(vendor)s'",
+			'native':
+                "Treat this package as native, default is '%(native)s'",
             'packaging-branch':
                 "Branch the packaging is being maintained on, rpm counterpart "
                 "of the 'debian-branch' option, default is "
                 "'%(packaging-branch)s'",
             'packaging-dir':
-                "Subdir for RPM packaging files, default is "
-                "'%(packaging-dir)s'",
+                "Subdir for RPM packaging files, default is '%(packaging-dir)s'",
             'packaging-tag':
                 "Format string for packaging tags, RPM counterpart of the "
                 "'debian-tag' option, default is '%(packaging-tag)s'",
             'pq-branch':
-                "format string for the patch-queue branch name, default is "
-                "'%(pq-branch)s'",
+                "format string for the patch-queue branch name, default is '%(pq-branch)s'",
             'import-files':
                 "Comma-separated list of additional file(s) to import from "
                 "packaging branch. These will appear as one monolithic patch "
@@ -656,8 +656,7 @@ class GbpOptionParserRpm(GbpOptionParser):
                 "Spec file to use, 'auto' makes gbp to guess, other values "
                 "make the packaging-dir option to be ignored, default is "
                 "'%(spec-file)s'",
-            'native':
-                "Treat this package as native, default is '%(native)s'",
+            
             'ignore-untracked':
                 "build with untracked files in the source tree, default is "
                 "'%(ignore-untracked)s'",
@@ -700,6 +699,9 @@ class GbpOptionParserRpm(GbpOptionParser):
                 "default is '%(git-author)s'",
             'meta-bts':
                 "Meta tags for the bts commands, default is '%(meta-bts)s'",
+			'tmp-dir':
+                "Base directory under which temporary directories are "
+                "created, default is '%(tmp-dir)s'",
                  })
 
 class GbpOptionParserBB(GbpOptionParserRpm):

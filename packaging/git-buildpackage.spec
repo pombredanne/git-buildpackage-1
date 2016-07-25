@@ -3,7 +3,7 @@
 
 Name:       git-buildpackage
 Summary:    Build packages from git
-Version:    0.6.27
+Version:    0.7.4
 Release:    0
 Group:      Development/Tools/Building
 License:    GPLv2
@@ -12,14 +12,10 @@ URL:        https://honk.sigxcpu.org/piki/projects/git-buildpackage/
 Source0:    %{name}_%{version}.tar.gz
 
 # Conditional package names for requirements
-%if 0%{?fedora} || 0%{?centos_ver} > 7
-%define dpkg_pkg_name dpkg-dev
-%else
-%if 0%{?centos_version}
+%if 0%{?fedora} || 0%{?centos_ver}
 %define dpkg_pkg_name dpkg-devel
 %else
 %define dpkg_pkg_name dpkg
-%endif
 %endif
 
 %if 0%{?suse_version} && 0%{?suse_version} < 1230
@@ -34,7 +30,7 @@ Source0:    %{name}_%{version}.tar.gz
 %define man_pkg_name man
 %endif
 
-%if 0%{?fedora} || 0%{?centos_version} || 0%{?centos_ver} || 0%{?tizen_version:1}
+%if 0%{?fedora} || 0%{?centos_ver} || 0%{?tizen_version:1}
 %define python_pkg_name python
 %else
 %define python_pkg_name python-base
@@ -177,6 +173,7 @@ GIT_CEILING_DIRECTORIES=%{_builddir} \
 %install
 rm -rf %{buildroot}
 WITHOUT_NOSETESTS=1 %{__python} ./setup.py install --root=%{buildroot} --prefix=/usr
+rm -rf %{buildroot}%{python_sitelib}/*info
 
 %if %{with docs}
 # Install man pages
@@ -222,8 +219,8 @@ cat >> files.list << EOF
 EOF
 %endif
 
-# Disable the debian tools for old CentOS
-%if 0%{?centos_version} && 0%{?centos_ver} < 7
+# Disable the debian tools for CentOS
+%if 0%{?centos_version}
 for f in `cat files.list`; do
     rm -rfv %{buildroot}/$f
 done
@@ -244,7 +241,6 @@ done
 %dir %{python_sitelib}/gbp/pkg
 %dir %{python_sitelib}/gbp/scripts
 %dir %{python_sitelib}/gbp/scripts/common
-%{python_sitelib}/gbp-*
 %{python_sitelib}/gbp/*.py*
 %{python_sitelib}/gbp/scripts/__init__.py*
 %{python_sitelib}/gbp/scripts/clone.py*

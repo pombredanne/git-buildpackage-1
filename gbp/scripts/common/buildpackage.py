@@ -73,7 +73,6 @@ def compress(cmd, options, output, input_data=None):
     except (OSError, IOError) as err:
         raise GbpError("Error creating %s: %s" % (output, err))
 
-
 def git_archive_submodules(repo, treeish, output, tmpdir_base, prefix,
                            comp_type, comp_level, comp_opts, format='tar'):
     """
@@ -142,7 +141,6 @@ def untar_data(outdir, data):
     popen.stdin.close()
     if popen.wait():
         raise GbpError("Error extracting tar to %s" % outdir)
-
 
 #{ Functions to handle export-dir
 def dump_tree(repo, export_dir, treeish, with_submodules, recursive=True):

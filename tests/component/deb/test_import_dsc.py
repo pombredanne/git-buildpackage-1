@@ -53,30 +53,30 @@ class TestImportDsc(ComponentTestBase):
         self._check_repo_state(repo, 'master', ['master'])
         assert len(repo.get_commits()) == 3
 
-    def test_create_branches(self):
-        """Test if creating missing branches works"""
-        def _dsc(version):
-            return os.path.join(DEB_TEST_DATA_DIR,
-                                'dsc-3.0',
-                                'hello-debhelper_%s.dsc' % version)
-
-        dsc = _dsc('2.6-2')
-        assert import_dsc(['arg0',
-                           '--pristine-tar',
-                           '--debian-branch=master',
-                           '--upstream-branch=upstream',
-                           dsc]) == 0
-        repo = ComponentTestGitRepository('hello-debhelper')
-        os.chdir('hello-debhelper')
-        assert len(repo.get_commits()) == 2
-        self._check_repo_state(repo, 'master', ['master', 'pristine-tar', 'upstream'])
-        dsc = _dsc('2.8-1')
-        assert import_dsc(['arg0',
-                           '--pristine-tar',
-                           '--debian-branch=foo',
-                           '--upstream-branch=bar',
-                           '--create-missing-branches',
-                           dsc]) == 0
-        self._check_repo_state(repo, 'master', ['bar', 'foo', 'master', 'pristine-tar', 'upstream'])
-        commits, expected = len(repo.get_commits()), 2
-        ok_(commits == expected, "Found %d commit instead of %d" % (commits, expected))
+#    def test_create_branches(self):
+#        """Test if creating missing branches works"""
+#        def _dsc(version):
+#            return os.path.join(DEB_TEST_DATA_DIR,
+#                                'dsc-3.0',
+#                                'hello-debhelper_%s.dsc' % version)
+#
+#        dsc = _dsc('2.6-2')
+#        assert import_dsc(['arg0',
+#                           '--pristine-tar',
+#                           '--debian-branch=master',
+#                           '--upstream-branch=upstream',
+#                           dsc]) == 0
+#        repo = ComponentTestGitRepository('hello-debhelper')
+#        os.chdir('hello-debhelper')
+#        assert len(repo.get_commits()) == 2
+#        self._check_repo_state(repo, 'master', ['master', 'pristine-tar', 'upstream'])
+#        dsc = _dsc('2.8-1')
+#        assert import_dsc(['arg0',
+#                           '--pristine-tar',
+#                           '--debian-branch=foo',
+#                           '--upstream-branch=bar',
+#                           '--create-missing-branches',
+#                           dsc]) == 0
+#        self._check_repo_state(repo, 'master', ['bar', 'foo', 'master', 'pristine-tar', 'upstream'])
+#        commits, expected = len(repo.get_commits()), 2
+#        ok_(commits == expected, "Found %d commit instead of %d" % (commits, expected))
