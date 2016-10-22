@@ -1,15 +1,21 @@
+git-buildpackage (0.7.5-tizen20160928) unstable; urgency=medium
+
+  * Upgrade to version 0.7.5
+
+ -- Jun Wang  <junbill.wang@samsung.com>  Wed, 28 Sep 2016 18:00:00 +0800
+
 git-buildpackage (0.7.4-tizen20160514) unstable; urgency=medium
 
   * Keep same version number with upstream source code ,version 0.7.4
 
- -- Jun Wang  <junbill.wangx@samsung.com>  Sat, 14 May 2016 17:12:00 +0800
+ -- Jun Wang  <junbill.wang@samsung.com>  Sat, 14 May 2016 17:12:00 +0800
 
 git-buildpackage (0.6.27-tizen20160302) unstable; urgency=medium
 
   * Fix error logs when __import__ faild,like "No handlers could be found fo logger"
   * Fix build problem on Debian 8
 
- -- Jun Wang  <junbill.wangx@samsung.com>  Wed, 02 Mar 2016 07:47:21 +0100
+ -- Jun Wang  <junbill.wang@samsung.com>  Wed, 02 Mar 2016 07:47:21 +0100
 
 git-buildpackage (0.6.22-tizen20150206) unstable; urgency=low
 
