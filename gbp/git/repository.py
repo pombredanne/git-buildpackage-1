@@ -539,6 +539,13 @@ class GitRepository(object):
         else:
             log.debug("Your git suite doesn't support --edit/--no-edit "
                       "option for git-merge ")
+
+        if (self._cmd_has_feature('merge', 'allow-unrelated-histories')):
+            args.add_cond(True, '--allow-unrelated-histories')
+        else:
+            log.debug("Your git suite doesn't support --allow-unrelated-histories "
+                      "option for git-merge ")
+
         args.add(commit)
         self._git_command("merge", args.args)
 
