@@ -1,3 +1,11 @@
+git-buildpackage (0.7.5-tizen20161231) unstable; urgency=medium
+
+  * Fix diff_status() for renames and copies
+  * Adapt git-merge option when git version greater then 2.9
+  * Disable test_pristine_tar unittest case
+
+ -- SoonKyu Park  <sk7.park@samsung.com>  Sat, 31 Dec 2016 19:30:00 +0800
+
 git-buildpackage (0.7.4-tizen20160514) unstable; urgency=medium
 
   * Keep same version number with upstream source code ,version 0.7.4

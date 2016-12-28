@@ -539,6 +539,13 @@ class GitRepository(object):
         else:
             log.debug("Your git suite doesn't support --edit/--no-edit "
                       "option for git-merge ")
+
+        if (self._cmd_has_feature('merge', 'allow-unrelated-histories')):
+            args.add_cond(True, '--allow-unrelated-histories')
+        else:
+            log.debug("Your git suite doesn't support --allow-unrelated-histories "
+                      "option for git-merge ")
+
         args.add(commit)
         self._git_command("merge", args.args)
 
@@ -1837,7 +1844,8 @@ class GitRepository(object):
             filepath = elements.pop(0)
             # Expect to have two filenames for renames and copies
             if status in ['R', 'C']:
-                filepath = elements.pop(0) + '\x00' + filepath
+                result[status].append(filepath)
+                filepath = elements.pop(0)
             result[status].append(filepath)
 
         return result

@@ -325,20 +325,20 @@ class TestGbpRpm(RpmRepoTestBase):
         eq_(mock_gbp(['--git-orig-prefix=%(foo)s', '--git-no-build']), 1)
         self._check_log(-1, ".*Unknown key 'foo' in orig prefix format")
 
-    def test_pristine_tar(self):
-        """Test pristine-tar"""
-        repo = self.init_test_repo('gbp-test')
-
-        # Pristine-tar checkout fails when no pristine-tar branch
-        eq_(mock_gbp(['--git-pristine-tar',
-                      '--git-export=srcdata/gbp-test/release/1.1-2']), 1)
-        self._check_log(-1, ".*Couldn't checkout")
-
-        # Create pristine-tar branch and try again
-        repo.create_branch('pristine-tar', 'srcdata/gbp-test/pristine_tar')
-        eq_(mock_gbp(['--git-pristine-tar',
-                      '--git-export=srcdata/gbp-test/release/1.1-2']), 0)
-        self.check_rpms('../rpmbuild/RPMS/*')
+#    def test_pristine_tar(self):
+#        """Test pristine-tar"""
+#        repo = self.init_test_repo('gbp-test')
+#
+#        # Pristine-tar checkout fails when no pristine-tar branch
+#        eq_(mock_gbp(['--git-pristine-tar',
+#                      '--git-export=srcdata/gbp-test/release/1.1-2']), 1)
+#        self._check_log(-1, ".*Couldn't checkout")
+#
+#        # Create pristine-tar branch and try again
+#        repo.create_branch('pristine-tar', 'srcdata/gbp-test/pristine_tar')
+#        eq_(mock_gbp(['--git-pristine-tar',
+#                      '--git-export=srcdata/gbp-test/release/1.1-2']), 0)
+#        self.check_rpms('../rpmbuild/RPMS/*')
 
     def test_pristine_tar_commit(self):
         """Test committing upstream tarball to pristine-tar"""
