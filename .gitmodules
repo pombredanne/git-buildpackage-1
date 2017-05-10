@@ -1,6 +1,7 @@
 [submodule "tests/component/deb/data"]
 	path = tests/component/deb/data
-        url = git://honk.sigxcpu.org/git/gbp/deb-testdata
+        #url = git://honk.sigxcpu.org/git/gbp/deb-testdata
+        url = https://git.tizen.org/cgit/tools/git-buildpackage-deb-testdata
 [submodule "tests/component/rpm/data"]
 	path = tests/component/rpm/data
-        url = git://github.com/marquiz/git-buildpackage-rpm-testdata.git
+        url = https://git.tizen.org/cgit/tools/git-buildpackage-rpm-testdata
